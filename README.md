@@ -1,25 +1,29 @@
-# Quick Array Combinations
+# Quick Array Combinations (QAC)
 
 There are a number of techniques around to combine interferometric
 array data, in particular adding short spacings information.  The
-"QAC" functions (they are not formally CASA tasks) hide some of
-the complexity of writing CASA scripts and provide a simple
+"QAC" functions (they are not formally CASA tasks, but use CASA) hide
+some of the complexity of writing CASA scripts and provide a simple
 interface to array combinations.
 
-The project was born out of the TP2VIS project, and was used to
-provide a number of examples, and regression tests.
+The project was born alongside the TP2VIS project, where it was used
+to provide a number of examples, and regression tests. We still keep
+these within QAC as they are not distributed with
+[TP2VIS](https://github.com/tp2vis/distribute).
 
-See the [INSTALL](INSTALL) file for ways how to use these functions
-in your
+See the
+[INSTALL](INSTALL)
+file for ways how to install and use these functions in your
 [CASA](https://casa.nrao.edu/casa_obtaining.shtml)
 shell. 
 
 
-
 ## Example Workflows
 
-In addition to the standard M100 [example1:](example1.md)  we have several workflows that also serve as
-regressions tests in development.
+In addition to TP2VIS' standard 
+[M100 example](https://github.com/tp2vis/distribute/blob/master/example1.md)
+we have several workflows, some of which also served as regressions tests during the TP2VIS development. We keep those
+here for reference.
 
 * [workflow1:](workflows/workflow1.md) ALMA **cloud197** (LMC)  [our standard regression test]
 * [workflow2:](workflows/workflow2.md) ALMA **SWBarN** (SMC)  [private data]
