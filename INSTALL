@@ -1,0 +1,46 @@
+QAC only makes sense to use it within CASA, so you will need to have
+this installed first. See https://casa.nrao.edu/casa_obtaining.shtml
+
+We currently do not recommend anything before CASA version 5.0 
+
+After CASA has been installed, the installation of QAC is very simple.
+You can either manually load the appropriate python file(s) using
+python's execfile() function, for example 
+
+	 execfile('qac.py')
+	 execfile('tp2vis.py')
+
+will get you the basic QAC functions. 
+
+
+However, it is far more convenient to automate this for each time you
+load CASA.  For this, copy the contents of the casa.init.py into your
+~/.casa/init.py but modify the location of your personal qac_root,
+or use a symlink where this was installed on your system.
+
+For example, the following commands would work just fine:
+
+
+    cd ~/.casa
+    git clone https://github.com/teuben/QAC
+    cat casa.init.py >> ~/.casa/init.py
+
+The next time CASA starts, you will see the QAC routines are loaded.
+
+
+FUTURE:
+-------
+
+In the current CASA environment there are two other ways QAC could be
+installed:
+ 
+- the "buildmytasks" method (supposedly deprecated?)
+- the "setup.py" method (e.g. ADMIT uses this)
+
+but none are supported in this development version of QAC. They might
+be in some future release, depending on further development of CASA.
+As it stands now, using the execfile() style to load the correct files
+is the more pragmatic approach.
+
+
+
