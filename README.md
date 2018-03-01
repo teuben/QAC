@@ -9,7 +9,7 @@ interface to array combinations.
 The project was born out of the TP2VIS project, and was used to
 provide a number of examples, and regression tests.
 
-See the [INSTALL](install) file for ways how to use these functions
+See the [INSTALL](INSTALL) file for ways how to use these functions
 in your CASA shell.
 
 
