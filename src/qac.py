@@ -2,7 +2,7 @@
 #        These are helper functions for Feather, TP2VIS and other Array Combination techniques.
 #        Some are wrappers around CASA, others are also convenient for regression testing.
 #
-#  There are a series of qtp_*() functions, and one static class QTP.* with pure helper functions
+#  There are a series of qac_*() functions, and one static class QAC.* with pure helper functions
 #
 # See also : https://casaguides.nrao.edu/index.php/Analysis_Utilities
 # (we currently don't assume you have installed these 'au' tools, but they are very useful)
@@ -29,25 +29,23 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 #restoringbeam = 'common'                # common beam for all planes
 restoringbeam = None                     # given the edge channel issue, a common beam is not a good idea
 
-def qtp_version():
-    """ qtp helper functions """
-    print "qtp: version 27-feb-2018"
-    print "tp2vis:"
-    tp2vis_version()
+def qac_version():
+    """ qac helper functions """
+    print "qax: version 28-feb-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
-def qtp_log(message, verbose=True):
-    """ qtp banner message; can be turned off
+def qac_log(message, verbose=True):
+    """ qac banner message; can be turned off
     """
     if verbose:
         print ""
-        print "========= QTP: %s " % message
+        print "========= QAC: %s " % message
         print ""
         
-    #-end of qtp_log()
+    #-end of qac_log()
 
-def qtp_tmp(prefix, tmpdir='.'):
+def qac_tmp(prefix, tmpdir='.'):
     """ Create a temporary file in a tmpdir
 
         Parameters
@@ -66,9 +64,9 @@ def qtp_tmp(prefix, tmpdir='.'):
     fd.close()
     return name
 
-    #-end of qtp_tmp()
+    #-end of qac_tmp()
 
-def qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None):
+def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None):
     """
     Generate hex-grid of pointing centers that covers a specified area. 
     Can optionally output in file or as list. Can check for overlap with input image areas
@@ -140,7 +138,7 @@ def qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
     #print("RA:",raDeg, "Dec:",decDeg)
     cosdec = math.cos(decDeg*math.pi/180.0)
     
-    imsize = QTP.imsize2(imsize)
+    imsize = QAC.imsize2(imsize)
     xim = imsize[0]
     yim = imsize[1]
         
@@ -203,9 +201,9 @@ def qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
         
     return finalPtglist
 
-    #-end of qtp_im_ptg()
+    #-end of qac_im_ptg()
 
-def qtp_ms_ptg(msfile, outfile=None, uniq=True):
+def qac_ms_ptg(msfile, outfile=None, uniq=True):
     """ get the ptg's from an MS into a list and/or ascii ptg file
     'J2000 19h00m00.00000 -030d00m00.000000',...
     This is a little trickier than it sounds, because the FIELD table has more entries than
@@ -261,10 +259,10 @@ def qtp_ms_ptg(msfile, outfile=None, uniq=True):
         fp.close()
     return pointings
 
-    #-end of qtp_ms_ptg()
+    #-end of qac_ms_ptg()
 
 
-def qtp_line(im):
+def qac_line(im):
     """
     return the line parameters for an image in terms of a dictionary for tclean()
     """
@@ -285,7 +283,7 @@ def qtp_line(im):
     start = str(start) + 'km/s'
     return {'start' : start, 'width' : width, 'nchan' : nchan, 'restfreq' : restfreq}
 
-def qtp_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
+def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     """
     Check (and optionally correct) that a TP image is a valid input for TP2VIS.
     This is also meant as a workaround certain CASA features (see bugs.txt)
@@ -322,7 +320,7 @@ def qtp_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     def casa_version_check(version='5.0.0'):
         cur = casa['build']['version'].split('.')
         req = version.split('.')
-        print "qtp:",cur,req
+        print "qac:",cur,req
         if cur[0] >= req[0]: return
         if cur[1] >= req[1]: return
         if cur[2] >= req[2]: return
@@ -344,7 +342,7 @@ def qtp_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         return 0      # should never happen
 
     def im_sign(im):
-        if not QTP.iscasa(im): return 0
+        if not QAC.iscasa(im): return 0
         ia.open(im)
         h0 = ia.summary()
         aname = h0['axisnames']
@@ -386,10 +384,10 @@ def qtp_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         cwa.append(11)
 
     # check if we have a fits file
-    if not QTP.iscasa(tp) and not 3 in cwa:
+    if not QAC.iscasa(tp) and not 3 in cwa:
         print "Converting fits file to casa image"
         cwa.append(3)
-    elif 3 in cwa and QTP.iscasa(tp):
+    elif 3 in cwa and QAC.iscasa(tp):
         print "Already have casa image"
         cwa.remove(3)
 
@@ -472,9 +470,9 @@ def qtp_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     # ran via imtrans(order='012-3')
     # could this be combined with the transpose() ?
 
-    #-end of qtp_ingest()
+    #-end of qac_ingest()
     
-def qtp_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False):
+def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False):
     """ summary of some stats in an image or measurement set
         in the latter case the flux is always reported as 0
 
@@ -508,10 +506,10 @@ def qtp_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         return '\'' + name + '\''
     
         
-    if not QTP.iscasa(image):
-        print "QTP_STATS: missing %s " % image
+    if not QAC.iscasa(image):
+        print "QAC_STATS: missing %s " % image
         return
-    if QTP.iscasa(image + '/ANTENNA'):                      # assume it's a MS
+    if QAC.iscasa(image + '/ANTENNA'):                      # assume it's a MS
         tb.open(image)
         data  = np.abs(tb.getcol('DATA')[0,:,:])  # first pol ->  data[nchan,nvis]
         mean = data.mean()
@@ -527,7 +525,7 @@ def qtp_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
             # this requires a .pb file to be parallel to the .image file
             if pb == None:
                 pb = image[:image.rindex('.')] + '.pb'
-                if QTP.iscasa(pb):
+                if QAC.iscasa(pb):
                     maskarea = lel(pb) + '>' + str(pbcut)      # create a LEL for the mask
             else:
                 maskarea = lel(pb) + '>' + str(pbcut)
@@ -569,16 +567,16 @@ def qtp_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
             else:
                 test_out = "FAILED regression delta=%g > %g" % (delta.max(),eps)
                 report = True
-    msg1 = "QTP_STATS: %s" % (image)
+    msg1 = "QAC_STATS: %s" % (image)
     print "%s %s %s" % (msg1,test_new,test_out)
     if report:
         fmt1 = '%%-%ds' % (len(msg1))
         msg2 = fmt1 % ' '
         print "%s %s EXPECTED" % (msg2,test)
     
-    #-end of qtp_stats()
+    #-end of qac_stats()
     
-def qtp_beam(im, normalized=False, plot=None):
+def qac_beam(im, normalized=False, plot=None):
     """ some properties of the PSF
 
     im:           image representing the beam (usually a .psf file)
@@ -587,8 +585,8 @@ def qtp_beam(im, normalized=False, plot=None):
 
     @todo   have an option to just print beam, no volume info
     """
-    if not QTP.iscasa(im):
-        print "QTP_BEAM: missing %s " % im
+    if not QAC.iscasa(im):
+        print "QAC_BEAM: missing %s " % im
         return
 
     h0 = imhead(im)
@@ -615,7 +613,7 @@ def qtp_beam(im, normalized=False, plot=None):
         factor = 1.0
         pix    = 1.0
 
-    print "QTP_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor)
+    print "QAC_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor)
 
     xcen = h0['refpix'][0]
     ycen = h0['refpix'][1]
@@ -628,7 +626,7 @@ def qtp_beam(im, normalized=False, plot=None):
     for i in size:
         box = '%d,%d,%d,%d' % (xcen-i,ycen-i,xcen+i,ycen+i)
         flux[i] = imstat(im,chans='0',box=box)['sum'][0]/factor
-    print "QTP_BEAM: Max/Last/PeakLoc",flux.max(),flux[-1],flux.argmax()*pix
+    print "QAC_BEAM: Max/Last/PeakLoc",flux.max(),flux[-1],flux.argmax()*pix
     
     if plot != None:
         plt.figure()
@@ -646,10 +644,10 @@ def qtp_beam(im, normalized=False, plot=None):
         plt.savefig(plot)
         plt.show()
     
-    #-end of qtp_beam()
+    #-end of qac_beam()
     
     
-def qtp_getuv(ms, kwave=True):
+def qac_getuv(ms, kwave=True):
     """ return the UV coordinates, in m or kilowaves
 
     ms       MS file, No default
@@ -657,7 +655,7 @@ def qtp_getuv(ms, kwave=True):
     kwave    boolean, if true (u,v) in klambda, else in native meter
              Default:  True
 
-    Usage:   (u,v) = qtp_getuv('msfile',True)
+    Usage:   (u,v) = qac_getuv('msfile',True)
     """
     tb.open(ms)
     uvw  = tb.getcol('UVW')
@@ -680,15 +678,15 @@ def qtp_getuv(ms, kwave=True):
 
     return (u,v)
 
-    #-end of qtp_getuv()
+    #-end of qac_getuv()
     
-def qtp_getamp(ms, record=0):
+def qac_getamp(ms, record=0):
     """ return the AMP for each channel for the (0,0) spacings.
     It needs to sum for all fields where uv=(0,0)
 
     ms       MS file, No default
     
-    Usage:   amp = qtp_getamp('msfile')
+    Usage:   amp = qac_getamp('msfile')
     """
     tb.open(ms)
     uvw  = tb.getcol('UVW')[0:2,:]               # uvw[2,nvis]
@@ -701,9 +699,9 @@ def qtp_getamp(ms, record=0):
     tb.close()
     return amp
 
-    #-end of qtp_getamp()
+    #-end of qac_getamp()
     
-def qtp_flag1(ms1, ms2):
+def qac_flag1(ms1, ms2):
     """
     niche flagger:    flag all data in ms2 that have no field in ms1.
     in the end.... useless.
@@ -746,9 +744,9 @@ def qtp_flag1(ms1, ms2):
     print "MASK",mask
     print "SUM:",mask.sum()
     
-    #-end of qtp_flag1()
+    #-end of qac_flag1()
     
-def qtp_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
+def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
@@ -778,7 +776,7 @@ def qtp_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
 
     # for tclean (only used if niter>=0)
-    imsize    = QTP.imsize2(imsize)
+    imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     outms     = '%s/%s.%s.ms'  % (project,project,cfg)
     outms2    = '%s/%s.%s.ms2' % (project,project,cfg)       # debug
@@ -841,31 +839,31 @@ def qtp_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
                phasecenter=phasecenter,
                weighting='natural',
                specmode='cube')
-        qtp_stats(outim + '.image')
+        qac_stats(outim + '.image')
         if do_fits:
             exportfits(outim+'.image',outim+'.fits')
 
     return outms
-    #-end of qtp_alma()
+    #-end of qac_alma()
 
-def qtp_tpdish(name, size):
+def qac_tpdish(name, size):
     """
     A patch to work with dishes that are not 12m (currently hardcoded in tp2vis.py)
 
     E.g. for GBT (a 100m dish) you would need to do:
 
-    qtp_tpdish('ALMATP',100.0)
-    qtp_tpdish('VIRTUAL',100.0)
+    qac_tpdish('ALMATP',100.0)
+    qac_tpdish('VIRTUAL',100.0)
     """
     old_size = t2v_arrays[name]['dish']
     old_fwhm = t2v_arrays[name]['fwhm100']
     r = size/old_size
     t2v_arrays[name]['dish']   = size
     t2v_arrays[name]['fwhm100']= old_fwhm / r
-    print "QTP_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
+    print "QAC_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
     
  
-def qtp_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
+def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
            
     """
       Simple frontend to call tp2vis() and an optional tclean()
@@ -902,8 +900,8 @@ def qtp_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
       line           Dictionary of tclean() parameters
     """
     # assert input files
-    QTP.assertf(imagename)
-    QTP.assertf(ptg)    
+    QAC.assertf(imagename)
+    QAC.assertf(ptg)    
     
     # clean up old project
     os.system('rm -rf %s ; mkdir -p %s' % (project,project))
@@ -928,7 +926,7 @@ def qtp_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
     tp2vis(imagename,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv)
 
     vptable = outfile + '/TP2VISVP'    
-    if QTP.iscasa(vptable):                   # note: current does not have a Type/SubType
+    if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
         print "Note: using TP2VISVP, and attempting to use vp from ",vptable
         use_vp = True
         vp.reset()
@@ -991,7 +989,7 @@ def qtp_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
 
     print "Final test clean around phasecenter = '%s'" % phasecenter
     dirtymap = '%s/dirtymap' % project
-    imsize    = QTP.imsize2(imsize)
+    imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     weighting = 'natural'
 
@@ -1014,10 +1012,10 @@ def qtp_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
 
     return outfile
 
-    #-end of qtp_tp()
+    #-end of qac_tp()
 
 
-def qtp_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
     """
     Simple interface to do a tclean() on one MS
     
@@ -1035,7 +1033,7 @@ def qtp_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     #
     outim1 = '%s/dirtymap' % project
     #
-    imsize    = QTP.imsize2(imsize)
+    imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     # weighting = 'natural'
     # weighting = 'uniform'
@@ -1063,7 +1061,7 @@ def qtp_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
 
     if type(ms) != type([]):
         vptable = ms + '/TP2VISVP'
-        if QTP.iscasa(vptable):                   # note: current does not have a Type/SubType
+        if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
             print "Note: using TP2VISVP, and attempting to use vp from",vptable
             use_vp = True
             vp.reset()
@@ -1102,9 +1100,9 @@ def qtp_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     if len(niters) == 1:
         exportfits(outim1+'.image',outim1+'.fits')
     
-    #-end of qtp_clean1()
+    #-end of qac_clean1()
     
-def qtp_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
+def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
     """
     Simple interface to do a tclean() joint deconvolution of one TP and one or more MS
     
@@ -1124,7 +1122,7 @@ def qtp_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
     outim2 = '%s/tpalma' % project
     outms  = '%s/tpalma.ms' % project       # concat MS to bypass tclean() bug
     #
-    imsize    = QTP.imsize2(imsize)
+    imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     # weighting = 'natural'
     # weighting = 'uniform'    
@@ -1210,9 +1208,9 @@ def qtp_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
         print "Removing ",outms
         shutil.rmtree(outms)
     
-    #-end of qtp_clean()
+    #-end of qac_clean()
     
-def qtp_summary(tp, ms=None, source=None, line=False):
+def qac_summary(tp, ms=None, source=None, line=False):
     """
     Summarize what could be useful to understand how to combine a TP map with one or more MS files
     and how to call mstransform()
@@ -1280,7 +1278,7 @@ def qtp_summary(tp, ms=None, source=None, line=False):
         return _line
 
     # print the image info
-    print "QTP_SUMMARY:"
+    print "QAC_SUMMARY:"
     print "TP:",tp
     print 'OBJECT:  ',h0['object']
     print 'SHAPE:   ',h0['shape']
@@ -1295,7 +1293,7 @@ def qtp_summary(tp, ms=None, source=None, line=False):
     # LIST OF MS (can be empty)
     for msi in ms_list:
         print ""
-        if QTP.iscasa(msi):
+        if QAC.iscasa(msi):
             print "MS: ",msi
         else:
             print "MS:   -- skipping non-existent ",msi
@@ -1335,9 +1333,9 @@ def qtp_summary(tp, ms=None, source=None, line=False):
         #print "chan_freq",chan_freq.shape,chan_freq
         # print 'FREQ:',chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9
 
-    #-end of qtp_summary()
+    #-end of qac_summary()
 
-def qtp_mom(imcube, chan_rms, pb=None, pbcut=0.3):
+def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     """
     Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
     
@@ -1373,7 +1371,7 @@ def qtp_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
 
     
-def qtp_plot(image, channel=0, range=None, plot=None):
+def qac_plot(image, channel=0, range=None, plot=None):
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
@@ -1393,7 +1391,7 @@ def qtp_plot(image, channel=0, range=None, plot=None):
     imview(raster=raster, zoom=zoom, out=out)
 
     
-def qtp_combine(project, TPdata, INTdata, **kwargs):
+def qac_combine(project, TPdata, INTdata, **kwargs):
     """
     Wishful Function to combine total power and interferometry data.
 
@@ -1442,7 +1440,7 @@ def qtp_combine(project, TPdata, INTdata, **kwargs):
         
     
 
-class QTP(object):
+class QAC(object):
     """ Static class to hide some local helper functions
 
         rmcasa
@@ -1453,8 +1451,17 @@ class QTP(object):
     
     """
     @staticmethod
+    def hasdt():
+        if dir(QAC).count('dt') == 0: return False
+        return True
+        
+    @staticmethod
+    def exists(filename):
+        return os.path.exists(filename)
+    
+    @staticmethod
     def rmcasa(filename):
-        if QTP.iscasa(filename):
+        if QAC.iscasa(filename):
             os.system('rm -rf %s' % filename)
         else:
             print "Warning: %s is not a CASA dataset" % filename
@@ -1519,8 +1526,8 @@ class QTP(object):
         """ ensure a file or directory exists, else report and and fail
         """
         if filename == None: return
-        assert os.path.exists(filename),  "QTP.assertf: %s does not exist" % filename
+        assert os.path.exists(filename),  "QAC.assertf: %s does not exist" % filename
         return
         
     
-#- end of qtp.py
+#- end of qac.py
