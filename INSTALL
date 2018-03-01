@@ -1,31 +1,47 @@
-QAC only makes sense to use it within CASA, so you will need to have
-this installed first. See https://casa.nrao.edu/casa_obtaining.shtml
 
-We currently do not recommend anything before CASA version 5.0 
 
-After CASA has been installed, the installation of QAC is very simple.
+1) CASA:
+
+You will need to install CASA before you can use QAC.
+See https://casa.nrao.edu/casa_obtaining.shtml
+
+2) TP2VIS:
+
+If you have not installed some version of "tp2vis" you can do that
+from within QAC:   pick the developers version:
+	make tp2vis
+or the public version:
+	make distribute
+both contain tp2vis.py, which is all you need. 
+
+3) QAC
+
 You can either manually load the appropriate python file(s) using
 python's execfile() function, for example 
 
 	 execfile('qac.py')
 	 execfile('tp2vis.py')
 
-will get you the basic QAC functions. 
-
-
-However, it is far more convenient to automate this for each time you
-load CASA.  For this, copy the contents of the casa.init.py into your
-~/.casa/init.py but modify the location of your personal qac_root,
-or use a symlink where this was installed on your system.
+but you will need to know the locations of these files. We promote
+using CASA's ~/.casa/init.py method. With this you will automatically
+have thq QAC functions available within CASA each time you use CASA.
+For this, copy the contents of the QAC/casa.init.py into your
+~/.casa/init.py but you may need to modify the location of your
+personal qac_root, or (recommended) use a symlink where this was
+installed on your system
 
 For example, the following commands would work just fine:
 
 
-    cd ~/.casa
+    mkdir -p  ~/.casa
+    cd  ~/.casa
     git clone https://github.com/teuben/QAC
     cat casa.init.py >> ~/.casa/init.py
+    cd QAC
+    make distrinbute
 
-The next time CASA starts, you will see the QAC routines are loaded.
+The next time CASA starts, you will see the QAC routines are loaded,
+as well have access to the tp2vis routines.
 
 
 FUTURE:
