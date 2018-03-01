@@ -19,12 +19,6 @@
 #  Shortcut files:  cloud197_aver_07.ms           6.49 MB
 #                   cloud197_aver_12.ms          26.56 MB
 
-try:
-    execfile('tp2vis.py')
-    execfile('tp2visplot.py')
-    execfile('qtp.py')
-except:
-    print "Skipping execfile's. Assuming you have loaded them before"
 
 # parameters in this workflow
 #   some options on how to set **line that we played with for debugging CASA 
