@@ -2,3 +2,9 @@ During the TP2VIS development workflow's 1-6 were used to test the code.
 See the respective workflow scripts (.py and/or .md) for details which
 data were used.  Some workflows use PI data which may not be available
 yet, however workflow 4 and 6 are freely available.
+
+WARNINGS:
+ 1)  workflow md files are badly out of sync with their py countersparts
+     (regresssion was deemed more important for now)
+ 2)  workflow 4 and 6 are the prime working one, and 1 is in pretty good 
+     shape too
