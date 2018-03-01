@@ -31,7 +31,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def qac_version():
     """ qac helper functions """
-    print "qax: version 28-feb-2018"
+    print "qac: version 28-feb-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -1370,8 +1370,24 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0)
     immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
 
+def qac_math(outfile, infile1, oper, infile2):
+    """  just simpler to read....
+    """
+    qac_tag("math")
+    if not QAC.exists(infile1) or not QAC.exists(infile2):
+        print "QAC_MATH: missing %s and/or %s" % (infile1,infile2)
+        return
     
-def qac_plot(image, channel=0, range=None, plot=None):
+    if oper=='+':  expr = 'IM0+IM1'
+    if oper=='-':  expr = 'IM0-IM1'
+    if oper=='*':  expr = 'IM0*IM1'
+    if oper=='/':  expr = 'IM0/IM1'
+    os.system("rm -rf %s" % outfile)
+    immath([infile1,infile2],'evalexpr',outfile,expr)
+
+    #-end of qac_math()
+    
+def qac_plot(image, channel=0, box=None, range=None, plot=None):
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
@@ -1390,7 +1406,84 @@ def qac_plot(image, channel=0, range=None, plot=None):
 
     imview(raster=raster, zoom=zoom, out=out)
 
+    #-end of qac_plot()
     
+def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
+    """
+    Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
+    
+    imcube:      image cube (flux flat, i.e. the .image file)
+    chan_rms:    list of 4 integers, which denote the low and high channel range where RMS should be measured
+    pb:          primary beam. If given, it can do a final pb corrected version and use it for masking
+    pbcut:       if PB is used, this is the cutoff above which mask is used
+    
+    """
+    qac_tag("mom")
+    
+    def lel(name):
+        """ convert filename to a safe filename for LEL expressions, e.g. in mask=
+        """
+        return '\'' + name + '\''
+    chans1='%d~%d' % (chan_rms[0],chan_rms[1])
+    chans2='%d~%d' % (chan_rms[2],chan_rms[3])
+    chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2])
+    rms  = imstat(imcube,axes=[0,1])['rms']
+    print rms
+    rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
+    rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
+    print rms1,rms2
+    rms = 0.5*(rms1+rms2)
+    print "RMS = ",rms
+    if pb==None:
+        mask = None
+    else:
+        mask = lel(pb) + '> %g' % pbcut
+        print "Using mask=",mask
+    mom0 = imcube + '.mom0'
+    mom1 = imcube + '.mom1'
+    os.system('rm -rf %s %s' % (mom0,mom1))
+    immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0)
+    immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
+
+    #-end of qac_mom()
+
+def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
+    """ Plotting min,max,rms as function of channel
+    
+        box     xmin,ymin,xmax,ymax       defaults to whole area
+
+        A useful way to check the the mean RMS at the first
+        or last 10 channels is:
+
+        imstat(image,axes=[0,1])['rms'][:10].mean()
+        imstat(image,axes=[0,1])['rms'][-10:].mean()
+    
+    """
+    qac_tag("flux")
+    
+    plt.figure()
+    _tmp = imstat(image,axes=[0,1],box=box)
+    fmin = _tmp['min']
+    fmax = _tmp['max']
+    frms = _tmp['rms']
+    chan = np.arange(len(fmin))
+    f = 0.5 * (fmax - fmin) / frms
+    plt.plot(chan,fmin,c='r',label='min')
+    plt.plot(chan,fmax,c='g',label='max')
+    plt.plot(chan,frms,c='b',label='rms')
+    # plt.plot(chan,f,   c='black', label='<peak>/rms')
+    zero = 0.0 * frms
+    plt.plot(chan,zero,c='black')
+    plt.ylabel('Flux')
+    plt.xlabel('Channel')
+    plt.title('%s  Min/Max/RMS' % (image))
+    plt.legend()
+    plt.savefig(plot)
+    plt.show()
+    print "Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv)
+
+    #-end of qac_flux()    
+        
 def qac_combine(project, TPdata, INTdata, **kwargs):
     """
     Wishful Function to combine total power and interferometry data.
@@ -1437,6 +1530,74 @@ def qac_combine(project, TPdata, INTdata, **kwargs):
         _INT_data = INTdata
     else:
         _INT_data = [INTdata]        
+        
+def qac_argv(sysargv):
+    """
+    safe argument parser from CASA, removing the CASA dependant ones, including the script name
+    
+    Typical usage:
+
+         import sys
+
+         for arg in qac_argv(sys.argv):
+         exec(arg)
+
+    """
+    return sysargv[3:]
+
+def qac_initkeys(keys, argv=[]):
+    QAC.keys = {}
+    for k in keys.keys():
+        QAC.keys[k] = keys[k]
+    for kv in argv[3:]:
+        i = kv.find('=')
+        if i > 0:
+            # @todo isn't there a better pythonic way to do this?
+            cmd='QAC.keys["%s"]=%s' % (kv[:i], kv[i+1:])
+            exec(cmd)
+        
+def qac_getkey(key):
+    return QAC.keys[key]
+
+
+
+def qac_begin(label="ngvla"):
+    """
+    Every script should start with qac_begin() if you want to use the logger
+    and/or Dtime output for performance testing
+
+    See also qac_tag() and qac_end()
+    """
+    if False:
+        # @todo until the logging + print problem solved, this is disabled
+        logging.basicConfig(level = logging.INFO)
+        root_logger = logging.getLogger()
+        print 'root_logger =', root_logger
+        print 'handlers:', root_logger.handlers
+        handler = root_logger.handlers[0]
+        print 'handler stream:', handler.stream
+        import sys
+        print 'sys.stderr:', sys.stderr
+        NG.dt = Dtime(label)
+
+def qac_tag(label):
+    """
+    Dtime.tag()
+    
+    See also qac_begin()
+    """
+    if QAC.hasdt(): 
+        QAC.dt.tag(label)
+
+def qac_end():
+    """
+    Dtime.end()
+    
+    See also qac_begin()
+    """
+    if QAC.hasdt(): 
+        QAC.dt.tag("done")
+        QAC.dt.end()
         
     
 
