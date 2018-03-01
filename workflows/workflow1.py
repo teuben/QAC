@@ -6,7 +6,7 @@
 #  where a few parameters can be used to tweak the script and expose
 #  certain problems. Use with care.
 #
-#  Timing:   
+#  Timing:   ~10 min
 #  917.984u 26.556s 11:23.57 138.1%	0+0k 9552+16330568io 4pf+0w    (repeat mode)
 #  849.592u 27.276s 11:09.18 131.0%	0+0k 64+16648072io 0pf+0w
 #  Space:
@@ -133,6 +133,7 @@ tp2vistweak('test1/clean2/tpalma','test1/clean2/tpalma_4')
 qac_log("TP2VISPL")
 tp2vispl(['test1/tp.ms',ms07,ms12],outfig='cloud197_tp2viswt.png')
 
+qac_log("PAPER FIGURE-6")
 # figure 6 in the paper  (this would be ch. 10,12,14 instead of 32,30,28 if the counting the other way)
 im1 = 'test1/clean_19/dirtymap_2.image'
 qac_plot(im1, channel=32, range=[-0.1,0.7],plot='cloud197_fig6a.png')
