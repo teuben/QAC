@@ -27,7 +27,7 @@ pixel = 0.5
 box1  = '219,148,612,579'       # same box as in workflow6a where we want to compare fluxes (depends on nsize=800, pixel=0.5)
 box   = box1
 
-boxlist = QAC.iarray(box)          # convert to a list of ints [219,148,612,579]
+boxlist = QAC.iarray(box)          # convert to an ascii list of ints [219,148,612,579] for qac_plot()
     
 
 #   report
@@ -41,11 +41,11 @@ QAC.assertf(ms12)
 
 # summary
 qac_log("SUMMARY-1")
-qac_summary('tp.im',['aver_12.ms','aver_7.ms'])
-qac_ms_ptg('aver_12.ms','aver_12.ptg')
+qac_summary(tpim,[ms12,ms07])
+qac_ms_ptg(ms12,'M100_aver_12.ptg')
 
 qac_log("TP2VIS")
-qac_tp('test6',tpim,'aver_12.ptg',nsize,pixel,niter=0,rms=0.15,phasecenter=phasecenter)          # PSF is blank for[C69:P0]
+qac_tp('test6',tpim,'M100_aver_12.ptg',nsize,pixel,niter=0,rms=0.15,phasecenter=phasecenter)          # PSF is blank for[C69:P0]
 qac_log("TP2VISWT - should show no change; about 0.0107354")
 tp2viswt('test6/tp.ms',value=0.15,mode='rms')
 
@@ -183,20 +183,14 @@ qac_stats(ms07,                       r[1])
 qac_stats('test6/tp.ms',              r[2])
 qac_stats(tpim,                       r[3])
 qac_stats('test6/dirtymap.image',     r[4])
-
 qac_stats('test6/clean1/alma.image',        r[5])     # test2c
 qac_stats('test6/clean1/tpalma.image',      r[6])
-
 qac_stats('test6/clean2/alma.image',        r[7])     # test2d
 qac_stats('test6/clean2/tpalma.image',      r[8])
-
 qac_stats('test6/clean3/alma.image',        r[9])     # test2d
 qac_stats('test6/clean3/tpalma.image',      r[10])
-
 qac_stats('test6/clean4/tpalma.image',      r[11])      # test2f
-
 qac_stats('test6/clean5/tpalma.image',      r[12])     # test2g
-
 qac_stats('test6/clean6/tpalma.image',      r[13])             # test2h series
 qac_stats('test6/clean6/tpalma_2.image')
 qac_stats('test6/clean6/tpalma_3.image')
