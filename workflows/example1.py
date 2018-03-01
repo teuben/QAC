@@ -1,11 +1,13 @@
 #
-# execfile this in CASA, it should mirror example1.md
-# make sure files beyond the "cmds" don't exist
+# M100 tp2vis script that should mirror our example1.md
 #
-# workflow6 is the regression test version of this, except it only deals with 5 km/s channel data
+# workflow6.py is the regression test version of this, except it only deals with 5 km/s channel data
+# workflow6a.py is the casaguide version of the M100 feather combination
 #
 # this example needs about 32GB in its full glory and takes about 90 mins to completion.
-# It also produced Figure 3 from the paper as plot_tp2viswt_rms.png
+# It also produces Figure 3 and 4 from the paper
+#
+#
 
 import os, sys
 
@@ -92,7 +94,7 @@ immath(imagename=['M100_TP07m12m_CO_dirty.image','M100_07m12m_CO_dirty.image'],e
 
 imview(raster=[{'file': 'M100_TP07m12m_CO_clean.image'}],
        zoom={'channel':24,'blc': [200,200], 'trc': [600,600]},
-       out='M100_TP07m12m_CO_dirty.24.png')
+       out='M100_TP07m12m_CO_clean.24.png')
 
 tp2viswt('M100_TP_CO.ms',mode='stat')
 tp2viswt(['M100_7m_CO.ms','M100_12m_CO.ms'],mode='stat')
@@ -100,9 +102,9 @@ tp2viswt(['M100_7m_CO.ms','M100_12m_CO.ms'],mode='stat')
 
 tp2vispl(['M100_TP_CO.ms','M100_7m_CO.ms','M100_12m_CO.ms'],outfig="plot_tp2viswt_rms.png")
 
-tp2viswt("M100_TP_CO.ms",mode='const',value=0.015)
-tp2viswt("M100_TP_CO.ms",mode='multiply',value=10.0)
-tp2viswt("M100_TP_CO.ms",mode='rms',value=0.15379972353470259)
+tp2viswt("M100_TP_CO.ms",mode='const',    value=0.015)
+tp2viswt("M100_TP_CO.ms",mode='multiply', value=10.0)
+tp2viswt("M100_TP_CO.ms",mode='rms',      value=0.15379972353470259)
 tp2viswt(['M100_TP_CO.ms','M100_7m_CO.ms','M100_12m_CO.ms'],mode='beam',makepsf=True)      # this takes time
 
 tp2vispl(['M100_TP_CO.ms','M100_7m_CO.ms','M100_12m_CO.ms'],outfig="plot_tp2viswt_beam.png")
@@ -119,12 +121,15 @@ tclean(vis='M100_TP07m12m_CO.ms',imagename='M100_TP07m12m_CO_clean',niter=10000,
        threshold='0mJy',specmode='cube',outframe='LSRK',restfreq='115.271201800GHz',nchan=70,start='1400km/s',width='5km/s')
 
 
-# outside scope, but useful
+# "outside scope, but useful"
 
 tp2vistweak('M100_TP07m12m_CO_dirty','M100_TP07m12m_CO_clean')         # need both dirty and clean image sets
 
 
-# imview (raster=[{'file': 'M100_TP07m12m_WT_CO_dirty.image'}],zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},out='M100_TP07m12m_WT_CO_dirty.23.png')
-# imview (raster=[{'file': 'M100_TP07m12m_WT_CO_dirty.image'}],zoom={'channel':47,'blc': [200,200], 'trc': [600,600]},out='M100_TP07m12m_WT_CO_dirty.47.png')
+imview (raster=[{'file': 'M100_TP07m12m_CO_clean.tweak.image'}],
+        zoom={'channel':24,'blc': [200,200], 'trc': [600,600]},
+        out='M100_TP07m12m_CO_clean.tweak.24.png')
 
 
+# figure on README.md
+# ![plot1](figures/M100_07m12m_TP07m12m_clean.png)
