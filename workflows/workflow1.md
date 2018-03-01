@@ -2,7 +2,7 @@
 
 
 The accompanying script **workflow1.py** is a regression test version of what is discussed in this document
-in a bit more detail. Note were are using the **qtp.py** shortcut functions.
+in a bit more detail. Note were are using the **qac.py** shortcut functions here.
 
 We start off by using some verbiage directly taken from the ALMA archive:
 
@@ -34,18 +34,6 @@ evolutionary stages and local environments) and between the LMC and
 the MW. The study will give us the clue to understand the properties
 of interstellar medium and its influence to star formation in the
 galaxy where the environment is very different from the MW.
-
-
-## Loading tp2vis
-
-We are assuming the **tp2vis** module has been loaded in your CASA shell. Currently this is something like
-(including two other tools):
-
-       execfile('tp2vis.py')
-       execfile('tp2visplot.py')
-       execfile('qtp.py')
-
-See also the INSTALL file in the tp2vis distribution.
 
 
 ## Nomenclature
@@ -130,7 +118,7 @@ but in our case we already have a CASA image.
 simulation tools we are using. If you have a RA-DEC-FREQ or RA-DEC-FREQ-POL
 cube, there is a tool to fix your cube, e.g.
 
-       qtp_ingest('cloud197_casa47.spw17.fits','cloud197.im')
+       qac_ingest('cloud197_casa47.spw17.fits','cloud197.im')
 
 and continue with this good image cube.  In our current example the input CASA
 image was actually correct, the shape is [150 150 1 43] and the spectral

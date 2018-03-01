@@ -1,27 +1,28 @@
-# TP2VIS workflow examples:  M100 Band3
+# TP2VIS workflow examples: M100 Band3
 
 In this workflow the following things are discussed:
 
 1) benchmark comparing tp2vis with a published feather solution for ALMA Science Verification data
 
-2) ...
+2) cutting down ALMA datasets to optimize the array combination experiments
 
 
 ## History
 
 This Science Verification dataset is described at length in the
-[casaguide "M100 Band3 Combine 4.3"](https://casaguides.nrao.edu/index.php/M100_Band3_Combine_4.3), where also
-the CASA task **feather()** was used to combine 12m, 7m and TP data. The code is currently valid for CASA 4.3.0,
-but in our workflow6a.py we have an expanded version that also works for CASA 5.1.1
+[casaguide "M100 Band3 Combine 4.3"](https://casaguides.nrao.edu/index.php/M100_Band3_Combine_4.3),
+where the CASA task **feather()** was used to combine 12m, 7m and TP data. The code is currently valid for CASA 4.3.0,
+but in our workflow6a.py we have an expanded version that also works for CASA 5
 
 Here we will show how to do this with tp2vis.
 
-NOTE: this workflow uses the "QTP" routines. A CASA-only version is available in
-[example1](example1.md). A executable regression version is available in workflow6.py
+NOTE: this workflow uses the "QAC" routines. A CASA-only version is available in the TP2VIS
+distribution as example1. An executable regression version is available in workflow6.py
 
 ## Organizing the data
 
-If you have not organized the calibrated data, here's a quick reminder.
+If you have not organized the calibrated data, here's a quick reminder how to get them
+from the ALMA archive.
 
 You can also use our prepared 5 km/s datasets, this will only take about 120 MB. If you have
 those data, you can skip to **Summary-2** below. The data for
@@ -84,7 +85,7 @@ It is already in the LSRK frame (see below).
 
 ## Summary-1
 
-	qtp_summary('M100_TP_CO_cube.bl.image',['M100_Band3_7m_CalibratedData.ms'])
+	qac_summary('M100_TP_CO_cube.bl.image',['M100_Band3_7m_CalibratedData.ms'])
 	TP: M100_TP_CO_cube.bl.image
 	OBJECT:   M100
 	SHAPE:    [110 110   1  70]
@@ -103,7 +104,7 @@ It is already in the LSRK frame (see below).
 	source 4 M100 (111.798250390625, 113.789949609375, 100.95, -32216.182759830859, -38130.95645359753, -1.4500548403448568, 4080)
 	source 5 M100 (113.673250390625, 115.664949609375, 102.7941, -31728.35052359162, -37537.014682193556, -1.4240412254478882, 4080) 
 
-NOTE: *There is a missing restfreq issue in the 12m data (qtp_summary can't deal with it yet). It is a little hard to decipher, because the
+NOTE: *There is a missing restfreq issue in the 12m data (qac_summary can't deal with it yet). It is a little hard to decipher, because the
 restfreq in spw 3 and 5 (hidden in source 3 and 5) are not that of CO(1-0).*
 
 Comparing the spectral coverage of the TP with that of the MS data, this is a prime candidate to narrow down the MS data size.
@@ -132,13 +133,13 @@ arrive at:
 
        line = {"restfreq":'115.271202GHz','start':'1400km/s', 'width':'5km/s','nchan':70}
 
-       rm -rf aver_12.ms
-       mstransform('M100_Band3_12m_CalibratedData.ms','aver_12.ms',
+       rm -rf M100_aver_12.ms
+       mstransform('M100_Band3_12m_CalibratedData.ms','M100_aver_12.ms',
 		datacolumn='DATA',outframe='LSRK',mode='velocity',regridms=True,nspw=1,spw='0',field='M100',keepflags=False,
 		**line)
 
-       rm -rf aver_7.ms
-       mstransform('M100_Band3_7m_CalibratedData.ms','aver_7.ms',
+       rm -rf M100_aver_7.ms
+       mstransform('M100_Band3_7m_CalibratedData.ms','M100_aver_7.ms',
 		datacolumn='DATA',outframe='LSRK',mode='velocity',regridms=True,nspw=1,spw='3,5',field='M100',keepflags=False,
 		**line)
 
@@ -153,7 +154,7 @@ There is still a missing RESTFREQ in the header, but we will pass this directly 
 
 A final summary: (still missing the 12m for this)
 
-       qtp_summary('M100_TP_CO_cube.bl.image',['aver_7.ms','aver_12.ms'])
+       qac_summary('M100_TP_CO_cube.bl.image',['M100_aver_7.ms','M100_aver_12.ms'])
        TP: M100_TP_CO_cube.bl.image       
        OBJECT:   M100
        SHAPE:    [110 110   1  70]
@@ -164,11 +165,11 @@ A final summary: (still missing the 12m for this)
        VELTYPE:  LSRK
        UNITS:    Jy/beam
 
-       MS:  aver_7.ms
+       MS:  M100_aver_7.ms
        source 0 M100 (114.60024366825306, 114.73289732123453, 115.271202, 1744.9999999999588, 1399.9999999999975, -4.9999999999994396, 70)
        source 1 M100 (114.60024366825306, 114.73289732123453, 115.271202, 1744.9999999999588, 1399.9999999999975, -4.9999999999994396, 70)
 
-       MS:  aver_12.ms
+       MS:  M100_aver_12.ms
        source 0 M100 (114.60024366825306, 114.73289732123453, 0.0, 0.0, 0.0, 0.0, 70)
 
 
@@ -214,20 +215,20 @@ and inspect the best ranges for the channels to estimate a good value for the RM
 
 We need to get the 12m pointings for mapping the TP
 
-       qtp_ms_ptg('aver_12.ms','aver_12.ptg')
+       qac_ms_ptg('M100_aver_12.ms','M100_12m.ptg')
 
 
 Compute visibilities from the TP and re-mapping these (notice large pixels)
 
-       qtp_tp('test1','M100_TP_CO_cube.bl.image','aver_12.ptg',128,5,niter=0,rms=0.15,phasecenter=phasecenter)
+       qac_tp('test1','M100_TP_CO_cube.bl.image','aver_12.ptg',128,5,niter=0,rms=0.15,phasecenter=phasecenter)
        WEIGHT: Old=1.0 New=0.0107354 Nvis=4140
 
 Comparing fluxes: (mean, rms, min, max, flux)
 
-       qtp_stats('M100_TP_CO_cube.bl.image')
+       qac_stats('M100_TP_CO_cube.bl.image')
        STATS: 0.54682752152594571, 1.2847112260328186, -0.89499807357788086, 8.8632850646972656, 4001.315200610718)
        
-       qtp_stats('test1/dirtymap.image')
+       qac_stats('test1/dirtymap.image')
        STATS:  0.91702267288437445, 1.2589038325185919, 0.072469912469387054, 6.873809814453125, 4737.5539535223179
 
 Although the TP data claims the total flux is about 4000 Jy.km/s, inspection of the maps will show this is an overestimate due to
@@ -241,57 +242,57 @@ Then we continue and map various combinations of 12m, 7m and TP, but in order to
        line = {"restfreq":'115.271202GHz','start':'1405km/s', 'width':'5km/s','nchan':68}
 
        # just 7m
-       qtp_clean1('test2a','aver_7.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
+       qac_clean1('test2a','aver_7.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
        -> 13.9 x 10.8 @ -88deg
-       qtp_stats('test2a/dirtymap.image')
+       qac_stats('test2a/dirtymap.image')
        STATS:  0.00010608723994142315, 0.08997501585030572, -0.68462353944778442, 2.4904146194458008, 15.856599635733675)
 
        # just 12m
-       qtp_clean1('test2b','aver_12.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
-       qtp_stats('test2b/dirtymap.image')
+       qac_clean1('test2b','aver_12.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
+       qac_stats('test2b/dirtymap.image')
        STATS:  -1.8733255271132615e-06, 0.016066182823863462, -0.15252432227134705, 0.55621969699859619, -3.0518904661967525
 
        # TP + 7m
-       qtp_clean('test2c','test1/tp.ms','aver_7.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
+       qac_clean('test2c','test1/tp.ms','aver_7.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
        WEIGHT min/max:  0.0610964559019 0.290469944477
        WEIGHT min/max:  0.0107353730127 0.0107353730127
        -> 13.9" x 10.8" @ -88deg
-       qtp_stats('test2c/tpalma.image')
+       qac_stats('test2c/tpalma.image')
        STATS:  0.05594231838218594, 0.12513078349605897, -0.35609498620033264, 2.7943828105926514, 7019.5587377738921
 
        # TP + 12m
-       qtp_clean('test2d','test1/tp.ms','aver_12.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
+       qac_clean('test2d','test1/tp.ms','aver_12.ms',512,1.5,niter=0,phasecenter=phasecenter,**line)
        WEIGHT min/max:  0.473205626011 1.79564714432
        WEIGHT min/max:  0.0107353730127 0.0107353730127
        -> 4.3" x 2.5" @ 70deg
-       qtp_stats('test2d/tpalma.image')
+       qac_stats('test2d/tpalma.image')
        STATS: 0.019088903248514841, 0.058592089079343941, -0.088251858949661255, 0.71008288860321045, 20712.214140501328
 
        # TP + 12m + 7m
-       qtp_clean('test2e','test1/tp.ms',['aver_12.ms','aver_7.ms'],800,0.5,niter=0,phasecenter=phasecenter,**line)
+       qac_clean('test2e','test1/tp.ms',['aver_12.ms','aver_7.ms'],800,0.5,niter=0,phasecenter=phasecenter,**line)
        WEIGHT min/max:  0.473205626011 1.79564714432
        WEIGHT min/max:  0.0610964559019 0.290469944477
        WEIGHT min/max:  0.0107353730127 0.0107353730127
        -> 4.6" x 3.0" @ -89
-       qtp_stats('test2e/tpalma.image')       
+       qac_stats('test2e/tpalma.image')       
        STATS:  0.016501103732203416, 0.059258307847094231, -0.12162975966930389, 0.88630974292755127, 14098.603744797363
 
        tp2viswt('test1/tp.ms',mode=2,factor=10)
-       qtp_clean('test2f','test1/tp.ms',['aver_12.ms','aver_7.ms'],512,1.5,niter=0,phasecenter=phasecenter,do_alma=False,**line)
+       qac_clean('test2f','test1/tp.ms',['aver_12.ms','aver_7.ms'],512,1.5,niter=0,phasecenter=phasecenter,do_alma=False,**line)
        WEIGHT min/max:  0.10735373199 0.10735373199
        -> 4.3" x 3.0" @ 89deg
-       qtp_stats('test2f/tpalma.image')              
+       qac_stats('test2f/tpalma.image')              
        STATS:  0.10279768542478428, 0.1450867078647059, -0.039790254086256027, 1.3810303211212158, 109731.4920369356
 
        # weights based on theoretical Cij's
        tp2viswt('test1/tp.ms',rms=41.9,mode=5)
        # wt -> 0.000569602588274
-       qtp_clean('test2g','test1/tp.ms',[ms12,ms07],512,1.5,niter=0,phasecenter=phasecenter,do_alma=False,**line)
+       qac_clean('test2g','test1/tp.ms',[ms12,ms07],512,1.5,niter=0,phasecenter=phasecenter,do_alma=False,**line)
 
        # beam size weights 
        tp2viswt('test1/tp.ms',[ms07,ms12],'test1/dirtymap.psf',4.0,mode=4)
        # wt -> 0.0044103029511 -> 0.00433382295945
-       qtp_clean('test2h','test1/tp.ms',[ms12,ms07],512,1.5,niter=0,phasecenter=phasecenter,do_alma=False,**line)
+       qac_clean('test2h','test1/tp.ms',[ms12,ms07],512,1.5,niter=0,phasecenter=phasecenter,do_alma=False,**line)
 
        
 
