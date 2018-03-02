@@ -112,7 +112,9 @@ robust     = 0.5
 phasecenter= 'J2000 12h22m54.9 +15d49m15.0'
 scales     = [0]
 ssbias     = 0.6
-box1       = '219,148,612,579'
+box1       = '219,148,612,579'       # regrid box, so feather overlaps and is not close to where PB is low
+box2       = [190, 150, 650, 610]    # orig box for plotting
+box2       = [219, 148, 612, 579]    # regrid box, match box1 for better figure comparison
 
 ### Setup stopping criteria with multiplier for rms.
 stop       = 3. 
@@ -273,12 +275,12 @@ immoments(imagename = 'M100_combine_CO_cube.image',
 os.system('rm -rf M100_combine_CO_cube.image.mom*.png')
 imview (raster=[{'file': 'M100_combine_CO_cube.image.mom0',
                  'range': [-0.3,25.],'scaling': -1.3,'colorwedge': True}],
-         zoom={'blc': [190,150],'trc': [650,610]},
+         zoom={'blc': box2[0:2],'trc': box2[2:4]},  #   box2[0:2]     box2[2:4]
          out='M100_combine_CO_cube.image.mom0.png')
 
 imview (raster=[{'file': 'M100_combine_CO_cube.image.mom1',
                  'range': [1440,1695],'colorwedge': True}],
-         zoom={'blc': [190,150],'trc': [650,610]}, 
+         zoom={'blc': box2[0:2],'trc': box2[2:4]}, 
          out='M100_combine_CO_cube.image.mom1.png')
 
 os.system('rm -rf M100_combine_CO_cube.flux.1ch')
@@ -297,12 +299,12 @@ imview (raster=[{'file': 'M100_combine_CO_cube.image.mom0',
                  'range': [-0.3,25.],'scaling': -1.3},
                 {'file': 'M100_combine_CO_cube.image.mom0.pbcor',
                  'range': [-0.3,25.],'scaling': -1.3}],
-         zoom={'blc': [190,150],'trc': [650,610]},
+         zoom={'blc':box2[0:2],'trc': box2[2:4]},
          out='junk.png')
 
 imview (raster=[{'file': 'M100_combine_CO_cube.image.mom0.pbcor',
                  'range': [-0.3,25.],'scaling': -1.3,'colorwedge': True}],
-         zoom={'blc': [190,150],'trc': [650,610]},
+         zoom={'blc':box2[0:2],'trc': box2[2:4]},
          out='M100_combine_CO_cube.image.mom0.pbcor.png')
 
 
