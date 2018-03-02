@@ -8,10 +8,6 @@
 # Wall time: 1h 15min 11s
 
 
-
-#   report
-qac_version()
-
 # model
 skymodel    = 'skymodel.fits'
 ptg1        = 'skymodel.ptg'
@@ -40,6 +36,7 @@ ptg         = ptg1
 
 #   summary
 qac_log("SUMMARY-1")
+qac_version()
 qac_summary(skymodel)
 
 if True:
