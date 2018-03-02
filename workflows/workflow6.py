@@ -79,7 +79,7 @@ qac_beam('test6/clean2/tpalma.psf',plot='test6/clean2/qac_beam.png',normalized=T
 # QAC_BEAM: Max/Last/PeakLoc 4.11547851528 3.62032676416 76.5
 
 qac_log("CLEAN clean3: TP+7m+12m")
-qac_clean('test6/clean3','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,1000,3000],phasecenter=phasecenter,do_alma=True,**line)
+qac_clean('test6/clean3','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,3000,10000],phasecenter=phasecenter,do_alma=True,**line)
 qac_beam('test6/clean3/tpalma.psf',plot='test6/clean3/qac_beam.png',normalized=True)
 # QAC_BEAM: test2e/tpalma.psf  4.4261 2.94494 0.5 59.0776 59.0776
 # QAC_BEAM: Max/Last/PeakLoc 2.95162277943 2.47391209456 76.0
@@ -104,7 +104,7 @@ tp2viswt(['test6/tp.ms',ms07,ms12], makepsf=True, mode='beammatch')
 # wt -> 0.0044103029511 -> 0.00433382295945 -> 0.00465955996837  -> 0.002709 
 
 qac_log("CLEAN clean6")
-qac_clean('test6/clean6','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,1000,3000],phasecenter=phasecenter,**line)
+qac_clean('test6/clean6','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,3000,10000],phasecenter=phasecenter,**line)
 qac_beam('test6/clean6/tpalma.psf',plot='test6/clean6/qac_beam.png',normalized=True)
 # -> QAC_BEAM: test2h/tpalma.psf  4.40321 2.92833 0.5 58.4404 58.4404
 #    QAC_BEAM: Max/Last/PeakLoc 1.86142086595 0.623532966042 7.5
@@ -125,15 +125,15 @@ plot2a([f0,f1,f2,f3],  'plot2h1',       'test6/plot2h1.png')
 plot2a([f0,f1,f4,f5],  'plot2h2 tweak', 'test6/plot2h2.png')
 
 qac_log("PAPER FIGURE-4")
-# figure 4 in the paper  (this would be ch. 10,12,14 instead of 32,30,28 if the counting the other way)
-im1 = 'test6/clean3/dirtymap_2.image'
-qac_plot(im1, channel=32, range=[-0.1,0.7],box=boxlist,plot='test6/M100_fig4a.png')
-qac_plot(im1, channel=30, range=[-0.1,0.7],box=boxlist,plot='test6/M100_fig4c.png')
-qac_plot(im1, channel=28, range=[-0.1,0.7],box=boxlist,plot='test6/M100_fig4e.png')
-im2 = 'test6/clean6/tpalma_3.tweak.image'
-qac_plot(im2, channel=32, range=[-0.1,0.7],box=boxlist,plot='test6/M100_fig4b.png')
-qac_plot(im2, channel=30, range=[-0.1,0.7],box=boxlist,plot='test6/M100_fig4d.png')
-qac_plot(im2, channel=28, range=[-0.1,0.7],box=boxlist,plot='test6/M100_fig4f.png')
+# figure 4 in the paper , comparing without (left) and with (right) 
+im1 = 'test6/clean3/alma_3.image'
+qac_plot(im1, channel=13, range=[-0.05,0.3],box=boxlist,plot='M100_fig4a.png')
+qac_plot(im1, channel=17, range=[-0.05,0.3],box=boxlist,plot='M100_fig4c.png')
+qac_plot(im1, channel=21, range=[-0.05,0.3],box=boxlist,plot='M100_fig4e.png')
+im2 = 'test6/clean3/tpalma_3.image'
+qac_plot(im2, channel=13, range=[-0.05,0.3],box=boxlist,plot='M100_fig4b.png')
+qac_plot(im2, channel=17, range=[-0.05,0.3],box=boxlist,plot='M100_fig4d.png')
+qac_plot(im2, channel=21, range=[-0.05,0.3],box=boxlist,plot='M100_fig4f.png')
 
 # qac_log("BEAMCHECK")
 # execfile('../beamcheck.py')
