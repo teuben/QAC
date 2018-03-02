@@ -66,8 +66,8 @@ tclean(vis=['M100_12m_CO.ms','M100_7m_CO.ms'],imagename='M100_07m12m_CO_clean', 
 
 #
 
-imview(raster=[{'file': 'M100_07m12m_CO_clean.image'}],
-       zoom={'channel':24,'blc': [200,200], 'trc': [600,600]},
+imview(raster=[{'file': 'M100_07m12m_CO_clean.image', 'range':[-0.1,0.6], 'colorwedge' : True}],
+       zoom={'channel':24,'blc': [219, 148], 'trc': [612, 579]},
        out='M100_07m12m_CO_clean.24.png')
 
 
@@ -92,8 +92,8 @@ os.system('rm -rf difference.im')
 immath(imagename=['M100_TP07m12m_CO_dirty.image','M100_07m12m_CO_dirty.image'],expr='IM0-IM1',outfile='difference.im')
 
 
-imview(raster=[{'file': 'M100_TP07m12m_CO_clean.image'}],
-       zoom={'channel':24,'blc': [200,200], 'trc': [600,600]},
+imview(raster=[{'file': 'M100_TP07m12m_CO_clean.image', 'range':[-0.1,0.6], 'colorwedge' : True}],
+       zoom={'channel':24,'blc': [219, 148], 'trc': [612, 579]},
        out='M100_TP07m12m_CO_clean.24.png')
 
 tp2viswt('M100_TP_CO.ms',mode='stat')
@@ -126,8 +126,8 @@ tclean(vis='M100_TP07m12m_CO.ms',imagename='M100_TP07m12m_CO_clean',niter=10000,
 tp2vistweak('M100_TP07m12m_CO_dirty','M100_TP07m12m_CO_clean')         # need both dirty and clean image sets
 
 
-imview (raster=[{'file': 'M100_TP07m12m_CO_clean.tweak.image'}],
-        zoom={'channel':24,'blc': [200,200], 'trc': [600,600]},
+imview (raster=[{'file': 'M100_TP07m12m_CO_clean.tweak.image', 'range':[-0.1,0.6], 'colorwedge' : True}],
+        zoom={'channel':24,'blc': [219, 148], 'trc': [612, 579]},
         out='M100_TP07m12m_CO_clean.tweak.24.png')
 
 
