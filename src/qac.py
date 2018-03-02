@@ -1403,6 +1403,9 @@ def qac_plot(image, channel=0, box=None, range=None, plot=None):
         print "%s: data range=[%g,%g]" % (image,h0['min'][0],h0['max'][0])
     zoom={'channel' : channel,
           'coord':'pixel'}      # @todo 'blc': [190,150],'trc': [650,610]}
+    if box != None:
+        zoom['blc'] = box[0:2]
+        zoom['trc'] = box[2:4]
 
     imview(raster=raster, zoom=zoom, out=out)
 
