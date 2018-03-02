@@ -7,8 +7,7 @@
 # See also : https://casaguides.nrao.edu/index.php/Analysis_Utilities
 # (we currently don't assume you have installed these 'au' tools, but they are very useful)
 #
-# 
-#
+
 import os, shutil, math, tempfile
 import os.path
 # from buildmosaic import buildmosaic
@@ -1392,7 +1391,12 @@ def qac_math(outfile, infile1, oper, infile2):
 
     #-end of qac_math()
     
-def qac_plot(image, channel=0, box=None, range=None, plot=None):
+def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
+    """
+    mode=0     pick the default
+    mode=1     force casa
+    mode=2     force numpy/imshow
+    """
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
@@ -1400,22 +1404,61 @@ def qac_plot(image, channel=0, box=None, range=None, plot=None):
         out = image+'.png'
     else:
         out = plot
-    raster =[{'file': image,  'colorwedge' : True}]    # scaling (numeric), colormap (string)
-    if range != None:
-        raster[0]['range'] = range
-    else:
-        h0 = imstat(image,chans='%d' % channel)
-        print "%s: data range=[%g,%g]" % (image,h0['min'][0],h0['max'][0])
-    zoom={'channel' : channel,
-          'coord':'pixel'}      # @todo 'blc': [190,150],'trc': [650,610]}
-    if box != None:
-        zoom['blc'] = box[0:2]
-        zoom['trc'] = box[2:4]
+        
+    if mode == 0: mode=2      # our hardcoded default
+        
+    if mode == 1:
+        if range == None:
+            h0 = imstat(image,chans='%d' % channel)
+            range = [h0['min'][0],h0['max'][0]]
+        raster =[{'file': image,  'colorwedge' : True, 'range' : range}]    # scaling (numeric), colormap (string)
+        zoom={'channel' : channel,
+              'coord':'pixel'}      # @todo 'blc': [190,150],'trc': [650,610]}
+        if box != None:
+            zoom['blc'] = box[0:2]
+            zoom['trc'] = box[2:4]
+            
+        print "QAC_PLOT: %s range=%s" % (image,str(range))
+        imview(raster=raster, zoom=zoom, out=out)
+    elif mode == 2:
+        cmap = 'nipy_spectral'
+        
+        tb.open(image)
+        d1 = tb.getcol("map").squeeze()
+        tb.close()
+        print "SHAPE from casa: ",d1.shape
+        nx = d1.shape[0]
+        ny = d1.shape[1]
+        if len(d1.shape) == 2:
+            d3 = np.flipud(np.rot90(d1.reshape((nx,ny))))            
+        else:
+            d2 = d1[:,:,channel]
+            d3 = np.flipud(np.rot90(d2.reshape((nx,ny))))            
 
-    imview(raster=raster, zoom=zoom, out=out)
+        if box != None:
+            data = d3[box[1]:box[3],box[0]:box[2]]
+        else:
+            data = d3
+        if range == None:
+            range = [data.min(), data.max()]
 
+        plt.figure()
+        alplot = plt.imshow(data, origin='lower', vmin = range[0], vmax = range[1])
+        #alplot = plt.imshow(data, origin='lower')
+        #plt.set_cmap(cmap)
+        #alplot.set_cmap(cmap)
+        plt.colorbar()
+        plt.ylabel('X')
+        plt.xlabel('Y')
+        plt.title('%s chan=%d' % (image,channel))
+        print "QAC_PLOT: %s range=%s   %s" % (image,str(range),out)        
+        plt.savefig(out)
+        plt.show()
+            
+        
+        
     #-end of qac_plot()
-    
+
 def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     """
     Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
@@ -1494,16 +1537,26 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
 
 def qac_psd(image, plot='qac_psd.png'):
     """ compute the PSD of a map
+    see also: radio_astro_tools et al. (sd2018)
     """
-    fd = fits.getdata(image).squeeze()     # this has to be a 2D image
-    f1 = np.fft.fft2(fd)
-    f2 = np.np.fftshift(f2)
-    psd2 = np.abs(f2)**2
-    psd1 = radialProfile.azimuthalAverage(psd2)
-    rad1 = np.arange(1.0,len(psd1)+1)
+
+    tb.open(image)
+    d1 = tb.getcol("map")
+    nx = d1.shape[0]
+    ny = d1.shape[1]
+    tb.close()
+    d2 = np.flipud(np.rot90(d1.reshape((nx,ny))))
+    data = d2.squeeze()
+    #
+    f1 = np.fft.fft2(data)
+    f2 = np.fft.fftshift(f1)
+    p2 = np.abs(f2)**2
+    #p1 = radialProfile.azimuthalAverage(p2)
+    p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
+    r1 = np.arange(1.0,len(p1)+1)
     
     plt.figure()
-    plt.loglog(rad1,psd1)
+    plt.loglog(r1,p1)
     plt.xlabel('Spatial Frequency')
     plt.ylabel('Power Spectrum')
     plt.xlabel('Channel')
@@ -1681,15 +1734,20 @@ class QAC(object):
         return False
 
     @staticmethod    
-    def casa2np(image, z=None):
+    def casa2np(image, box=None, z=None):
         """
         convert a casa[x][y] to a numpy[y][x] such that fits writers
         will produce a fits file that looks like an RA-DEC image
         and also native matplotlib routines, such that imshow(origin='lower')
         will give the correct orientation.
 
+        if image is a string, it's assumed to be the casa image name
+
+        box    pixel list of [xmin,ymin, xmax, ymax]
         z      which plane to pick in case it's a cube (not implemented)
         """
+        if type(image)==type(""):
+            return None
         return np.flipud(np.rot90(image))
 
     @staticmethod    
