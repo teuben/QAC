@@ -144,7 +144,9 @@ qac_plot(im2, channel=32, range=[-0.1,0.7],plot='cloud197_fig6b.png')
 qac_plot(im2, channel=30, range=[-0.1,0.7],plot='cloud197_fig6d.png')
 qac_plot(im2, channel=28, range=[-0.1,0.7],plot='cloud197_fig6f.png')
 
-
+qac_log("README figures/Cloud197_07m12m_TP07m12m_clean.png")
+qac_plot(im1, channel=30, range=[-0.1,0.6],plot='cloud197_readme_1a.png')
+qac_plot(im2, channel=30, range=[-0.1,0.6],plot='cloud197_readme_1b.png')
 
 regres53 = [
     '9.877570407926104 6.5851462532089871 0.024031112244953266 68.426556567708786 0.0',
