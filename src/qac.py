@@ -1482,7 +1482,29 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
     plt.show()
     print "Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv)
 
-    #-end of qac_flux()    
+    #-end of qac_flux()
+
+def qac_psd(image, plot='qac_psd.png'):
+    """ compute the PSD of a map
+    """
+    fd = fits.getdata(image).squeeze()     # this has to be a 2D image
+    f1 = np.fft.fft2(fd)
+    f2 = np.np.fftshift(f2)
+    psd2 = np.abs(f2)**2
+    psd1 = radialProfile.azimuthalAverage(psd2)
+    rad1 = np.arange(1.0,len(psd1)+1)
+    
+    plt.figure()
+    plt.loglog(rad1,psd1)
+    plt.xlabel('Spatial Frequency')
+    plt.ylabel('Power Spectrum')
+    plt.xlabel('Channel')
+    plt.title('%s' % (image))
+    plt.savefig(plot)
+    plt.show()
+    
+    return psd1
+    
         
 def qac_combine(project, TPdata, INTdata, **kwargs):
     """
