@@ -1144,20 +1144,25 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
     #
     if do_alma:
         print "Creating ALMA using vis1=",vis1
-        tclean(vis = vis1,
-               imagename      = outim1,
-               niter          = niters[0],
-               gridder        = 'mosaic',
-               imsize         = imsize,
-               cell           = cell,
-               restoringbeam  = restoringbeam,               
-               stokes         = 'I',
-               pbcor          = True,
-               phasecenter    = phasecenter,
-               vptable        = None,
-               weighting      = weighting,
-               specmode       = 'cube',
-               **line)
+        restart = True
+        for niter in niters:
+            print "TCLEAN(niter=%d)" % niter  
+            tclean(vis = vis1,
+                   imagename      = outim1,
+                   niter          = niters[0],
+                   gridder        = 'mosaic',
+                   imsize         = imsize,
+                   cell           = cell,
+                   restoringbeam  = restoringbeam,               
+                   stokes         = 'I',
+                   pbcor          = True,
+                   phasecenter    = phasecenter,
+                   vptable        = None,
+                   weighting      = weighting,
+                   specmode       = 'cube',
+                   restart        = restart,
+                   **line)
+            restart = False
         print "Wrote %s with %s weighting" % (outim1,weighting)        
     else:
         print "Skipping pure ALMA using vis1=",vis1        
