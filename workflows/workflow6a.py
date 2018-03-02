@@ -272,16 +272,16 @@ immoments(imagename = 'M100_combine_CO_cube.image',
 
 
 # and figures
-os.system('rm -rf M100_combine_CO_cube.image.mom*.png')
 imview (raster=[{'file': 'M100_combine_CO_cube.image.mom0',
                  'range': [-0.3,25.],'scaling': -1.3,'colorwedge': True}],
-         zoom={'blc': box2[0:2],'trc': box2[2:4]},  #   box2[0:2]     box2[2:4]
+         zoom={'blc': box2[0:2],'trc': box2[2:4]},  
          out='M100_combine_CO_cube.image.mom0.png')
 
 imview (raster=[{'file': 'M100_combine_CO_cube.image.mom1',
                  'range': [1440,1695],'colorwedge': True}],
          zoom={'blc': box2[0:2],'trc': box2[2:4]}, 
          out='M100_combine_CO_cube.image.mom1.png')
+
 
 os.system('rm -rf M100_combine_CO_cube.flux.1ch')
 imsubimage(imagename='M100_combine_CO_cube.flux',
@@ -293,14 +293,6 @@ immath(imagename=['M100_combine_CO_cube.image.mom0', \
                        'M100_combine_CO_cube.flux.1ch'],
         expr='IM0/IM1',
         outfile='M100_combine_CO_cube.image.mom0.pbcor')
-
-# ???
-imview (raster=[{'file': 'M100_combine_CO_cube.image.mom0',
-                 'range': [-0.3,25.],'scaling': -1.3},
-                {'file': 'M100_combine_CO_cube.image.mom0.pbcor',
-                 'range': [-0.3,25.],'scaling': -1.3}],
-         zoom={'blc':box2[0:2],'trc': box2[2:4]},
-         out='junk.png')
 
 imview (raster=[{'file': 'M100_combine_CO_cube.image.mom0.pbcor',
                  'range': [-0.3,25.],'scaling': -1.3,'colorwedge': True}],
@@ -385,7 +377,6 @@ immoments(imagename='M100_TP_CO_cube.regrid.subim',
          includepix=[rms*5.5, 50],
          outfile='M100_TP_CO_cube.regrid.subim.mom1')
 
-os.system('rm -rf M100_TP_CO_cube.regrid.subim.mom*.png')
 imview(raster=[{'file': 'M100_TP_CO_cube.regrid.subim.mom0',
                 'range': [0., 1080.],
                 'scaling': -1.3,
