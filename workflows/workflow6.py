@@ -1,3 +1,4 @@
+#  -*- python -*-
 #
 #  Example workflow with TP2VIS for "M100" project.
 #  See workflow6.md for a more detailed explanation with figures 
@@ -10,10 +11,17 @@
 # 7504.900u 176.808s 1:11:48.52 178.2%	0+0k 17703128+123968584io 2512pf+0w
 #
 #  Uses about 21GB when symlinks to small data are used.
+#
+#  Within test6/ the following directories are:
+#   test6/clean1    TP+7m
+#   test6/clean2    TP+12m 
+#   test6/clean3    TP+7m12m   rms weights   (5.584021/GHz)
+#   test6/clean4    -same- but with 10*rms   (55.840208/GHz)
+#   test6/clean6    TP+7m12m   beammatch weights   (1.409106/GHz)
 
 
 # parameters in this workflow
-phasecenter = 'J2000  12h22m54.900s +15d49m15.000s'
+phasecenter = 'J2000 12h22m54.900s +15d49m15.000s'
 
 line1 = {"restfreq":'115.271202GHz','start':'1400km/s', 'width':'5km/s','nchan':70}
 line2 = {"restfreq":'115.271202GHz','start':'1405km/s', 'width':'5km/s','nchan':68}
@@ -46,13 +54,13 @@ qac_log("SUMMARY-1")
 qac_summary(tpim,[ms12,ms07])
 qac_ms_ptg(ms12,'M100_aver_12.ptg')
 
-qac_log("TP2VIS")
-qac_tp('test6',tpim,'M100_aver_12.ptg',nsize,pixel,niter=0,rms=0.15,phasecenter=phasecenter)          # PSF is blank for[C69:P0]
+qac_log("TP2VIS with rms=0.15")       # rms from imstat() one edge channels
+qac_tp_vis('test6',tpim,'M100_aver_12.ptg',nsize,pixel,niter=0,rms=0.15,phasecenter=phasecenter)          # PSF is blank for[C69:P0]
 qac_log("TP2VISWT - should show no change; about 0.0107354")
 tp2viswt('test6/tp.ms',value=0.15,mode='rms')
 
 if True:
-    # Look at the difference between TP and dirty map from TP2VIS
+    # Look at the difference between TP and dirty map from TP2VIS (Jin Koda)
     temp_dict = imregrid(imagename='test6/dirtymap.image', template="get")
     imregrid(imagename='M100_TP_CO_cube.bl.image',output='M100_TP_CO_cube.bl.smo',template=temp_dict,overwrite=True)
     os.system('rm -rf temp.diff')
