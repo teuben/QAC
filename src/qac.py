@@ -1,8 +1,12 @@
 #  QAC:  "Quick Array Combinations"
-#        These are helper functions for Feather, TP2VIS and other Array Combination techniques.
-#        Some are wrappers around CASA, others are also convenient for regression testing.
 #
-#  There are a series of qac_*() functions, and one static class QAC.* with pure helper functions
+#        These are helper functions for various Array Combination techniques, such as
+#        Feather, TP2VIS and others.
+#        Some are wrappers around CASA, others are also convenient for regression and performance testing.
+#
+#        The simplicity of the function is intended to simplify usage of CASA and promote
+#        testing your codes.
+#
 #
 # See also : https://casaguides.nrao.edu/index.php/Analysis_Utilities
 # (we currently don't assume you have installed these 'au' tools, but they are very useful)
@@ -11,7 +15,7 @@
 import os, shutil, math, tempfile
 import os.path
 # from buildmosaic import buildmosaic
-from utils import constutils as const
+from utils import constutils as const        # @todo
 import numpy as np
 # import numpy.ma as ma
 # import pyfits as fits
@@ -30,7 +34,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def qac_version():
     """ qac helper functions """
-    print "qac: version 28-feb-2018"
+    print "qac: version 3-mar-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -269,7 +273,7 @@ def qac_line(im):
     ia.open(im)
     h1=ia.summary()
     ia.close()
-    #
+    #  we assume RA-DEC-POL-FREQ cubes as are needed for simobserve
     crp = h0['crpix4']
     crv = h0['crval4']
     cde = h0['cdelt4']
@@ -862,7 +866,7 @@ def qac_tpdish(name, size):
     print "QAC_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
     
  
-def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
+def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):    
            
     """
       Simple frontend to call tp2vis() and an optional tclean()
@@ -872,9 +876,11 @@ def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
       ===================
       project:       identifying (one level deep directory) name within which all files are places
       imagename:     casa image in RA-DEC-POL-FREQ order
-      ptg            Filename with pointings (ptg format) to be used
+      ptg            1) Filename with pointings (ptg format) to be used
+                     2_ List of (string) pointings
                      If none specified, it will currently return, but there may be a
                      plan to allow auto-filling the (valid) map with pointings.
+                     A list of J2000/RA/DEC strings can also be given.
     
     
       _optional_keywords:
@@ -900,7 +906,6 @@ def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
     """
     # assert input files
     QAC.assertf(imagename)
-    QAC.assertf(ptg)    
     
     # clean up old project
     os.system('rm -rf %s ; mkdir -p %s' % (project,project))
@@ -945,7 +950,7 @@ def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
     fix_mode = fix
     
     if fix_mode == 1:    # should be the default
-        print "FIX with mstransform and concat for CORRECTED_DATA" 
+        print "FIX %d with mstransform and concat for CORRECTED_DATA" % fix_mode 
         outfile1 = '%s/tp1.ms' % project    
         mstransform(outfile,outfile1)
         os.system('rm -rf %s' % outfile)
@@ -953,7 +958,7 @@ def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
         os.system('rm -rf %s' % outfile1)
 
     if fix_mode == 2:
-        print "FIX with mstransform and concat and for CORRECTED_DATA keeping backups"
+        print "FIX %d with mstransform and concat and for CORRECTED_DATA keeping backups" % fix_mode
         outfile1 = '%s/tp1.ms' % project    
         outfile2 = '%s/tp2.ms' % project
         outfile3 = '%s/tp3.ms' % project    
@@ -976,9 +981,9 @@ def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
         # removecols removekeyword removecolkeyword
 
     if False:
-        # Plot UV
+        # Plot UV - tp2vispl() does this better
         figfile = outfile + ".png"
-        print "PLOTUV ",figfile                                                            
+        print "PLOTUV ",figfile
         plotuv(outfile,figfile=figfile)
 
     if niter < 0 or imsize < 0:
@@ -1012,6 +1017,77 @@ def qac_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasec
     return outfile
 
     #-end of qac_tp()
+_
+def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
+    """
+    helper function to create on the fly total power map
+    
+    dish:       dish diameter in meters
+    freq:       frequency in GHz, if you want to override the image header value 
+    template:   dirty image --> must come from tclean so there is both *.image and *.pb
+    
+    @todo make use of the template for regrid
+    @todo come up with a good way to handle the directory structure for the project input 
+    
+    E.g. for 45 m single dish configuration:
+
+    qac_tp_otf('test10/clean1', 'skymodel.im', dish=45)
+    """
+    qac_tag("tp_otf")
+    
+    # clean up old project
+    # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+
+    # projectpath/filename for temporary otf 
+    out_tmp   = '%s/temp_otf.image'%project
+    # projectpath/filename for otf.image.pbcor
+    out_pbcor = '%s/otf%s.image.pbcor'%(project, label)
+    # projectpath/filename for otf.image (primary beam applied)
+    out_image = '%s/otf%s.image'%(project, label)
+
+    # check if a freq was specificed in the input
+    if freq == None:
+        # if none, then pull out frequency from skymodel header
+        # @todo come up with a way to check if we are actually grabbing the frequency from the header. it's not always crval3
+        h0 = imhead(skymodel,mode='list')
+        freq = h0['crval4'] # hertz
+    else:
+        freq = freq * 1.0e9
+
+    # calculate beam size in arcsecs
+    # @todo check if alma uses 1.22*lam/D or just 1.0*lam/D
+    beam = cms / (freq * dish) * apr
+
+    # convolve skymodel with beam. assumes circular beam
+    imsmooth(imagename=skymodel,
+             kernel='gauss',
+             major='%sarcsec'%beam,
+             minor='%sarcsec'%beam,
+             pa='0deg',
+             outfile=out_tmp,
+             overwrite=True)
+
+    # regrid
+    if template == None:
+        # inherit template from dirty map if template has not be specified in the input
+        # @todo need a way to grab the last dirtymap (e.g. dirtymap7.image) or grab a specified dirty map (e.g. dirtymap7 is bad so we want dirtymap6)
+        template = '%s/dirtymap.image'%project
+
+    imregrid(imagename=out_tmp,
+             template=template,
+             output=out_pbcor,
+             overwrite=True)
+
+    # immath to create primary beam applied. assumes the template is output from tclean so that you have file.image and file.pb
+    immath(imagename=[out_pbcor, '%s.pb'%template[:-6]],
+           expr='IM0*IM1',
+           outfile=out_image)
+    # qac_math(out_image, '%s.pb'%template[:-6]], '*', out_pbcor);
+
+    # remove the temporary OTF image that was created
+    os.system('rm -fr %s'%out_tmp)
+
+    #-end of qac_tp_otf()    
 
 
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
@@ -1564,7 +1640,7 @@ def qac_psd(image, plot='qac_psd.png'):
     plt.savefig(plot)
     plt.show()
     
-    return psd1
+    return p1
     
         
 def qac_combine(project, TPdata, INTdata, **kwargs):

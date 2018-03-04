@@ -1,23 +1,32 @@
+#  -*- python -*-
 #
 #  Example workflow with TP2VIS for "cloud197" project.
+#
 #  See also workflow1.md 
 #
 #  This workflow also serves as a benchmark and regression test
 #  where a few parameters can be used to tweak the script and expose
 #  certain problems. Use with care.
 #
-#  Timing:   ~10 min
-#  917.984u 26.556s 11:23.57 138.1%	0+0k 9552+16330568io 4pf+0w    (repeat mode)
-#  849.592u 27.276s 11:09.18 131.0%	0+0k 64+16648072io 0pf+0w
+#  Timing:   ~11 min (if starting from the bigger calib_ MS files)
+#            ~ 9 min (if starting from the smaller cloud197_aver MS files)
 #  Space:
-#  Creates about 4.3 GB in the test1 directory
-
+#  Creates about 4.5 GB in the test1 directory and a few figures in the
+#  current directory
+#
 #
 #  Bootstrap files: cloud197_casa47.spw17.image   6.77 MB
 #                   calib_split_07m.ms            0.36 GB
 #                   calib_split_12m.ms            2.14 GB
 #  Shortcut files:  cloud197_aver_07.ms           6.49 MB
 #                   cloud197_aver_12.ms          26.56 MB
+#
+#  Within test1/ the following directories are:
+#   test1/clean_07    7m
+#   test1/clean_12    12m 
+#   test1/clean_19    7m12m  
+#   test1/clean1      TP+7m12m   rms weights
+#   test1/clean2      TP+7m12m   beammatch weights
 
 
 # parameters in this workflow
@@ -48,6 +57,8 @@ ms12  = 'cloud197_aver_12.ms'
 
 ptg   = 'cloud197.ptg'
 
+new_weight  = True           # apply our new weights (DANGER: need to start from the calib_ files)
+nvgrp       = 4              # samples for tp2vis (14' for 16,   9' for 4, 8' for 1)
     
 #   report
 qac_version()
@@ -81,23 +92,26 @@ qac_log("SUMMARY-2")
 #  summary again of what goes into tp2vis
 qac_summary(tpim,[ms07,ms12])
 
-if False:
+if new_weight:
     qac_log("WEIGHT 7/12m")
     # set weights for 7m and 12m, classic style
-    # mode=5 was removed
+    # mode=5 was removed, now do it manually
     tp2viswt(ms07,mode='constant',value=0.00168259119043)      # old: rms=77.4,mode=5)   -> sigmas = 24.3787
     tp2viswt(ms12,mode='constant',value=0.0103271634451)       # old: rms=24.2,mode=5)   -> sigmas =  9.84033
-
 
 # the old benchmark is line2, line5/6 are the narrow one to avoid the rounding edge channel(s)
 # line = line6
 
-
 # MODE=3:  weights based on cube rms=0.7 (these two better give the same answer)
 qac_log("TP2VIS for rms=0.7; should be wt=0.000492951")
-qac_tp('test1',tpim,ptg,nsize,pixel,niter=0,phasecenter=phasecenter,rms=0.7)
+qac_tp_vis('test1',tpim,ptg,nsize,pixel,niter=0,phasecenter=phasecenter,rms=0.7,nvgrp=nvgrp)
+# -> 0.0016825911589 0.0103271631524 0.000492950784974
 
-#  7m and 12m maps 
+#  show weight and plot
+tp2viswt('test1/tp.ms')
+tp2vispl(['test1/tp.ms',ms07,ms12],outfig='cloud197_tp2viswt_rms.png')
+
+#  7m and 12m and combined 7m12m maps
 qac_log("CLEAN1 7m")
 qac_clean1('test1/clean_07',ms07,phasecenter=phasecenter)
 qac_log("CLEAN1 12m")
@@ -108,7 +122,6 @@ qac_clean1('test1/clean_19',ms12,phasecenter=phasecenter,niter=[0,1000])
 #
 qac_log("CLEAN clean1")
 qac_clean('test1/clean1','test1/tp.ms',[ms07,ms12],nsize,pixel,niter=0,phasecenter=phasecenter,do_alma=True,**line)
-# -> 0.0016825911589 0.0103271631524 0.000492950784974
 qac_beam('test1/clean1/tpalma.psf',plot='test1/clean1/qac_beam.png',normalized=True)
 
 
@@ -131,7 +144,7 @@ tp2vistweak('test1/clean2/tpalma','test1/clean2/tpalma_4')
 
 # standard plot (figure 5 in paper)
 qac_log("TP2VISPL")
-tp2vispl(['test1/tp.ms',ms07,ms12],outfig='cloud197_tp2viswt.png')
+tp2vispl(['test1/tp.ms',ms07,ms12],outfig='cloud197_tp2viswt_beam.png')
 
 qac_log("PAPER FIGURE-6")
 # figure 6 in the paper  (this would be ch. 10,12,14 instead of 32,30,28 if the counting the other way)
