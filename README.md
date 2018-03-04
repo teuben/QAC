@@ -45,6 +45,7 @@ other workflows, contact us if the PI has released the data.
   * Simulations (in 4.4) https://casaguides.nrao.edu/index.php/Simulating_Observations_in_CASA_4.4
   * See also our [workflow4](workflow4.md)
 * CASA single dish imaging:  https://casa.nrao.edu/casadocs/latest/single-dish-imaging
+  * Mangum et el. 2007:  [OTF imaging technique](https://www.aanda.org/articles/aa/pdf/2007/41/aa7811-07.pdf)
 * CASA feather: https://casa.nrao.edu/casadocs/latest/image-combination/feather
 * CASA data weights and combination:  https://casaguides.nrao.edu/index.php/DataWeightsAndCombination
 * Nordic Tools SD2VIS: https://www.oso.nordic-alma.se/software-tools.php
