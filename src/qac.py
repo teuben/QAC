@@ -1518,6 +1518,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
         if range == None:
             range = [data.min(), data.max()]
 
+        plt.ioff()    # not interactive
         plt.figure()
         alplot = plt.imshow(data, origin='lower', vmin = range[0], vmax = range[1])
         #alplot = plt.imshow(data, origin='lower')
@@ -1529,7 +1530,10 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
         plt.title('%s chan=%d' % (image,channel))
         print "QAC_PLOT: %s range=%s   %s" % (image,str(range),out)        
         plt.savefig(out)
-        plt.show()
+        if False:
+            plt.show()
+        else:
+            plt.close('all')
             
         
         
