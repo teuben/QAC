@@ -1218,7 +1218,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
         niters = [niter]
     #
     if do_alma:
-        print "Creating ALMA using vis1=",vis1
+        print "Creating ALMA imaging using vis1=",vis1
         restart = True
         for niter in niters:
             print "TCLEAN(niter=%d)" % niter  
@@ -1240,9 +1240,9 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
             restart = False
         print "Wrote %s with %s weighting" % (outim1,weighting)        
     else:
-        print "Skipping pure ALMA using vis1=",vis1        
+        print "Skipping pure ALMA imaging using vis1=",vis1        
 
-    print "Creating TPALMA using vis2=",vis2
+    print "Creating TPALMA imaging using vis2=",vis2
     if do_concat:
         # first report weight 
         print "Weights in ",vis2
@@ -1613,6 +1613,9 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
 
 def qac_psd(image, plot='qac_psd.png'):
     """ compute the PSD of a map
+
+    image:     casa image (fits file not allowed here)
+    
     see also: radio_astro_tools et al. (sd2018)
     """
 
