@@ -11,6 +11,7 @@
 #
 #           clean=0     tweak=0        full bench
 #  x270:   38" (29")  2'54" (7'43")   2"57" (7'48")
+#          51" (35")  2'56" (7'39")   3"04" (7'47")
 #  t530:
 
 # parameters in this benchmark workflow
