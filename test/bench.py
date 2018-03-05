@@ -1,9 +1,11 @@
 #  -*- python -*-
 #
 #  QAC benchmark, based on M100 workflow6 with just 5 channels
-#  Grab data from http://admit.astro.umd.edu/~teuben/QAC/qac_bench.tar.gz
-#  Run as follows:    time casa --nogui -c bench.py
-
+#  Grab data from:     http://admit.astro.umd.edu/~teuben/QAC/qac_bench.tar.gz
+#  Benchmark run:      time casa --nogui -c bench.py
+#
+#  Example run:        casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]'
+#
 #  Paper shows channels 1465,1485,1505 km/s
 #  Online example1 one shows channel 1520 km/s
 #
@@ -20,7 +22,7 @@ ms07        = 'M100_aver_7.ms'
 ms12        = 'M100_aver_12.ms'
 nsize       = 800
 pixel       = 0.5
-niter       = [0,300,1000,3000]
+niter       = [0,1000]
 clean       = 1
 tweak       = 1
 
@@ -69,3 +71,8 @@ if clean == 1:
         for i in range(1,len(niter)): 
             iname = test+'/clean/tpalma_%d.tweak.image' % (i+1)
             qac_stats(iname)
+
+"""
+1000 ->      0.0038324084555372432 0.021439742878458137 -0.048513446003198624 0.41929447650909424 383.60327838373536 
+
+"""
