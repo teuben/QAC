@@ -73,7 +73,5 @@ if clean == 1:
             iname = test+'/clean/tpalma_%d.tweak.image' % (i+1)
             qac_stats(iname)
 
-"""
-1000 ->      0.0038324084555372432 0.021439742878458137 -0.048513446003198624 0.41929447650909424 383.60327838373536 
-
-"""
+# regression only valid with no cmdline argument
+qac_stats(test+'clean/tpalma_2.tweak.image', "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479")
