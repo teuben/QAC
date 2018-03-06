@@ -15,7 +15,7 @@
 import os, shutil, math, tempfile
 import os.path
 # from buildmosaic import buildmosaic
-from utils import constutils as const        # @todo
+# from utils import constutils as const        # @todo
 import numpy as np
 # import numpy.ma as ma
 # import pyfits as fits
