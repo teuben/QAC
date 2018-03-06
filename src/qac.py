@@ -1090,7 +1090,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     #-end of qac_tp_otf()    
 
 
-def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  **line):
     """
     Simple interface to do a tclean() on one MS
     
@@ -1166,8 +1166,10 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
                vptable         = vptable,
                weighting       = weighting,
                specmode        = 'cube',
+               startmodel      = startmodel, 
                restart         = restart,
                **line)
+        startmodel = ""
         restart = False
     
     print "Wrote %s with %s weighting" % (outim1,weighting)
@@ -1177,7 +1179,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     
     #-end of qac_clean1()
     
-def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
+def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", startmodel="", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
     """
     Simple interface to do a tclean() joint deconvolution of one TP and one or more MS
     
@@ -1222,7 +1224,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
         restart = True
         for niter in niters:
             print "TCLEAN(niter=%d)" % niter  
-            tclean(vis = vis1,
+            tclean(vis            = vis1,
                    imagename      = outim1,
                    niter          = niters[0],
                    gridder        = 'mosaic',
@@ -1235,8 +1237,10 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
                    vptable        = None,
                    weighting      = weighting,
                    specmode       = 'cube',
+                   startmodel     = startmodel,
                    restart        = restart,
                    **line)
+            startmodel = ""
             restart = False
         print "Wrote %s with %s weighting" % (outim1,weighting)        
     else:
@@ -1271,8 +1275,10 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
                vptable        = None,
                weighting      = weighting,
                specmode       = 'cube',
+               startmodel     = startmodel,
                restart        = restart,
                **line)
+        startmodel = ""
         restart = False
 
 #          phasecenter=phasecenter,weighting='briggs',robust=-2.0,threshold='0mJy',specmode='cube')
