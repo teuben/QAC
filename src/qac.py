@@ -15,7 +15,8 @@
 import os, shutil, math, tempfile
 import os.path
 # from buildmosaic import buildmosaic
-# from utils import constutils as const        # @todo
+from utils import constutils as const
+from utils import radialProfile
 import numpy as np
 # import numpy.ma as ma
 # import pyfits as fits
@@ -1721,7 +1722,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
         
-    cmap = 'nipy_spectral'
     print "QAC_PLOT_GRID",images
     n = len(images)
     dim = range(n)
@@ -1729,7 +1729,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
         tb.open(images[i])
         d1 = tb.getcol("map").squeeze()
         tb.close()
-        print "SHAPE from casa: ",d1.shape
         nx = d1.shape[0]
         ny = d1.shape[1]
         if len(d1.shape) == 2:
@@ -1767,7 +1766,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
     for row in range(nrow):
         d[row] = range(ncol)
         for col in range(ncol):
-            print "row,col",row,col,i
             if cmp > 0.0:
                 if col < 2:
                     d[row][col] = dim[i]
@@ -1880,7 +1878,10 @@ def qac_psd(image, plot='qac_psd.png'):
     """
 
     tb.open(image)
-    d1 = tb.getcol("map")
+    d1 = tb.getcol("map").squeeze()
+    if len(d1.shape) != 2:
+        print "Shape not supported for %s: %s" % (image,d1.shape)
+        return
     nx = d1.shape[0]
     ny = d1.shape[1]
     tb.close()
@@ -1890,8 +1891,8 @@ def qac_psd(image, plot='qac_psd.png'):
     f1 = np.fft.fft2(data)
     f2 = np.fft.fftshift(f1)
     p2 = np.abs(f2)**2
-    #p1 = radialProfile.azimuthalAverage(p2)
-    p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
+    p1 = radialProfile.azimuthalAverage(p2)    # now in util
+    #p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
     r1 = np.arange(1.0,len(p1)+1)
     
     plt.figure()
