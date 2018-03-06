@@ -1289,6 +1289,155 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phase
         shutil.rmtree(outms)
     
     #-end of qac_clean()
+
+def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
+    """
+    Feather combination of a highres and lowres image
+
+    project    typical  "sky3/clean2", somewhere where tclean has run
+    highres    override default, needs full name w/ its project
+    lowres     override default, needs full name w/ its project
+    
+    If the standard workflow is used, project contains the correctly named
+    dirtymap.image and otf.image from qac_clean1() and qac_tp_otf() resp.
+    @todo figure out if a manual mode will work
+
+    Typical use in a simulation:
+    
+    qac_vla('sky3','skymodel.fits',4096,0.01,cfg='../SWcore',ptg='vla.ptg',phasecenter=pcvla)
+    qac_clean1('sky3/clean3','sky3/sky3.SWcore.ms',  512,0.25,phasecenter=pcvla,niter=[0,500,1000,2000,3000,4000,5000])
+    qac_tp_otf('sky3/clean3','skymodel.fits',45.0,label="45")
+    qac_feather('sky3/clean3',label="45")
+
+    """
+    qac_tag("feather")
+    
+    # if the niteridx is 0, then the niter label will be an empty string
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        # otherwise the niter label reflect the tclean naming convention
+        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
+        # to get the second iteration of tclean (niter=1000), niteridx = 1
+        niter_label = "_%s"%(niteridx + 1)
+
+
+    if highres == None:
+        highres = "%s/dirtymap%s.image" % (project,niter_label) 
+    if lowres  == None:
+        lowres  = "%s/otf%s.image"    % (project,label)        # noise flat OTF image
+    pb = highres[:highres.rfind('.')] + ".pb"
+    NG.assertf(highres)
+    NG.assertf(lowres)
+    NG.assertf(pb)
+
+    feather1 = "%s/feather%s%s.image"       % (project,label,niter_label)
+    feather2 = "%s/feather%s%s.image.pbcor" % (project,label,niter_label)
+
+    feather(feather1,highres,lowres)                           # it will happily overwrite
+    os.system('rm -rf %s' % feather2)                          # immath does not overwrite
+    immath([feather1,pb],'evalexpr',feather2,'IM0/IM1')
+    # ng_math(feather2, feather1, "/", pb)
+
+    if False:
+        qac_stats(highres)
+        qac_stats(lowres)
+        qac_stats(feather1)
+        qac_stats(feather2)
+
+    #-end of qac_feather()
+
+def qac_smooth(project, skymodel, label="", niteridx=0):
+    """
+    helper function to smooth skymodel using beam of feathered image
+    essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
+
+    @todo  feather is looked for, but it also be a tp2vis? or other method?
+    """
+    qac_tag("smooth")
+    
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        niter_label = "_%s"%(niteridx + 1)
+
+    # feather image path/filename
+    feather = '%s/feather%s%s.image.pbcor' % (project, label, niter_label)
+    # projectpath/filename for a temporary image that will get deleted
+    out_tmp = '%s/skymodel_tmp.image' % project
+    # projectpath/filename for final regrid jy/beam image
+    out_smoo = '%s/skymodel.smooth%s%s.image' % (project, label, niter_label)
+    # projectpath/filename for subtracted image
+    out_resid= '%s/feather%s%s.residual' % (project, label, niter_label)
+
+    # grab beam size and position angle from feather image
+    h0 = imhead(feather, mode='list')
+    bmaj = h0['beammajor']['value']
+    bmin = h0['beamminor']['value']
+    pa   = h0['beampa']['value']
+
+    # convolve skymodel with feather beam
+    imsmooth(imagename=skymodel,
+             kernel='gauss',
+             major='%sarcsec' % bmaj,
+             minor='%sarcsec' % bmin,
+             pa='%sdeg' % pa,
+             outfile=out_tmp,
+             overwrite=True)
+
+    # need to regrid skymodel using feather image as template
+    imregrid(imagename=out_tmp,
+             template=feather,
+             output=out_smoo,
+             overwrite=True)
+
+    # subtract feather from smoothed skymodel to get a residual map
+    immath(imagename=[out_smoo, feather], 
+           expr='IM0-IM1',
+           outfile=out_resid)
+    # ng_math(out_resid, out_smoo, '-', feather)
+
+    # remove the temporary image that was created
+    os.system('rm -fr %s'%out_tmp)
+
+    #-end of qac_smooth()
+
+def qac_phasecenter(im):
+    """
+    return the map reference center as a phasecenter
+    """
+    qac_tag("phasecenter")
+    
+    NG.assertf(im)
+    #
+    h0=imhead(im,mode='list')
+    ra  = h0['crval1'] * 180.0 / math.pi
+    dec = h0['crval2'] * 180.0 / math.pi
+    phasecenter = 'J2000 %.6fdeg %.6fdeg' % (ra,dec)
+    return  phasecenter
+
+    #-end of qac_phasecenter()
+
+def qac_ptg(ptg, ptgfile=None):
+    """ write a ptg list (or single) to a ptg file
+        Example for format of the ptg's:
+            J2000 180.000000deg 40.000000deg
+            J2000 12:00:00.000  40.00.00.000
+
+       @todo  absorb into qac_im_ptg()
+    """
+    qac_tag("ptg")
+    
+    if ptgfile == None: return
+    fp = open(ptgfile,"w")
+    if type(ptg) == type([]):
+        for p in ptg:
+            fp.write("%s" % p)
+    else:
+        fp.write("%s" % ptg)
+    fp.close()
+
+    #-end of qac_ptg()    
     
 def qac_summary(tp, ms=None, source=None, line=False):
     """
