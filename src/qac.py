@@ -1688,7 +1688,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
         
     #-end of qac_plot()
 
-def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=False, plot=None):
+def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, plot=None):
     """
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
@@ -1696,8 +1696,9 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=False, p
     images  list of images. Needs to fit in nrow x ncol, where nrow is computed
     channel which channel, in case images are cubes
             @todo   if channel is a list, these are the channels on one image
-    cmp     if set, in pairs of two, a new difference image is computed and plotted
+    cmp     if positive, in pairs of two, a new difference image is computed and plotted
             this will increase ncol from 2 to 3 (cmp=True needs ncol=2)
+            cmp is the factor by which the difference image is scaled
 
     0,0 is top left in row,col notation
     """
@@ -1739,9 +1740,10 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=False, p
         dmax = minmax[1]
     #
     nrow = n // ncol
-    if cmp==True:
+    if cmp > 0.0:
         if ncol != 2:
-            print "Cannot cmp=True with ncol=",ncol
+            print "Cannot cmp with ncol=",ncol
+            return
         ncol = ncol + 1
     print "Nrow/col = ",nrow,ncol
     # placeholders for the data
@@ -1751,13 +1753,12 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=False, p
         d[row] = range(ncol)
         for col in range(ncol):
             print "row,col",row,col,i
-            if cmp==True:
+            if cmp > 0.0:
                 if col < 2:
                     d[row][col] = dim[i]
                     i=i+1
                 else:
-                    # d[row][col] = dim[i]-dim[i-1]
-                    d[row][col] = d[row][col-1] - d[row][col-2] 
+                    d[row][col] = (d[row][col-1] - d[row][col-2])*cmp
                     
             else:
                 d[row][col] = dim[i]
