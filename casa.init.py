@@ -3,12 +3,13 @@
 #  to automatically start up QAC in your CASA session 
 #
 
-import os
+import os, sys
 
   
 try:
-    qac_root  = os.environ['HOME'] + '/.casa/QAC'                     # SET THIS TO YOUR LOCATION OF QAC or use a symlink
-    py_files  = ['src/qac', 'distribute/tp2vis', 'tp2vis/tp2vis']     # pick which ones you want
+    if sys.path[0] != "":   sys.path.insert(0,'')                  # CASA takes out the '' . why ???
+    qac_root  = os.environ['HOME'] + '/.casa/QAC'                  # SET THIS TO YOUR LOCATION OF QAC or use a symlink
+    py_files  = ['src/qac', 'distribute/tp2vis', 'tp2vis/tp2vis']  # pick which ones you want
     work_dir = os.getcwd()
     sys.path.append(qac_root)
     os.chdir(qac_root)
