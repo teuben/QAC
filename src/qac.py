@@ -1688,12 +1688,104 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
         if False:
             plt.show()
         else:
-            plt.close('all')
-            
+            plt.close('all') 
+           
         
         
     #-end of qac_plot()
 
+def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, plot=None):
+    """
+    Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
+    a column of difference images
+    
+    images  list of images. Needs to fit in nrow x ncol, where nrow is computed
+    channel which channel, in case images are cubes
+            @todo   if channel is a list, these are the channels on one image
+    cmp     if positive, in pairs of two, a new difference image is computed and plotted
+            this will increase ncol from 2 to 3 (cmp=True needs ncol=2)
+            cmp is the factor by which the difference image is scaled
+
+    0,0 is top left in row,col notation
+    """
+    #
+    # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
+    #'range': [-0.3,25.],'scaling': -1.3,
+        
+    cmap = 'nipy_spectral'
+    print "QAC_PLOT_GRID",images
+    n = len(images)
+    dim = range(n)
+    for i in range(n):
+        tb.open(images[i])
+        d1 = tb.getcol("map").squeeze()
+        tb.close()
+        print "SHAPE from casa: ",d1.shape
+        nx = d1.shape[0]
+        ny = d1.shape[1]
+        if len(d1.shape) == 2:
+            d3 = np.flipud(np.rot90(d1.reshape((nx,ny))))            
+        else:
+            d2 = d1[:,:,channel]
+            d3 = np.flipud(np.rot90(d2.reshape((nx,ny))))            
+
+        if box != None:
+            data = d3[box[1]:box[3],box[0]:box[2]]
+        else:
+            data = d3
+        if i==0:
+            dmin = data.min()
+            dmax = data.max()
+        else:
+            dmin = min(data.min(),dmin)
+            dmax = max(data.max(),dmax)
+        dim[i] = np.copy(data)
+    print "Data min/max",dmin,dmax
+    if minmax != None:
+        dmin = minmax[0]
+        dmax = minmax[1]
+    #
+    nrow = n // ncol
+    if cmp > 0.0:
+        if ncol != 2:
+            print "Cannot cmp with ncol=",ncol
+            return
+        ncol = ncol + 1
+    print "Nrow/col = ",nrow,ncol
+    # placeholders for the data
+    d = range(nrow)
+    i = 0
+    for row in range(nrow):
+        d[row] = range(ncol)
+        for col in range(ncol):
+            print "row,col",row,col,i
+            if cmp > 0.0:
+                if col < 2:
+                    d[row][col] = dim[i]
+                    i=i+1
+                else:
+                    d[row][col] = (d[row][col-1] - d[row][col-2])*cmp
+                    
+            else:
+                d[row][col] = dim[i]
+                i=i+1
+
+
+    fig = plt.figure()
+    i = 0
+    for row in range(nrow):
+        for col in range(ncol):
+            f1 = fig.add_subplot(nrow,ncol,i+1)
+            p1 = f1.imshow(d[row][col], origin='lower', vmin = dmin, vmax = dmax)
+            f1.set_title("im %d" % i)
+            f1.set_xticklabels([])
+            f1.set_yticklabels([])
+            i = i + 1
+    # plt.savefig(out)
+    plt.show()
+
+    #-end of qac_plot_grid()
+    
 def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     """
     Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
