@@ -748,6 +748,12 @@ def qac_flag1(ms1, ms2):
     print "SUM:",mask.sum()
     
     #-end of qac_flag1()
+
+def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None,cfg="", niter=-1, ptg = None):
+    """
+    """
+    print "@todo"
+    return None
     
 def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
     """
