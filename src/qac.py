@@ -15,7 +15,8 @@
 import os, shutil, math, tempfile
 import os.path
 # from buildmosaic import buildmosaic
-# from utils import constutils as const        # @todo
+from utils import constutils as const
+from utils import radialProfile
 import numpy as np
 # import numpy.ma as ma
 # import pyfits as fits
@@ -474,6 +475,11 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     # could this be combined with the transpose() ?
 
     #-end of qac_ingest()
+
+def qac_stats_grid(images, **kwargs):
+    for image in images:
+        qac_stats(image, **kwargs)
+    
     
 def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False):
     """ summary of some stats in an image or measurement set
@@ -1708,9 +1714,13 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
     images  list of images. Needs to fit in nrow x ncol, where nrow is computed
     channel which channel, in case images are cubes
             @todo   if channel is a list, these are the channels on one image
+    box     [xmin,ymin,xmax,ymax]   defaults to whole image
+    minmax  [dmin,dmax]  defaults to minmax of all images
+    ncol    number of columns to be used. rows follow from #images
     cmp     if positive, in pairs of two, a new difference image is computed and plotted
             this will increase ncol from 2 to 3 (cmp=True needs ncol=2)
             cmp is the factor by which the difference image is scaled
+    plot    if given, plotfile name
 
     0,0 is top left in row,col notation
     """
@@ -1718,7 +1728,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
         
-    cmap = 'nipy_spectral'
     print "QAC_PLOT_GRID",images
     n = len(images)
     dim = range(n)
@@ -1726,7 +1735,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
         tb.open(images[i])
         d1 = tb.getcol("map").squeeze()
         tb.close()
-        print "SHAPE from casa: ",d1.shape
         nx = d1.shape[0]
         ny = d1.shape[1]
         if len(d1.shape) == 2:
@@ -1764,7 +1772,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
     for row in range(nrow):
         d[row] = range(ncol)
         for col in range(ncol):
-            print "row,col",row,col,i
             if cmp > 0.0:
                 if col < 2:
                     d[row][col] = dim[i]
@@ -1776,14 +1783,14 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
                 d[row][col] = dim[i]
                 i=i+1
 
-
     fig = plt.figure()
+    # fig.tight_layout()
     i = 0
     for row in range(nrow):
         for col in range(ncol):
             f1 = fig.add_subplot(nrow,ncol,i+1)
             p1 = f1.imshow(d[row][col], origin='lower', vmin = dmin, vmax = dmax)
-            f1.set_title("im %d" % i)
+            #f1.set_title("im %d" % i)
             f1.set_xticklabels([])
             f1.set_yticklabels([])
             i = i + 1
@@ -1877,7 +1884,10 @@ def qac_psd(image, plot='qac_psd.png'):
     """
 
     tb.open(image)
-    d1 = tb.getcol("map")
+    d1 = tb.getcol("map").squeeze()
+    if len(d1.shape) != 2:
+        print "Shape not supported for %s: %s" % (image,d1.shape)
+        return
     nx = d1.shape[0]
     ny = d1.shape[1]
     tb.close()
@@ -1887,8 +1897,8 @@ def qac_psd(image, plot='qac_psd.png'):
     f1 = np.fft.fft2(data)
     f2 = np.fft.fftshift(f1)
     p2 = np.abs(f2)**2
-    #p1 = radialProfile.azimuthalAverage(p2)
-    p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
+    p1 = radialProfile.azimuthalAverage(p2)    # now in util
+    #p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
     r1 = np.arange(1.0,len(p1)+1)
     
     plt.figure()
