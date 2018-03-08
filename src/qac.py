@@ -1029,9 +1029,13 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
 
     #-end of qac_tp()
 
+
+# qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
+
+
 def qac_sd_vis(**kwargs):
     """
-    SDimage='',
+    SDimage='',        
     SDchannels = -1,
     SDbaseline=7.0,
     nSDvis=1000,
@@ -1046,6 +1050,7 @@ def qac_sd_vis(**kwargs):
 
     """
     print "Here we plan to call SD2VIS"
+    sd2vis(**kwargs)
 
     #-end of qac_sd_vis()
         
