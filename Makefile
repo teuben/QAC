@@ -1,5 +1,7 @@
 #
-#  make a tar ball release
+#
+
+.PHONY:  tp2vis distribute
 
 
 # should just be an ID, e.g. 0.5 or 0.5a, or 0.5.1, in one single line.
@@ -29,13 +31,22 @@ help:
 	@echo "There are a few more targets for experts as reminders to mundane tasks we may need"
 	@echo "See the Makefile for comments"
 
-# Jin's proposed new (11-dec-2018) dist method
-distribute:
-	git clone $(URL2) 
-
-# the development version
+# public release is in distribute
 tp2vis:
-	git clone $(URL1) 
+	if [ ! -d distribute ]; then \
+	  git clone $(URL2) ;\
+	else \
+	  (cd distribute; git status; git pull)\
+	fi
+
+# private developers version:
+dev:
+	if [ ! -d tp2vis ]; then \
+	  git clone $(URL1) ;\
+	else \
+	  (cd tp2vis; git status; git pull)\
+	fi
+
 
 
 ### below are reminders how to do some mundane things #########################################
