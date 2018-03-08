@@ -129,8 +129,8 @@ if plot == 1:
     d1=test+'/clean/tpalma_2.image'
     e1=test+'/clean/tpalma_2.tweak.image'
 
-    images = [a1,b1,a1,c2,b1,d1,e1,d1]
-    x=['*','*','-diff']
-    y=['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
+    images = [a1,b1,   a1,c1,   b1,d1,      e1,d1]
+    y      = ['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
+    x      = ['*','*','-diff']
     qac_plot_grid(images,ncol=2,cmp=10,box=[200,200,600,600],xgrid=x,ygrid=y,plot=test+'/bench-cmp.png')
 
