@@ -74,7 +74,7 @@ for arg in qac_argv(sys.argv):
 
 tpms   = test + '/tp.ms'
 ptg    = test + '.ptg'
-if alma == 1:
+if alma == 1 or plot == 1:
     do_alma = True
 else:
     do_alma = False
@@ -128,17 +128,6 @@ if plot == 1:
     c1=test+'/clean/alma_2.image'
     d1=test+'/clean/tpalma_2.image'
     e1=test+'/clean/tpalma_2.tweak.image'
-
-    qac_plot_grid([a1,a2],ncol=2,cmp=10,box=[200,200,600,600])  # alma: casa diff
-    qac_plot_grid([b1,b2],ncol=2,cmp=10,box=[200,200,600,600])  # tpalma: casa diff
-    qac_plot_grid([c1,c2],ncol=2,cmp=10,box=[200,200,600,600])
-    qac_plot_grid([d1,d2],ncol=2,cmp=10,box=[200,200,600,600])
-    qac_plot_grid([e1,e2],ncol=2,cmp=10,box=[200,200,600,600])
-
-    qac_plot_grid([a1,b1],ncol=2,cmp=10,box=[200,200,600,600])  # alma and tpalma
-    qac_plot_grid([a1,c1],ncol=2,cmp=10,box=[200,200,600,600])  # same....
-    qac_plot_grid([b1,d1],ncol=2,cmp=10,box=[200,200,600,600])  # wow
-    qac_plot_grid([e1,d1],ncol=2,cmp=10,box=[200,200,600,600]) 
 
     images = [a1,b1,a1,c2,b1,d1,e1,d1]
     x=['*','*','-diff']
