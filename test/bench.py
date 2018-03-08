@@ -47,7 +47,7 @@
 #            910.227u 20.115s 6:22.68 243.1%	0+0k 912+3244072io 0pf+0w  (HDD)
 #
 #  cvspost:  709.250u 52.919s 2:51.36 444.7% 0+0k 565664+4425384io 233pf+0w   (HDD)  E5-2640 v3 @ 2.60GHz
-#            691.213u 51.565s 2:22.13 522.5% 0+0k 48+80io 0pf+0w
+#            691.213u 51.565s 2:22.13 522.5% 0+0k 48+80io 0pf+0w (SHM)
 #
 #  MacPro:   2m28s    13s     2m35s                                                  i7-2.8GHz  [FLUX BAD]
 #------------------------------------------------------------------------------------------------------------------------------
@@ -122,11 +122,12 @@ qac_stats(test+'/clean/tpalma.image',         "")
 qac_stats(test+'/clean/tpalma_2.tweak.image', "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479")
 
 if plot == 1:
-    a1='bench/clean/alma.image'
-    b1='bench/clean/tpalma.image'
-    c1='bench/clean/alma_2.image'
-    d1='bench/clean/tpalma_2.image'
-    e1='bench/clean/tpalma_2.tweak.image'
+    print "Plotting benchmark comparison"
+    a1=test+'/clean/alma.image'
+    b1=test+'/clean/tpalma.image'
+    c1=test+'/clean/alma_2.image'
+    d1=test+'/clean/tpalma_2.image'
+    e1=test+'/clean/tpalma_2.tweak.image'
 
     qac_plot_grid([a1,a2],ncol=2,cmp=10,box=[200,200,600,600])  # alma: casa diff
     qac_plot_grid([b1,b2],ncol=2,cmp=10,box=[200,200,600,600])  # tpalma: casa diff
@@ -142,5 +143,5 @@ if plot == 1:
     images = [a1,b1,a1,c2,b1,d1,e1,d1]
     x=['*','*','-diff']
     y=['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
-    qac_plot_grid(images,ncol=2,cmp=10,box=[200,200,600,600],xgrid=x,ygrid=y,plot='bench-cmp.png')
+    qac_plot_grid(images,ncol=2,cmp=10,box=[200,200,600,600],xgrid=x,ygrid=y,plot=test+'/bench-cmp.png')
 
