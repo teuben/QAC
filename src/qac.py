@@ -876,8 +876,7 @@ def qac_tpdish(name, size):
     t2v_arrays[name]['dish']   = size
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print "QAC_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
-    
- 
+
 def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):    
            
     """
@@ -1029,7 +1028,27 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     return outfile
 
     #-end of qac_tp()
-_
+
+def qac_sd_vis(**kwargs):
+    """
+    SDimage='',
+    SDchannels = -1,
+    SDbaseline=7.0,
+    nSDvis=1000,
+    inputvis='', 
+    inputspw=0,
+    inputchan = [0,0],
+    wgtfac = 1.0,
+    over_resolve = 1.0, 
+    scale= 1.0,
+    outputvis='SD2vis.ms',
+    Python_DFT = False): 
+
+    """
+    print "Here we plan to call SD2VIS"
+
+    #-end of qac_sd_vis()
+        
 def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     """
     helper function to create on the fly total power map
