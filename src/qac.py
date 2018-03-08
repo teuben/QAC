@@ -1735,7 +1735,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
     
-    images  list of images. Needs to fit in nrow x ncol, where nrow is computed
+    images  list of images. Needs to fit in nrow x ncol, where nrow is computed from ncol
+            order of images is row by row
     channel which channel, in case images are cubes
             @todo   if channel is a list, these are the channels on one image
     box     [xmin,ymin,xmax,ymax]   defaults to whole image
@@ -1771,7 +1772,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
         else:
             d2 = d1[:,:,channel]
             d3 = np.flipud(np.rot90(d2.reshape((nx,ny))))            
-
         if box != None:
             data = d3[box[1]:box[3],box[0]:box[2]]
         else:
