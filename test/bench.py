@@ -65,6 +65,7 @@ niter       = [0,1000]
 clean       = 1
 tweak       = 1
 alma        = 0
+plot        = 0
 
 #-- do not change parameters below this ---
 import sys
@@ -119,3 +120,27 @@ if clean == 1:
 # regression only valid with no cmdline argument
 qac_stats(test+'/clean/tpalma.image',         "")
 qac_stats(test+'/clean/tpalma_2.tweak.image', "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479")
+
+if plot == 1:
+    a1='bench/clean/alma.image'
+    b1='bench/clean/tpalma.image'
+    c1='bench/clean/alma_2.image'
+    d1='bench/clean/tpalma_2.image'
+    e1='bench/clean/tpalma_2.tweak.image'
+
+    qac_plot_grid([a1,a2],ncol=2,cmp=10,box=[200,200,600,600])  # alma: casa diff
+    qac_plot_grid([b1,b2],ncol=2,cmp=10,box=[200,200,600,600])  # tpalma: casa diff
+    qac_plot_grid([c1,c2],ncol=2,cmp=10,box=[200,200,600,600])
+    qac_plot_grid([d1,d2],ncol=2,cmp=10,box=[200,200,600,600])
+    qac_plot_grid([e1,e2],ncol=2,cmp=10,box=[200,200,600,600])
+
+    qac_plot_grid([a1,b1],ncol=2,cmp=10,box=[200,200,600,600])  # alma and tpalma
+    qac_plot_grid([a1,c1],ncol=2,cmp=10,box=[200,200,600,600])  # same....
+    qac_plot_grid([b1,d1],ncol=2,cmp=10,box=[200,200,600,600])  # wow
+    qac_plot_grid([e1,d1],ncol=2,cmp=10,box=[200,200,600,600]) 
+
+    images = [a1,b1,a1,c2,b1,d1,e1,d1]
+    x=['*','*','-diff']
+    y=['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
+    qac_plot_grid(images,ncol=2,cmp=10,box=[200,200,600,600],xgrid=x,ygrid=y,plot='bench-cmp.png')
+
