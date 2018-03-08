@@ -1706,7 +1706,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
         
     #-end of qac_plot()
 
-def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, plot=None):
+def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid=[], ygrid=[], plot=None):
     """
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
@@ -1717,12 +1717,17 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
     box     [xmin,ymin,xmax,ymax]   defaults to whole image
     minmax  [dmin,dmax]  defaults to minmax of all images
     ncol    number of columns to be used. rows follow from #images
-    cmp     if positive, in pairs of two, a new difference image is computed and plotted
+    cmp     if non-zero, in pairs of two, a new difference image is computed and plotted
             this will increase ncol from 2 to 3 (cmp=True needs ncol=2)
             cmp is the factor by which the difference image is scaled
+            Note that cmp can be positive or negative. 
+    xgrid   List of strings for the X panels in the grid   @todo NOT IMPLEMENTED YET
+    ygrid   List of strings for the Y panels in the grid   @todo NOT IMPLEMENTED YET
     plot    if given, plotfile name
 
     0,0 is top left in row,col notation
+
+    @todo   we need a colorbar (or nrows's) somewhere on the right?
     """
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
@@ -1760,41 +1765,53 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=-1.0, pl
         dmax = minmax[1]
     #
     nrow = n // ncol
-    if cmp > 0.0:
+    if cmp != 0:
         if ncol != 2:
             print "Cannot cmp with ncol=",ncol
             return
         ncol = ncol + 1
     print "Nrow/col = ",nrow,ncol
+    # @todo check if enough xgrid[] and ygrid[]
+    #
     # placeholders for the data
     d = range(nrow)
     i = 0
     for row in range(nrow):
         d[row] = range(ncol)
         for col in range(ncol):
-            if cmp > 0.0:
+            if cmp != 0:
                 if col < 2:
                     d[row][col] = dim[i]
                     i=i+1
                 else:
-                    d[row][col] = (d[row][col-1] - d[row][col-2])*cmp
-                    
+                    d[row][col] = d[row][col-1] - d[row][col-2]
+                    print "Difference map minmax",d[row][col].min(),d[row][col].max()
+                    d[row][col]  *= cmp
             else:
                 d[row][col] = dim[i]
                 i=i+1
 
     fig = plt.figure()
-    # fig.tight_layout()
+    # plt.title(title)     # @todo global title needs work
+    # fig.tight_layout()   # @todo this didn't work
     i = 0
+    # @todo need less whitespace between boxes
     for row in range(nrow):
         for col in range(ncol):
             f1 = fig.add_subplot(nrow,ncol,i+1)
             p1 = f1.imshow(d[row][col], origin='lower', vmin = dmin, vmax = dmax)
-            #f1.set_title("im %d" % i)
+            #f1.set_title("im %d" % i)     # makes plot too busy
             f1.set_xticklabels([])
             f1.set_yticklabels([])
+            if col==0 and len(ygrid) > 0:
+                print ygrid[row]
+                f1.set_ylabel(ygrid[row])
+            if row==nrow-1 and len(xgrid) > 0:    # @todo should auto-create "diff" if cmp != 0
+                print xgrid[col]
+                f1.set_xlabel(xgrid[col])
             i = i + 1
-    # plt.savefig(out)
+    if plot != None:
+        plt.savefig(plot)
     plt.show()
 
     #-end of qac_plot_grid()
