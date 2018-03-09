@@ -1,10 +1,11 @@
 # TP2VIS workflow example 1:  cloud197
 
 
-The accompanying script **workflow1.py** is a regression test version of what is discussed in this document
-in a bit more detail. Note were are using the **qac.py** shortcut functions here.
+The accompanying script **workflow1.py** is a regression test version of what is discussed
+in this document in a different amount of detail.
+Note were are using the **qac.py** shortcut functions here, with a few direct CASA calls.
 
-We start off by using some verbiage directly taken from the ALMA archive:
+For background, we start off by using some verbiage directly taken from the ALMA archive:
 
 ## ALMA archive
 
@@ -477,6 +478,19 @@ in mstransform, this is confusing, since **tclean()** will honor that request)
 
 
 NOTE: imregrid has potentially issues with flux conservation!
+
+## Summary
+
+Here is a summary of the *cloud197* data, keep in mind the original data is at ~0.32 km/s,
+we regrid to 1 km/s to match the TP data
+
+   7m weights                     original: <0.0062> (51.0/GHz)    1km/s:  <0.039>  (100/GHz)
+   12m weights                    original: <0.088>  (724/GHz)     1km/s:  <0.381>  (992/GHz)
+   TP weights - rms based
+   TP weights - beammatch based
+
+
+As given, the weights of the 12m are about 10x that of the 7m. But this is CYCLE1 data.
 
 ## Acknowledgements
 
