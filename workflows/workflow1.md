@@ -478,6 +478,14 @@ in mstransform, this is confusing, since **tclean()** will honor that request)
 
 NOTE: imregrid has potentially issues with flux conservation!
 
+## Caveats
+
+This cycle-1 data has weights that as we understand were not
+correct. They have been corrected to some degree, but we only show
+this workflow with the understanding of showing qualitatively that
+tp2vis is improving your data. We cannot make any good quantitative
+statements.
+
 ## Acknowledgements
 
 This paper makes use of the following ALMA data: ADS/JAO.ALMA#2012.1.00641.S.
