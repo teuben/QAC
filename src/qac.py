@@ -1666,7 +1666,7 @@ def qac_math(outfile, infile1, oper, infile2):
 
     #-end of qac_math()
     
-def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
+def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None):
     """
     mode=0     pick the default
     mode=1     force casa
@@ -1726,7 +1726,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, plot=None):
         plt.colorbar()
         plt.ylabel('X')
         plt.xlabel('Y')
-        plt.title('%s chan=%d' % (image,channel))
+        plt.title('%s chan=%d %s' % (image,channel,title))
         print "QAC_PLOT: %s range=%s   %s" % (image,str(range),out)        
         plt.savefig(out)
         if False:
@@ -1768,6 +1768,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
     
 
     @todo   we need a colorbar (or nrows's) somewhere on the right?
+
+    @todo   allow for a single image, to set a list of channels
     """
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
