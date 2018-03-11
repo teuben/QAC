@@ -71,19 +71,19 @@ def getPA(imName):
     return pa_value, pa_unit
 
 # our Main, QAC style
-def qac_ssc(project_dir, intFITS, sdFITS, sdTel = None):
+def qac_ssc(project_dir, highres, lowres, sdTel = None):
     """
         project_dir       (new) directory in which all work will be performed
-        intFITS           INT fits file (the hiRes image)
-        sdFITS            SD fits file  (the loRes image)
+        highres           high res (interferometer) image
+        lowres            low res (SD/TP) image
         sdTEL             if not provided, sdFITS must contain the telescope
     """
     print 'The presented pipeline performs short-spacing correction (SSC) in the image domain'
     print '   Project directory :', project_dir
     print '   Single-dish Telescope: ',sdTel
     print 'Single-dish and interferometric fits files'
-    print '   Single-dish fits: ',sdFITS
-    print '   Interferometer fits: ',intFITS
+    print '   Single-dish: ',lowres
+    print '   Interferometer: ',highres
 
     ensure_dir(project_dir)    
 
@@ -123,8 +123,10 @@ def qac_ssc(project_dir, intFITS, sdFITS, sdTel = None):
     prefix = project_dir + '/'
 
     # Defining some useful variables
-    lr = str(prefix) + 'LR.im'                 # imported low resolution cube
-    hr = str(prefix) + 'HR.im'                 # imported high resolution cube
+    # lr = str(prefix) + 'LR.im'                 # imported low resolution cube
+    # hr = str(prefix) + 'HR.im'                 # imported high resolution cube
+    lr = lowres                                
+    hr = highres
 
     lr_reg = str(prefix) + 'LR_reg.im'         # regridded low resolution cube
     hr_conv = str(prefix) + 'HR_conv.im'       # convolved high resolution cube
@@ -136,19 +138,19 @@ def qac_ssc(project_dir, intFITS, sdFITS, sdTel = None):
     print 'Importing FITS files ...'
 
     # single-dish re-gridded
-    default(importfits)
-    fitsimage = str(sdFITS)
-    imagename = str(lr)
-    importfits()
+    # default(importfits)
+    # fitsimage = str(sdFITS)
+    # imagename = str(lr)
+    # importfits()
     #     importfits(sdFITS,lr)
 
     # interferometer
-    default(importfits)
-    fitsimage = str(intFITS)
-    imagename = str(hr)
-    importfits()
+    #default(importfits)
+    #fitsimage = str(intFITS)
+    #imagename = str(hr)
+    #importfits()
     # importfits(intFITS,hr)
-    print 'Low and high resolution cubes are imported' + '\n'
+    # print 'Low and high resolution cubes are imported' + '\n'
 
     # Re-gridding the Single-dish cube
     print 'Begin regridding ...'
@@ -159,6 +161,7 @@ def qac_ssc(project_dir, intFITS, sdFITS, sdTel = None):
     mycs.settelescope(str(sdTel))
     ia.setcoordsys(csys=mycs.torecord())
     ia.done()
+    # 
     ia.open(str(hr))
     cs1 = ia.coordsys()
     s1 = ia.shape()
