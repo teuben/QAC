@@ -8,11 +8,9 @@ See https://casa.nrao.edu/casa_obtaining.shtml
 2) TP2VIS:
 
 If you have not installed some version of "tp2vis" you can do that
-from within QAC:   pick the developers version:
+from within QAC:   pick the public version:
 	make tp2vis
-or the public version:
-	make distribute
-both contain tp2vis.py, which is all you need. 
+it just needs tp2vis.py
 
 3) QAC
 
@@ -38,7 +36,7 @@ For example, the following commands would work just fine:
     git clone https://github.com/teuben/QAC
     cat casa.init.py >> ~/.casa/init.py
     cd QAC
-    make distrinbute
+    make tp2vis
 
 The next time CASA starts, you will see the QAC routines are loaded,
 as well have access to the tp2vis routines.
