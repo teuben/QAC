@@ -492,6 +492,15 @@ we regrid to 1 km/s to match the TP data
 
 As given, the weights of the 12m are about 10x that of the 7m. But this is CYCLE1 data.
 
+## Caveats
+
+This cycle-1 data has weights that as we understand were not
+correct. They have been corrected to some degree, but we only show
+this workflow with the understanding of showing qualitatively that
+tp2vis is improving your data. We cannot make any good quantitative
+statements.
+
+
 ## Acknowledgements
 
 This paper makes use of the following ALMA data: ADS/JAO.ALMA#2012.1.00641.S.
