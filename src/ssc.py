@@ -18,21 +18,7 @@ import datetime
 
 testMode = False
 
-# Procedures
-# Check if d exists, if not it will be created
-def ensure_dir(d):
-    if os.path.exists(d):
-        print 'Target directory already exists!'
-        print 'If you continue all the files in the existing directory will be removed permanently'
-        key_strike = raw_input(
-            'Press C if you want to continue for aborting press X: ')
-        if key_strike.upper() == 'C':
-            os.system('rm -rf ' + str(d) + '/*.*')
-        if key_strike.upper() == 'X':
-            print 'Aborting the script immediately'
-            sys.exit()
-    if not os.path.exists(d):
-        os.makedirs(d)
+# Helper Functions
 
 # BUNIT from the header
 def getBunit(imName):
@@ -71,113 +57,60 @@ def getPA(imName):
     return pa_value, pa_unit
 
 # our Main, QAC style
-def qac_ssc(project_dir, highres, lowres, sdTel = None):
+def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, label="", niteridx=0):
     """
-        project_dir       (new) directory in which all work will be performed
-        highres           high res (interferometer) image
-        lowres            low res (SD/TP) image
-        sdTEL             if not provided, sdFITS must contain the telescope
+        project     directory in which all work will be performed
+        highres     high res (interferometer) image
+        lowres      low res (SD/TP) image
+        sdTEL       if not provided, sdFITS must contain the telescope
+        regrid      if you are sure of the same WCS, set this to False
     """
-    print 'The presented pipeline performs short-spacing correction (SSC) in the image domain'
-    print '   Project directory :', project_dir
-    print '   Single-dish Telescope: ',sdTel
-    print 'Single-dish and interferometric fits files'
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        # otherwise the niter label reflect the tclean naming convention
+        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
+        # to get the second iteration of tclean (niter=1000), niteridx = 1
+        niter_label = "_%s"%(niteridx + 1)
+
+    if highres == None:
+        highres = "%s/dirtymap%s.image" % (project,niter_label)
+    if lowres == None:
+        lowres  = "%s/otf%s.image"    % (project,label)   
+    
+    print 'SSC array combination method'
     print '   Single-dish: ',lowres
     print '   Interferometer: ',highres
-
-    ensure_dir(project_dir)    
-
-    # Getting the current time
-    nowStr = datetime.datetime.now()
-    dateStr = str(nowStr.year) + str(nowStr.month) + str(nowStr.day)
-    print 'Current Date: ' + str(dateStr) + '\n'
-    # Determining the current path
-    currentPath = str(os.getcwd())
-    print 'currentPath: ' + str(currentPath) + '\n'
-
-    # this will be our prefix/directory in which all work occurs
-    source = project_dir
-
-    # Creating a temporary directory for partial results
-    # it will be deleted at the end of script while the "scriptMode" is True.
-    #dirName = str(source) + '_' + str(dateStr) + '_casaIms'
-    
-    # Path of temp directory for the partial results
-    #casaImages = currentPath + '/' + str(dirName)
-    casaImages = project_dir
-    casaImPath = casaImages + '/'
-    print 'CASA-images will be stored in: ' + str(casaImPath) + '\n'
-
-
-    # Check if the temporary directory exists if not it creates one
-    # ensure_dir(casaImages)
-
-    # yuck, this could damage other work unless you work in a project_dir
-    
-    #print 'Cleaning the previous log files ...' + '\n'
-    #os.system('rm -rf *.last')
-    #os.system('rm -rf *.log')
+    print '   Single-dish Telescope: ',sdTel
 
     # Creating the prefix for all the CASA-images
-    #prefix = str(source) + '_'
-    prefix = project_dir + '/'
+    prefix = project + '/'
 
-    # Defining some useful variables
-    # lr = str(prefix) + 'LR.im'                 # imported low resolution cube
-    # hr = str(prefix) + 'HR.im'                 # imported high resolution cube
-    lr = lowres                                
-    hr = highres
+    lr = lowres                                  # input low resolution cube
+    hr = highres                                 # input high resolution cube
 
-    lr_reg = str(prefix) + 'LR_reg.im'         # regridded low resolution cube
-    hr_conv = str(prefix) + 'HR_conv.im'       # convolved high resolution cube
-    sub = str(prefix) + 'sub.im'               # observed flux only by single-dish
-    sub_bc = str(prefix) + 'sub_bc.im'         # Corrected flux by the ratio of beam sizes
-    combined = str(prefix) + 'combined.im'     # restored missing flux
-    comb_fits = str(prefix) + 'combined.fits'  # final fits
+    # temp files
+    lr_reg    = prefix + 'LR_reg.im'             # regridded low resolution cube
+    hr_conv   = prefix + 'HR_conv.im'            # convolved high resolution cube
+    sub       = prefix + 'sub.im'                # observed flux only by single-dish
+    sub_bc    = prefix + 'sub_bc.im'             # Corrected flux by the ratio of beam sizes
+    clean_up  = [lr_reg, hr_conv, sub, sub_bc]   # collect filenames we need to clean
 
-    print 'Importing FITS files ...'
+    # final results
+    combined  = prefix + 'ssc%s%s.image'  % (label,niter_label)
 
-    # single-dish re-gridded
-    # default(importfits)
-    # fitsimage = str(sdFITS)
-    # imagename = str(lr)
-    # importfits()
-    #     importfits(sdFITS,lr)
-
-    # interferometer
-    #default(importfits)
-    #fitsimage = str(intFITS)
-    #imagename = str(hr)
-    #importfits()
-    # importfits(intFITS,hr)
-    # print 'Low and high resolution cubes are imported' + '\n'
-
-    # Re-gridding the Single-dish cube
-    print 'Begin regridding ...'
-    print 'The default interpolation scheme is linear'
-    ia.open(str(lr))
-    mycs = ia.coordsys()
-    mycs.telescope
-    mycs.settelescope(str(sdTel))
-    ia.setcoordsys(csys=mycs.torecord())
-    ia.done()
-    # 
-    ia.open(str(hr))
-    cs1 = ia.coordsys()
-    s1 = ia.shape()
-    ia.close()
-    ia.open(str(lr))
-    ia.regrid(outfile=str(lr_reg), method='linear',
-              shape=s1, csys=cs1.torecord(), overwrite=True)
-    ia.close()
-    print 'End of re-griding' + '\n'
+    # Re-gridding the lowres Single-dish cube to that of the highres Interferometer cube
+    if regrid:
+        print 'Regridding ... the default interpolation scheme is linear'
+        imregrid(lr,hr,lr_reg, overwrite=True)
+    else:
+        lr_reg = lr
 
 
     # Check if both data sets are in the same units
     if str(getBunit(lr_reg)) != str(getBunit(hr)):
         print 'Bunits of low- and high-resolution data cubes are not identical!'
         return
-
 
     print ''
     print 'LR_Bmin: ' + str(getBmin(lr_reg))
@@ -194,28 +127,20 @@ def qac_ssc(project_dir, highres, lowres, sdTel = None):
     print 'Kernel2: ' + str(kernel2)
     print ''
 
-    # Convolve the interferometer with the appropriate beam
+    # Convolve the highres with the appropriate beam so it matches the lowres 
     print 'Convolving high resolution cube ...'
-    default(imsmooth)
-    imagename = str(hr)
-    kernel = 'gauss'
     major = str(getBmaj(lr_reg)) + 'arcsec'
     minor = str(getBmin(lr_reg)) + 'arcsec'
-    targetres = True
     pa = str(getPA(hr)[0]) + str(getPA(hr)[1])
-    outfile = str(hr_conv)
-    imsmooth()
-    print 'End of convolution' + '\n'
+    print 'imsmooth',major,minor,pa
+    imsmooth(hr, 'gauss', major, minor, pa, True, outfile=hr_conv, overwrite=True)
 
     # Missing flux
-    default(immath)
     print 'Computing the obtained flux only by single-dish ...'
-    imagename = [str(lr_reg), str(hr_conv)]
-    mode = 'evalexpr'
-    expr = 'IM0 - IM1'
-    outfile = str(sub)
-    immath()
+    os.system('rm -rf %s' % sub)
+    immath([lr_reg, hr_conv], 'evalexpr', sub, 'IM0-IM1')
     print 'Flux difference has been determined' + '\n'
+    print 'Units', getBunit(lr_reg)
 
     if getBunit(lr_reg) == 'Jy/beam':
         print 'Computing the weighting factor according to the surface of the beam ...'
@@ -224,45 +149,27 @@ def qac_ssc(project_dir, highres, lowres, sdTel = None):
         print 'Weighting factor: ' + str(weightingfac) + '\n'
 
         print 'Considering the different beam sizes ...'
-        default(immath)
-        imagename = str(sub)
-        mode = 'evalexpr'
-        expr = 'IM0 *' + str(weightingfac)
-        outfile = str(sub_bc)
-        immath()
+        os.system('rm -rf %s' % sub_bc)        
+        immath(sub, 'evalexpr', sub_bc, 'IM0*' + str(weightingfac))
         print 'Fixed for the beam size' + '\n'
 
-        print 'Combinig the single-dish and interferometer cube'
-        default(immath)
-        imagename = [str(hr), str(sub_bc)]
-        mode = 'evalexpr'
-        expr = 'IM0 + IM1'
-        outfile = str(combined)
-        immath()
+        print 'Combining the single-dish and interferometer cube [Jy/beam mode]'
+        os.system('rm -rf %s' % combined)        
+        immath([hr, sub_bc], 'evalexpr', combined, 'IM0+IM1')
         print 'The missing flux has been restored' + '\n'
 
     if getBunit(lr_reg) == 'Kelvin':
-        print 'Combinig the single-dish and interferometer cube'
-        default(immath)
-        imagename = [str(hr), str(sub)]
-        mode = 'evalexpr'
-        expr = 'IM0 + IM1'
-        outfile = str(combined)
-        immath()
+        print 'Combining the single-dish and interferometer cube [K-mode]'
+        os.system('rm -rf %s' % combined)                
+        immath([hr, sub], 'evalexpr', combined, 'IM0 + IM1')
         print 'The missing flux has been restored' + '\n'
 
-    # Export the combined FITS
-    print 'Exporting the combined FITS ...'
-    print 'The existing FITS-file will be overwritten'
-    default(exportfits)
-    imagename = str(combined)
-    fitsimage = str(comb_fits)
-    overwrite = True
-    exportfits()
-    print ''
+    for f in clean_up:
+        print "cleaning ",f
+        os.system('rm -rf %s' % f)
 
-    print 'Moving all CASA Images to :' + '\n' + str(casaImages)
-    os.system('mv *.im ' + str(casaImages))
-    os.system('rm -rf *.last')
-    os.system('rm -rf *.log')
-    print 'Short-spacing-correction has been performed'
+    if True:
+        qac_stats(lowres)
+        qac_stats(highres)
+        qac_stats(combined)
+
