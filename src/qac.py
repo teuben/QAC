@@ -35,7 +35,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def qac_version():
     """ qac helper functions """
-    print "qac: version 3-mar-2018"
+    print "qac: version 10-mar-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -767,6 +767,10 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
 
     project     - name (one directory deep) to which files are accumulated
+    skymodel
+    imsize
+    pixel
+    phasecenter
     
     See CASA/data/alma/simmos/ for the allowed (cycle,cfg) pairs
 
@@ -936,6 +940,10 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     if ptg == None:
         print "No PTG specified, no auto-regioning yet"
         return None
+
+    # @todo   similar to qac_alma this should be able to override the mapsize and pixelsize
+    #         will need to make a shadow copy of the imagename
+    #
 
     outfile = '%s/tp.ms' % project
     tp2vis(imagename,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv)
@@ -1369,9 +1377,9 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
     if lowres  == None:
         lowres  = "%s/otf%s.image"    % (project,label)        # noise flat OTF image
     pb = highres[:highres.rfind('.')] + ".pb"
-    NG.assertf(highres)
-    NG.assertf(lowres)
-    NG.assertf(pb)
+    QAC.assertf(highres)
+    QAC.assertf(lowres)
+    QAC.assertf(pb)
 
     feather1 = "%s/feather%s%s.image"       % (project,label,niter_label)
     feather2 = "%s/feather%s%s.image.pbcor" % (project,label,niter_label)
@@ -1450,7 +1458,7 @@ def qac_phasecenter(im):
     """
     qac_tag("phasecenter")
     
-    NG.assertf(im)
+    QAC.assertf(im)
     #
     h0=imhead(im,mode='list')
     ra  = h0['crval1'] * 180.0 / math.pi
@@ -1734,7 +1742,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
     """
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
-    
+
     images  list of images. Needs to fit in nrow x ncol, where nrow is computed from ncol
             order of images is row by row
     channel which channel, in case images are cubes
@@ -1751,6 +1759,13 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
     plot    if given, plotfile name
 
     0,0 is top left in row,col notation
+
+    WARNINGS:
+    - Since there is no WCS on the images, it is the responsibility of the caller to make sure each
+    image has the same physical scale, although the pixel scale does not matter.
+    - box is applied to all images in the same way. This makes the previous item even more dangerous.
+    
+    
 
     @todo   we need a colorbar (or nrows's) somewhere on the right?
     """
@@ -2048,7 +2063,7 @@ def qac_begin(label="ngvla"):
         print 'handler stream:', handler.stream
         import sys
         print 'sys.stderr:', sys.stderr
-        NG.dt = Dtime(label)
+        QAC.dt = Dtime(label)
 
 def qac_tag(label):
     """
@@ -2134,6 +2149,9 @@ class QAC(object):
         z      which plane to pick in case it's a cube (not implemented)
         """
         if type(image)==type(""):
+            tb.open(image)
+            d1 = tb.getcol("map").squeeze()            
+            tb.close()
             return None
         return np.flipud(np.rot90(image))
 
