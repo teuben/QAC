@@ -6,8 +6,34 @@
 #  The first time you can do:
 #       cat casa.init.py >> ~/.casa/init.py
 #
+#  A few other common examples of enhancing your CASA have been given
+#  but not activated since you will need to install them and put in
+#  the correct path
+#
 
 import os, sys
+
+if False:
+    print "Adding au"
+    sys.path.append("/astromake/opt/casa/analysis_scripts")
+    import analysisUtils as au
+
+if False:
+    print "Adding uvm"
+    sys.path.append("/astromake/opt/casa/Nordic_Tools")
+    import uvmultifit as uvm
+
+if False:
+    print "Adding SD2vis"
+    execfile("/astromake/opt/casa/Nordic_Tools/SD2vis_1.3/mytasks.py")
+
+if False:
+    print "Adding casairing"
+    execfile('/astromake/opt/casa/Nordic_Tools/casairing_1.1/mytasks.py')
+
+    
+
+   
 
 #   QAC version 8-mar-2018  
 try:
