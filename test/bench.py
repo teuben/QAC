@@ -8,7 +8,8 @@
 #  Space needs:        ~500MB
 #  Memory needed:      ~2.6GB
 #
-#  Example run:        casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]'  nvgrp=16
+#  Example runs:       casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]' 
+#                      casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]'  nvgrp=16 test='"bench16"'
 #
 #  On a Mac you may need to use  /Applications/CASA.app/Contents/MacOS/casa
 #
@@ -27,8 +28,6 @@
 #           748.144u 19.440s 5:02.15 254.0%	0+0k 2104+2799288io 2pf+0w
 #           803.884u 168.912s 8:11.96 197.7%	0+0k 640496+3091592io 1209pf+0w  530
 #           740.076u 17.432s 5:33.21 227.3%	0+0k 501552+3074184io 1121pf+0w  512
-
-
 
 
 #  dante:   385.062u 14.358s 2:42.37 245.9%	0+0k 624+2013376io 0pf+0w            i7-3820 CPU @ 3.60GHz
@@ -105,7 +104,6 @@ if clean == 1:
             tp2vistweak(inamed,inamec)
             iname = test+'/clean/tpalma_%d.tweak.image' % (i+1)
             qac_plot(inamec+'.image')
-            qac_plot(iname)
     for i in range(0,len(niter)): 
         if i==0:
             iname = test+'/clean/tpalma.image'
@@ -118,9 +116,13 @@ if clean == 1:
             qac_stats(iname)
 
 # regression only valid with no cmdline argument
-qac_stats(test+'/clean/tpalma.image',         "")
-qac_stats(test+'/clean/tpalma_2.tweak.image', "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479")
+r1 = "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479"
+r2 = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624 0.41929447650909424 383.60327838373536"   # 5.2.1
 
+qac_stats(test+'/clean/tpalma.image')
+qac_stats(test+'/clean/tpalma_2.tweak.image', r2)
+
+# final plot if enough data was accumulated for this comparison
 if plot == 1:
     print "Plotting benchmark comparison"
     a1=test+'/clean/alma.image'
