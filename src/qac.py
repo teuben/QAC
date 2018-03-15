@@ -35,17 +35,17 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def qac_version():
     """ qac helper functions """
-    print "qac: version 10-mar-2018"
-    print "casa:",casa['version']         # there is also:   cu.version_string()
-    print "data:",casa['dirs']['data']    
+    print("qac: version 15-mar-2018")
+    print("casa:" + casa['version'])        # there is also:   cu.version_string()
+    print("data:" + casa['dirs']['data'])
 
 def qac_log(message, verbose=True):
     """ qac banner message; can be turned off
     """
     if verbose:
-        print ""
-        print "========= QAC: %s " % message
-        print ""
+        print("")
+        print("========= QAC: %s " % message)
+        print("")
         
     #-end of qac_log()
 
@@ -201,7 +201,7 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
                 f.write("%s\n" % strTemp)
                 finalPtglist.append(strTemp)
         f.close()
-        print "%d fields used in %s" % (n,outfile)
+        print("%d fields used in %s" % (n,outfile))
         
     return finalPtglist
 
@@ -244,7 +244,7 @@ def qac_ms_ptg(msfile, outfile=None, uniq=True):
         ptr0 = [ptr0[i] for i in field_id]
         ptr1 = [ptr1[i] for i in field_id]
     n2 = len(ptr0)
-    print "%d/%d fields are actually used in %s" % (n2,n1,msfile)
+    print("%d/%d fields are actually used in %s" % (n2,n1,msfile))
     tb.close()
     #
     pointings = []
@@ -292,7 +292,7 @@ def qac_fits(image,overwrite=True):
     """
     ff = image + '.fits'
     exportfits(image,ff,overwrite=overwrite)
-    print "Wrote ",ff
+    print("Wrote " + ff)
 
 def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     """
@@ -331,11 +331,11 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     def casa_version_check(version='5.0.0'):
         cur = casa['build']['version'].split('.')
         req = version.split('.')
-        print "qac:",cur,req
+        print("qac: %s %s" % (cur,req))
         if cur[0] >= req[0]: return
         if cur[1] >= req[1]: return
         if cur[2] >= req[2]: return
-        print "WARNING: your CASA is outdated",cut,req
+        print("WARNING: your CASA is outdated %s %s" % (cur,req))
         
     def ms_sign(ms):
         if ms == None:
@@ -343,13 +343,13 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         # if not iscasa(ms): return 0
         tb.open(ms + '/SPECTRAL_WINDOW')
         cw = tb.getcol('CHAN_WIDTH')
-        print 'CHAN_WIDTH=',cw[0][0]
+        print('CHAN_WIDTH=' + str(cw[0][0]))
         tb.close()
         if cw[0][0] > 0:
             return 1
         elif cw[0][0] < 0:
             return -1
-        print "WARNING: unexpected chan_width"
+        print("WARNING: unexpected chan_width")
         return 0      # should never happen
 
     def im_sign(im):
@@ -358,8 +358,8 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         h0 = ia.summary()
         aname = h0['axisnames']
         incr =  h0['incr']
-        print "AXIS NAMES:",aname
-        print "incr      :",incr
+        print("AXIS NAMES:" + str(aname))
+        print("incr      :" + str(incr))
         ia.close()
         #
         df = None
@@ -369,13 +369,13 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
                 df = incr[i]
                 break
         if df == None:
-            print "Warning: no freq axis found"
+            print("Warning: no freq axis found")
             return 0
         if df > 0:
             return 1
         elif df < 0:
             return -1
-        print "WARNING: unexpected freq incr",df
+        print("WARNING: unexpected freq incr %f" % df)
         return 0
         
     # create a local copy of the list, so no multiple call side-effects !!!
@@ -383,7 +383,7 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         cwa = list(casaworkaround)
     else:
         cwa = [casaworkaround]
-    print "tp2vischeck: casaworkaround: ",cwa
+    print("tp2vischeck: casaworkaround: " + str(cwa))
 
     casa_version_check('5.0.0')
 
@@ -391,25 +391,25 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     sign1 = ms_sign(ms)     # 0, 1 or -1
     sign2 = im_sign(tp)     # 0, 1 or -1
     if sign1*sign2 != 0 and sign1 != sign2:
-        print "Adding workaround 11 for flip freq axis"
+        print("Adding workaround 11 for flip freq axis")
         cwa.append(11)
 
     # check if we have a fits file
     if not QAC.iscasa(tp) and not 3 in cwa:
-        print "Converting fits file to casa image"
+        print("Converting fits file to casa image")
         cwa.append(3)
     elif 3 in cwa and QAC.iscasa(tp):
-        print "Already have casa image"
+        print("Already have casa image")
         cwa.remove(3)
 
     if 3 in cwa:
         if tpout != None:
             importfits(tp,tpout,overwrite=True)
-            print "Converted fits to casa image ",tpout
-            print "Rerun tp2vischeck() to ensure no more fixed needed"
+            print("Converted fits to casa image " + tpout)
+            print("Rerun tp2vischeck() to ensure no more fixed needed")
             return
         else:
-            print "No output file given, expect things to fail now"
+            print("No output file given, expect things to fail now")
 
     if 1 in cwa or 11 in cwa:
         #  1: ensure we have a RA-DEC-POL-FREQ cube
@@ -417,10 +417,10 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         ia.open(tp)
         h0 = ia.summary()
         aname = h0['axisnames']
-        print "AXIS NAMES:",aname
+        print("AXIS NAMES:" + str(aname))
         if len(aname) == 3:
             # ia.adddegaxes(stokes='I')
-            print "Cannot deal with 3D cubes yet - fix this code"
+            print("Cannot deal with 3D cubes yet - fix this code")
             ia.done()
             return
         order = None
@@ -432,7 +432,7 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         elif 11 in cwa:
             order = '012-3'
         if order != None:
-            print "FIX: ia.transpose order=",order
+            print("FIX: ia.transpose order=" + order)
                 
         if tpout != None:
             if order != None:
@@ -441,15 +441,15 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
                 ia2 = ia.transpose(outfile=tpout,order=order)
                 ia.done()
                 ia2.done()
-                print "Written transposed ",tpout
-                print "Rerun tp2vischeck() to ensure no more fixed needed"                
+                print("Written transposed " + tpout)
+                print("Rerun tp2vischeck() to ensure no more fixed needed")
                 return
             else:
                 ia.done()                
-                print "WARNING: No transposed needed"
+                print("WARNING: No transposed needed")
         else:
             if order != None:
-                print "WARNING: axis ordering not correct, please provide output name"
+                print("WARNING: axis ordering not correct, please provide output name")
                 return
 
     if 2 in cwa:
@@ -457,23 +457,23 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         s0 = imstat(tp)
         h0 = imhead(tp)
         if 'unit' in h0:
-            print "UNIT: ",h0['unit']
+            print("UNIT: " + h0['unit'])
         if 'flux' in s0:
             bof = s0['sum'][0] / s0['flux'][0]
-            print "BOF = ",bof
+            print("BOF = %g" % bof)
             if tpout != None:
                 os.system('rm -rf %s' % tpout)                
                 expr = 'IM0/%g' % bof
                 immath(tp,'evalexpr',tpout,expr)
                 imhead(tpout,'del','beammajor')
                 imhead(tpout,'put','bunit','Jy/pixel')
-                print "Written rescaled ",tpout
-                print "Rerun tp2vischeck() to ensure no more fixed needed"                
+                print("Written rescaled " + tpout)
+                print("Rerun tp2vischeck() to ensure no more fixed needed")
                 return
             else:
-                print "Warning: %s is not in the correct units for tp2vis. Provide output file name" % tp
+                print("Warning: %s is not in the correct units for tp2vis. Provide output file name" % tp)
         else:
-            print "WARNING: No rescale fix needed"
+            print("WARNING: No rescale fix needed")
         return
 
     # BUG 15
@@ -523,7 +523,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
     
         
     if not QAC.iscasa(image):
-        print "QAC_STATS: missing %s " % image
+        print("QAC_STATS: missing %s " % image)
         return
     if QAC.iscasa(image + '/ANTENNA'):                      # assume it's a MS
         tb.open(image)
@@ -576,7 +576,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
             v1 = text2array(test_new)
             v2 = text2array(test)
             delta = arraydiff(v1,v2)
-            print delta
+            print(delta)
             if delta.max() < eps:
                 test_out = "OK"
                 report = False
@@ -584,11 +584,11 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
                 test_out = "FAILED regression delta=%g > %g" % (delta.max(),eps)
                 report = True
     msg1 = "QAC_STATS: %s" % (image)
-    print "%s %s %s" % (msg1,test_new,test_out)
+    print("%s %s %s" % (msg1,test_new,test_out))
     if report:
         fmt1 = '%%-%ds' % (len(msg1))
         msg2 = fmt1 % ' '
-        print "%s %s EXPECTED" % (msg2,test)
+        print("%s %s EXPECTED" % (msg2,test))
     
     #-end of qac_stats()
     
@@ -602,7 +602,7 @@ def qac_beam(im, normalized=False, plot=None):
     @todo   have an option to just print beam, no volume info
     """
     if not QAC.iscasa(im):
-        print "QAC_BEAM: missing %s " % im
+        print("QAC_BEAM: missing %s " % im)
         return
 
     h0 = imhead(im)
@@ -629,7 +629,7 @@ def qac_beam(im, normalized=False, plot=None):
         factor = 1.0
         pix    = 1.0
 
-    print "QAC_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor)
+    print("QAC_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor))
 
     xcen = h0['refpix'][0]
     ycen = h0['refpix'][1]
@@ -642,7 +642,7 @@ def qac_beam(im, normalized=False, plot=None):
     for i in size:
         box = '%d,%d,%d,%d' % (xcen-i,ycen-i,xcen+i,ycen+i)
         flux[i] = imstat(im,chans='0',box=box)['sum'][0]/factor
-    print "QAC_BEAM: Max/Last/PeakLoc",flux.max(),flux[-1],flux.argmax()*pix
+    print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux.max(),flux[-1],flux.argmax()*pix))
     
     if plot != None:
         plt.figure()
@@ -686,11 +686,11 @@ def qac_getuv(ms, kwave=True):
     else:
         factor = 1.0
 
-    print "UVW shape",uvw.shape,uvw[:,0],factor
+    print("UVW shape %s %s %g" % str(uvw.shape),str(uvw[:,0]),factor)
     u = uvw[0,:] * factor                   # uvw are in m. we want m
     v = uvw[1,:] * factor                   # or klambda
     uvd = np.sqrt(u*u+v*v)
-    print "UVD npts,min/max = ",len(uvd), uvd.min(), uvd.max()
+    print("UVD npts,min/max = %d %g %g" % (len(uvd), uvd.min(), uvd.max()))
 
     return (u,v)
 
@@ -735,8 +735,8 @@ def qac_flag1(ms1, ms2):
     field2 = tb.getcol("REFERENCE_DIR")
     tb.close()
     #
-    print "FIELD1",field1
-    print "FIELD2",field2
+    print("FIELD1" + str(field1))
+    print("FIELD2" + str(field2))
     x1 = field1[0][0]
     y1 = field1[1][0]
     x2 = field2[0][0]
@@ -744,7 +744,7 @@ def qac_flag1(ms1, ms2):
 
     n1 = len(field1[0][0])
     n2 = len(field2[0][0])
-    print "Found %d in MS1, %d in MS2" % (n1,n2)
+    print("Found %d in MS1, %d in MS2" % (n1,n2))
     # ensure n1 > n2
     mask = np.zeros(n1)
     eps = 0.001
@@ -755,10 +755,10 @@ def qac_flag1(ms1, ms2):
             if d < dmin:
                 dmin = d
         if dmin < eps:  mask[i] = 1.0
-        print "DMIN %d %f %d" % (i1,dmin,int(mask[i1]))
+        print("DMIN %d %f %d" % (i1,dmin,int(mask[i1])))
 
-    print "MASK",mask
-    print "SUM:",mask.sum()
+    print("MASK" + str(mask))
+    print("SUM: %g" % mask.sum())
     
     #-end of qac_flag1()
 
@@ -766,7 +766,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None,cfg="", n
     """
     really for the ngVLA design study
     """
-    print "@todo"
+    print("@todo")
     return None
     
 def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
@@ -799,7 +799,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     else:
         cfg = 'alma.cycle%d.%d' % (cycle,cfg)        # cfg>1 means ALMA (12m)
 
-    print "CFG: ",cfg
+    print("CFG: " + cfg)
 
 
     # for tclean (only used if niter>=0)
@@ -848,7 +848,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     if True:
         # there appears to be also something wrong with the POINTING table via simobserve
-        print "CONCAT: removing POINTING table into ",outms2
+        print("CONCAT: removing POINTING table into " + outms2)
         concat(outms,outms2,copypointing=False)
 
     if niter >= 0:
@@ -887,7 +887,7 @@ def qac_tpdish(name, size):
     r = size/old_size
     t2v_arrays[name]['dish']   = size
     t2v_arrays[name]['fwhm100']= old_fwhm / r
-    print "QAC_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
+    print("QAC_DISH: %g %g -> %g %g" % (old_size, old_fwhm, size, old_fwhm/r))
 
 def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):    
            
@@ -941,12 +941,12 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
         ra_string  = const.sixty_string(const.hms(ra),hms=True)
         dec_string = const.sixty_string(const.dms(dec),hms=False)
         phasecenter0 = 'J2000 %s %s' % (ra_string, dec_string)
-        print "MAP REFERENCE: phasecenter = '%s'" % phasecenter0
+        print("MAP REFERENCE: phasecenter = '%s'" % phasecenter0)
         if phasecenter == None:
             phasecenter == phasecenter0
 
     if ptg == None:
-        print "No PTG specified, no auto-regioning yet"
+        print("No PTG specified, no auto-regioning yet")
         return None
 
     # @todo   similar to qac_alma this should be able to override the mapsize and pixelsize
@@ -958,12 +958,12 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
 
     vptable = outfile + '/TP2VISVP'    
     if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
-        print "Note: using TP2VISVP, and attempting to use vp from ",vptable
+        print("Note: using TP2VISVP, and attempting to use vp from " + vptable)
         use_vp = True
         vp.reset()
         vp.loadfromtable(vptable)        # Kumar says this doesn't work, you need the vptable= in tclean()
     else:
-        print "Note: did not find TP2VISVP, not using vp"
+        print("Note: did not find TP2VISVP, not using vp")
         use_vp = False
         vptable = None
     vp.summarizevps()
@@ -977,7 +977,7 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     fix_mode = fix
     
     if fix_mode == 1:    # should be the default
-        print "FIX %d with mstransform and concat for CORRECTED_DATA" % fix_mode 
+        print("FIX %d with mstransform and concat for CORRECTED_DATA" % fix_mode )
         outfile1 = '%s/tp1.ms' % project    
         mstransform(outfile,outfile1)
         os.system('rm -rf %s' % outfile)
@@ -985,7 +985,7 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
         os.system('rm -rf %s' % outfile1)
 
     if fix_mode == 2:
-        print "FIX %d with mstransform and concat and for CORRECTED_DATA keeping backups" % fix_mode
+        print("FIX %d with mstransform and concat and for CORRECTED_DATA keeping backups" % fix_mode)
         outfile1 = '%s/tp1.ms' % project    
         outfile2 = '%s/tp2.ms' % project
         outfile3 = '%s/tp3.ms' % project    
@@ -1010,7 +1010,7 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     if False:
         # Plot UV - tp2vispl() does this better
         figfile = outfile + ".png"
-        print "PLOTUV ",figfile
+        print("PLOTUV " + figfile)
         plotuv(outfile,figfile=figfile)
 
     if niter < 0 or imsize < 0:
@@ -1018,7 +1018,7 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
 
     # finalize by making a tclean()
 
-    print "Final test clean around phasecenter = '%s'" % phasecenter
+    print("Final test clean around phasecenter = '%s'" % phasecenter)
     dirtymap = '%s/dirtymap' % project
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
@@ -1065,7 +1065,7 @@ def qac_sd_vis(**kwargs):
     Python_DFT = False): 
 
     """
-    print "Here we plan to call SD2VIS"
+    print("Here we plan to call SD2VIS")
     sd2vis(**kwargs)
 
     #-end of qac_sd_vis()
@@ -1175,12 +1175,12 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
             tb.open(ms + '/SOURCE')
             ref_freq = tb.getcol('REST_FREQUENCY')
             tb.close()
-            print 'FREQ:',chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9
+            print('FREQ: %g %g %g' % (chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9))
         except:
-            print "Bypassing some error displaying freq ranges"
+            print("Bypassing some error displaying freq ranges")
 
-    print "VIS1",vis1
-    print "niter=",niter
+    print("VIS1" + vis1)
+    print("niter=" + str(niter))
     if type(niter) == type([]):
         niters = niter
     else:
@@ -1189,12 +1189,12 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     if type(ms) != type([]):
         vptable = ms + '/TP2VISVP'
         if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
-            print "Note: using TP2VISVP, and attempting to use vp from",vptable
+            print("Note: using TP2VISVP, and attempting to use vp from" + vptable)
             use_vp = True
             vp.reset()
             vp.loadfromtable(vptable)
         else:
-            print "Note: did not find TP2VISVP, not using vp"
+            print("Note: did not find TP2VISVP, not using vp")
             use_vp = False
             vptable = None
         vp.summarizevps()
@@ -1204,7 +1204,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
 
     restart = True
     for niter in niters:
-        print "TCLEAN(niter=%d)" % niter
+        print("TCLEAN(niter=%d)" % niter)
         tclean(vis             = vis1,
                imagename       = outim1,
                niter           = niter,
@@ -1224,7 +1224,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         startmodel = ""
         restart = False
     
-    print "Wrote %s with %s weighting" % (outim1,weighting)
+    print("Wrote %s with %s weighting" % (outim1,weighting))
 
     if len(niters) == 1:
         exportfits(outim1+'.image',outim1+'.fits')
@@ -1263,8 +1263,8 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         vis2 = [ms] + [tp] 
     # @todo    get the weights[0] and print them
     # vis2.reverse()         # for debugging; in 5.0 it seems to be sort of ok,but small diffs can still be seen
-    print "niter=",niter
-    print "line: ",line
+    print("niter=" + str(niter))
+    print("line: " + str(line))
     #
     if type(niter) == type([]):
         niters = niter
@@ -1272,10 +1272,10 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         niters = [niter]
     #
     if do_alma:
-        print "Creating ALMA imaging using vis1=",vis1
+        print("Creating ALMA imaging using vis1=" + vis1)
         restart = True
         for niter in niters:
-            print "TCLEAN(niter=%d)" % niter  
+            print("TCLEAN(niter=%d)" % niter  )
             tclean(vis            = vis1,
                    imagename      = outim1,
                    niter          = niters[0],
@@ -1294,26 +1294,26 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
                    **line)
             startmodel = ""
             restart = False
-        print "Wrote %s with %s weighting" % (outim1,weighting)        
+        print("Wrote %s with %s weighting" % (outim1,weighting))
     else:
-        print "Skipping pure ALMA imaging using vis1=",vis1        
+        print("Skipping pure ALMA imaging using vis1=",vis1)
 
-    print "Creating TPALMA imaging using vis2=",vis2
+    print("Creating TPALMA imaging using vis2=",vis2)
     if do_concat:
         # first report weight 
-        print "Weights in ",vis2
+        print("Weights in ",vis2)
         for v in vis2:
             tp2viswt(v)
         # due to a tclean() bug, the vis2 need to be run via concat
         # MS has a pointing table, this often complaints, but in workflow5 it actually crashes concat()
-        print "Using concat to bypass tclean bug - also using copypointing=False, freqtol='10kHz'"
+        print("Using concat to bypass tclean bug - also using copypointing=False, freqtol='10kHz'")
         #concat(vis=vis2,concatvis=outms,copypointing=False,freqtol='10kHz')
         concat(vis=vis2,concatvis=outms,copypointing=False)
         vis2 = outms
 
     restart = True
     for niter in niters:
-        print "TCLEAN(niter=%d)" % niter        
+        print("TCLEAN(niter=%d)" % niter)
         tclean(vis=vis2,
                imagename      = outim2,
                niter          = niter,
@@ -1335,7 +1335,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
 
 #          phasecenter=phasecenter,weighting='briggs',robust=-2.0,threshold='0mJy',specmode='cube')
 
-    print "Wrote %s with %s weighting" % (outim2,weighting)
+    print("Wrote %s with %s weighting" % (outim2,weighting))
 
     if do_alma:
         exportfits(outim1+'.image',outim1+'.fits')
@@ -1343,7 +1343,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         exportfits(outim2+'.image',outim2+'.fits')
 
     if do_concat and do_cleanup:
-        print "Removing ",outms
+        print("Removing " + outms)
         shutil.rmtree(outms)
     
     #-end of qac_clean()
@@ -1564,26 +1564,26 @@ def qac_summary(tp, ms=None, source=None, line=False):
         _line['width']    = '%skm/s' % repr(dv)
         return _line
 
-    # print the image info
-    print "QAC_SUMMARY:"
-    print "TP:",tp
-    print 'OBJECT:  ',h0['object']
-    print 'SHAPE:   ',h0['shape']
-    print 'CRVAL:   ',phasecenter
-    print 'CRVALd:  ',phasecenterd
-    print 'RESTFREQ:',restfreq[0]/1e9
-    print "FREQ:    ",freq_values[0]/1e9,freq_values[-1]/1e9
-    print "VEL:     ",vmin[0],vmax[0],dv
-    print "VELTYPE: ",rft
-    print "UNITS:   ",h0['bunit']
+    # print the image info   @todo
+    print("QAC_SUMMARY:")
+    print("TP:",tp)
+    print('OBJECT:  ',h0['object'])
+    print('SHAPE:   ',h0['shape'])
+    print('CRVAL:   ',phasecenter)
+    print('CRVALd:  ',phasecenterd)
+    print('RESTFREQ:',restfreq[0]/1e9)
+    print("FREQ:    ",freq_values[0]/1e9,freq_values[-1]/1e9)
+    print("VEL:     " + str(vmin[0]) + str(vmax[0],dv))
+    print("VELTYPE: " + rft)
+    print("UNITS:   " + h0['bunit'])
     
     # LIST OF MS (can be empty)
     for msi in ms_list:
-        print ""
+        print("")
         if QAC.iscasa(msi):
-            print "MS: ",msi
+            print("MS: " + msi)
         else:
-            print "MS:   -- skipping non-existent ",msi
+            print("MS:   -- skipping non-existent " + msi)
             continue
 
         # first get the rest_freq per source (it may be missing)
@@ -1614,7 +1614,7 @@ def qac_summary(tp, ms=None, source=None, line=False):
         for i in range(nsource):
             # print "source",i,source[i],spw_id[i],rest_freq[0][i]
             # print "source",i,source[i],trans[0][i],vrange(chan_freq[spw_id[i]],rest_freq[0][i])
-            print "source",i,source[i],vrange(chan_freq[spw_id[i]],rest_freq[0][i])            
+            print("source %d %s %s" % (i,source[i],str(vrange(chan_freq[spw_id[i]],rest_freq[0][i]))))
 
         
         #print "chan_freq",chan_freq.shape,chan_freq
@@ -1640,17 +1640,17 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     chans2='%d~%d' % (chan_rms[2],chan_rms[3])
     chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2])
     rms  = imstat(imcube,axes=[0,1])['rms']
-    print rms
+    print(rms)
     rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
     rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
-    print rms1,rms2
+    print(rms1,rms2)
     rms = 0.5*(rms1+rms2)
-    print "RMS = ",rms
+    print("RMS = ",rms)
     if pb==None:
         mask = None
     else:
         mask = lel(pb) + '> %g' % pbcut
-        print "Using mask=",mask
+        print("Using mask=",mask)
     mom0 = imcube + '.mom0'
     mom1 = imcube + '.mom1'
     os.system('rm -rf %s %s' % (mom0,mom1))
@@ -1662,7 +1662,7 @@ def qac_math(outfile, infile1, oper, infile2):
     """
     qac_tag("math")
     if not QAC.exists(infile1) or not QAC.exists(infile2):
-        print "QAC_MATH: missing %s and/or %s" % (infile1,infile2)
+        print("QAC_MATH: missing %s and/or %s" % (infile1,infile2))
         return
     
     if oper=='+':  expr = 'IM0+IM1'
@@ -1701,7 +1701,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
             zoom['blc'] = box[0:2]
             zoom['trc'] = box[2:4]
             
-        print "QAC_PLOT: %s range=%s" % (image,str(range))
+        print("QAC_PLOT: %s range=%s" % (image,str(range)))
         imview(raster=raster, zoom=zoom, out=out)
     elif mode == 2:
         cmap = 'nipy_spectral'
@@ -1709,7 +1709,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         tb.open(image)
         d1 = tb.getcol("map").squeeze()
         tb.close()
-        print "SHAPE from casa: ",d1.shape
+        print("SHAPE from casa: ",d1.shape)
         nx = d1.shape[0]
         ny = d1.shape[1]
         if len(d1.shape) == 2:
@@ -1735,7 +1735,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         plt.ylabel('X')
         plt.xlabel('Y')
         plt.title('%s chan=%d %s' % (image,channel,title))
-        print "QAC_PLOT: %s range=%s   %s" % (image,str(range),out)        
+        print("QAC_PLOT: %s range=%s   %s" % (image,str(range),out))
         plt.savefig(out)
         if False:
             plt.show()
@@ -1783,7 +1783,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
         
-    print "QAC_PLOT_GRID",images
+    print("QAC_PLOT_GRID",images)
     n = len(images)
     dim = range(n)
     for i in range(n):
@@ -1808,7 +1808,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
             dmin = min(data.min(),dmin)
             dmax = max(data.max(),dmax)
         dim[i] = np.copy(data)
-    print "Data min/max",dmin,dmax
+    print("Data min/max",dmin,dmax)
     if minmax != None:
         dmin = minmax[0]
         dmax = minmax[1]
@@ -1816,10 +1816,10 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     nrow = n // ncol
     if diff != 0:
         if ncol != 2:
-            print "Cannot compute diff with ncol=",ncol
+            print("Cannot compute diff with ncol=",ncol)
             return
         ncol = ncol + 1
-    print "Nrow/col = ",nrow,ncol
+    print("Nrow/col = ",nrow,ncol)
     # @todo check if enough xgrid[] and ygrid[]
     #
     # placeholders for the data
@@ -1834,7 +1834,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
                     i=i+1
                 else:
                     d[row][col] = d[row][col-1] - d[row][col-2]
-                    print "Difference map minmax",d[row][col].min(),d[row][col].max()
+                    print("Difference map minmax",d[row][col].min(),d[row][col].max())
                     d[row][col]  *= diff
             else:
                 d[row][col] = dim[i]
@@ -1883,17 +1883,17 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     chans2='%d~%d' % (chan_rms[2],chan_rms[3])
     chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2])
     rms  = imstat(imcube,axes=[0,1])['rms']
-    print rms
+    print(rms)
     rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
     rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
-    print rms1,rms2
+    print(rms1,rms2)
     rms = 0.5*(rms1+rms2)
-    print "RMS = ",rms
+    print("RMS = ",rms)
     if pb==None:
         mask = None
     else:
         mask = lel(pb) + '> %g' % pbcut
-        print "Using mask=",mask
+        print("Using mask=",mask)
     mom0 = imcube + '.mom0'
     mom1 = imcube + '.mom1'
     os.system('rm -rf %s %s' % (mom0,mom1))
@@ -1935,7 +1935,7 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
     plt.legend()
     plt.savefig(plot)
     plt.show()
-    print "Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv)
+    print("Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv))
 
     #-end of qac_flux()
 
@@ -1950,7 +1950,7 @@ def qac_psd(image, plot='qac_psd.png'):
     tb.open(image)
     d1 = tb.getcol("map").squeeze()
     if len(d1.shape) != 2:
-        print "Shape not supported for %s: %s" % (image,d1.shape)
+        print("Shape not supported for %s: %s" % (image,d1.shape))
         return
     nx = d1.shape[0]
     ny = d1.shape[1]
@@ -2009,7 +2009,7 @@ def qac_combine(project, TPdata, INTdata, **kwargs):
 
     """
 
-    print "you just wished this would work...."
+    print("you just wished this would work already eh....")
 
     if False:
         os.system('rm -rf %s; mkdir -p %s' % (project,project))    
@@ -2065,12 +2065,12 @@ def qac_begin(label="ngvla"):
         # @todo until the logging + print problem solved, this is disabled
         logging.basicConfig(level = logging.INFO)
         root_logger = logging.getLogger()
-        print 'root_logger =', root_logger
-        print 'handlers:', root_logger.handlers
+        print('root_logger =', root_logger)
+        print('handlers:', root_logger.handlers)
         handler = root_logger.handlers[0]
-        print 'handler stream:', handler.stream
+        print('handler stream:', handler.stream)
         import sys
-        print 'sys.stderr:', sys.stderr
+        print('sys.stderr:', sys.stderr)
         QAC.dt = Dtime(label)
 
 def qac_tag(label):
@@ -2118,7 +2118,7 @@ class QAC(object):
         if QAC.iscasa(filename):
             os.system('rm -rf %s' % filename)
         else:
-            print "Warning: %s is not a CASA dataset" % filename
+            print("Warning: %s is not a CASA dataset" % filename)
 
     @staticmethod
     def iscasa(filename, casatype=None):
