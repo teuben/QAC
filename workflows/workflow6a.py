@@ -7,7 +7,7 @@
 #
 #  In these scripts huge MS files are used, but here we are using the processed
 #  "aver" MS files created in TP2VIS' workflow6.
-#  Those data are in http://admit.astro.umd.edu/~teuben/TP2VIS/workflow6_data.tar.gz
+#  Those data are in http://admit.astro.umd.edu/~teuben/QAC/workflow6_data.tar.gz
 #
 #  The resulting final fluxes will be a little different, also because of newer CASA ?
 #
@@ -21,7 +21,7 @@
 #  NOTE:    info on generating scripts from casaguide wiki's:
 #           https://casaguides.nrao.edu/index.php?title=Extracting_scripts_from_these_tutorials
 #           https://github.com/jaredcrossley/CASA-Guides-Script-Extractor
-#           ./extractCASAscript.py https://casaguides.nrao.edu/index.php/M100_Band3_Combine_4.3
+#           ./extractCASAscript.py https://casaguides.nrao.edu/index.php/M100_Band3_Combine_5.1
 #
 #  fixes needed from the casaguide for CASA 5.1.1 (EKeller should know about this?)
 #         T -> True   (8 times  in imview)
@@ -132,6 +132,15 @@ else:
 print "CLEAN-0"
 ### Make initial dirty image
 os.system('rm -rf ' + prename + '.* ' + prename + '_*')
+tclean(vis=vis,imagename=prename+'_new',
+       gridder='mosaic',deconvolver='hogbom',pbmask=minpb,
+       imsize=imsize,cell=cell,spw=spw,
+       weighting='briggs',robust=robust,phasecenter=phasecenter,
+       specmode='cube',width=width,start=start,nchan=nchan,      
+       restfreq=restfreq,outframe=outframe,veltype='radio',
+       mask='',
+       niter=0,interactive=False)
+
 clean(vis=vis,imagename=prename,
       imagermode='mosaic',ftmachine='mosaic',minpb=minpb,
       imsize=imsize,cell=cell,spw=spw,
@@ -486,3 +495,12 @@ plot2a([f0a,f1a,f2a],'plot2a2.png')
 plot2a([f0,f0a],     'plot2a3.png')    
 plot2a([f1,f1a],     'plot2a4.png')    
 plot2a([f2,f2a],     'plot2a5.png')    
+
+#  regression
+
+qac_stats('M100_TP_CO_cube.bl.image')
+qac_stats('M100_TP_CO_cube.regrid.subim')
+qac_stats('M100_combine_CO_cube.image')
+qac_stats('M100_combine_CO_cube.image.subim')
+qac_stats('M100_Feather_CO.image')
+qac_stats('M100_Feather_CO.image.pbcor')
