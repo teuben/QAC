@@ -20,7 +20,7 @@ from utils import radialProfile
 import numpy as np
 # import numpy.ma as ma
 # import pyfits as fits
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pl
 
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
 cqa  = qa.constants('c')                  # (turns out to be in m/s)
@@ -645,20 +645,20 @@ def qac_beam(im, normalized=False, plot=None):
     print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux.max(),flux[-1],flux.argmax()*pix))
     
     if plot != None:
-        plt.figure()
+        pl.figure()
         if normalized:
-            plt.title("%s : Normalized cumulative flux" % im)
-            plt.xlabel("size/2 (arcsec)")
-            plt.ylabel("Flux")
+            pl.title("%s : Normalized cumulative flux" % im)
+            pl.xlabel("size/2 (arcsec)")
+            pl.ylabel("Flux")
             size = size * sqrt(pix2)
         else:
-            plt.title("%s : Cumulative sum" % im)
-            plt.xlabel("size/2 (pixels)")
-            plt.ylabel("Sum")
-        plt.plot(size,flux)
-        plt.plot(size,zero)
-        plt.savefig(plot)
-        plt.show()
+            pl.title("%s : Cumulative sum" % im)
+            pl.xlabel("size/2 (pixels)")
+            pl.ylabel("Sum")
+        pl.plot(size,flux)
+        pl.plot(size,zero)
+        pl.savefig(plot)
+        pl.show()
     
     #-end of qac_beam()
     
@@ -1179,8 +1179,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         except:
             print("Bypassing some error displaying freq ranges")
 
-    print("VIS1" + vis1)
-    print("niter=" + str(niter))
+    print("VIS1",vis1)
+    print("niter=",niter)
     if type(niter) == type([]):
         niters = niter
     else:
@@ -1630,12 +1630,17 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     chan_rms:    list of 4 integers, which denote the low and high channel range where RMS should be measured
     pb:          primary beam. If given, it can do a final pb corrected version and use it for masking
     pbcut:       if PB is used, this is the cutoff above which mask is used
+
+    @todo    add the mom2 by default as well
     
     """
     def lel(name):
         """ convert filename to a safe filename for LEL expressions, e.g. in mask=
         """
         return '\'' + name + '\''
+    pbguess = imcube + '.pb'
+    if QAC.exists(pbguess) and not pb:
+        print("WARNING: there is a pb file, but you are not using it. Assuming flat pb")
     chans1='%d~%d' % (chan_rms[0],chan_rms[1])
     chans2='%d~%d' % (chan_rms[2],chan_rms[3])
     chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2])
@@ -1725,22 +1730,22 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         if range == None:
             range = [data.min(), data.max()]
 
-        plt.ioff()    # not interactive
-        plt.figure()
-        alplot = plt.imshow(data, origin='lower', vmin = range[0], vmax = range[1])
-        #alplot = plt.imshow(data, origin='lower')
-        #plt.set_cmap(cmap)
+        pl.ioff()    # not interactive
+        pl.figure()
+        alplot = pl.imshow(data, origin='lower', vmin = range[0], vmax = range[1])
+        #alplot = pl.imshow(data, origin='lower')
+        #pl.set_cmap(cmap)
         #alplot.set_cmap(cmap)
-        plt.colorbar()
-        plt.ylabel('X')
-        plt.xlabel('Y')
-        plt.title('%s chan=%d %s' % (image,channel,title))
+        pl.colorbar()
+        pl.ylabel('X')
+        pl.xlabel('Y')
+        pl.title('%s chan=%d %s' % (image,channel,title))
         print("QAC_PLOT: %s range=%s   %s" % (image,str(range),out))
-        plt.savefig(out)
+        pl.savefig(out)
         if False:
-            plt.show()
+            pl.show()
         else:
-            plt.close('all') 
+            pl.close('all') 
            
         
         
@@ -1840,8 +1845,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
                 d[row][col] = dim[i]
                 i=i+1
 
-    fig = plt.figure()
-    # plt.title(title)     # @todo global title needs work
+    fig = pl.figure()
+    # pl.title(title)     # @todo global title needs work
     # fig.tight_layout()   # @todo this didn't work
     i = 0
     # @todo need less whitespace between boxes
@@ -1858,8 +1863,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
                 f1.set_xlabel(xgrid[col])
             i = i + 1
     if plot != None:
-        plt.savefig(plot)
-    plt.show()
+        pl.savefig(plot)
+    pl.show()
 
     #-end of qac_plot_grid()
     
@@ -1916,25 +1921,25 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
     """
     qac_tag("flux")
     
-    plt.figure()
+    pl.figure()
     _tmp = imstat(image,axes=[0,1],box=box)
     fmin = _tmp['min']
     fmax = _tmp['max']
     frms = _tmp['rms']
     chan = np.arange(len(fmin))
     f = 0.5 * (fmax - fmin) / frms
-    plt.plot(chan,fmin,c='r',label='min')
-    plt.plot(chan,fmax,c='g',label='max')
-    plt.plot(chan,frms,c='b',label='rms')
-    # plt.plot(chan,f,   c='black', label='<peak>/rms')
+    pl.plot(chan,fmin,c='r',label='min')
+    pl.plot(chan,fmax,c='g',label='max')
+    pl.plot(chan,frms,c='b',label='rms')
+    # pl.plot(chan,f,   c='black', label='<peak>/rms')
     zero = 0.0 * frms
-    plt.plot(chan,zero,c='black')
-    plt.ylabel('Flux')
-    plt.xlabel('Channel')
-    plt.title('%s  Min/Max/RMS' % (image))
-    plt.legend()
-    plt.savefig(plot)
-    plt.show()
+    pl.plot(chan,zero,c='black')
+    pl.ylabel('Flux')
+    pl.xlabel('Channel')
+    pl.title('%s  Min/Max/RMS' % (image))
+    pl.legend()
+    pl.savefig(plot)
+    pl.show()
     print("Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv))
 
     #-end of qac_flux()
@@ -1965,14 +1970,14 @@ def qac_psd(image, plot='qac_psd.png'):
     #p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
     r1 = np.arange(1.0,len(p1)+1)
     
-    plt.figure()
-    plt.loglog(r1,p1)
-    plt.xlabel('Spatial Frequency')
-    plt.ylabel('Power Spectrum')
-    plt.xlabel('Channel')
-    plt.title('%s' % (image))
-    plt.savefig(plot)
-    plt.show()
+    pl.figure()
+    pl.loglog(r1,p1)
+    pl.xlabel('Spatial Frequency')
+    pl.ylabel('Power Spectrum')
+    pl.xlabel('Channel')
+    pl.title('%s' % (image))
+    pl.savefig(plot)
+    pl.show()
     
     return p1
     
