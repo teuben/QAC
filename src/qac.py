@@ -757,6 +757,7 @@ def qac_flag1(ms1, ms2):
 
 def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None,cfg="", niter=-1, ptg = None):
     """
+    really for the ngVLA design study
     """
     print "@todo"
     return None
@@ -1738,7 +1739,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         
     #-end of qac_plot()
 
-def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid=[], ygrid=[], plot=None):
+def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgrid=[], ygrid=[], plot=None):
     """
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
@@ -1750,12 +1751,12 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
     box     [xmin,ymin,xmax,ymax]   defaults to whole image
     minmax  [dmin,dmax]  defaults to minmax of all images
     ncol    number of columns to be used. rows follow from #images
-    cmp     if non-zero, in pairs of two, a new difference image is computed and plotted
-            this will increase ncol from 2 to 3 (cmp=True needs ncol=2)
-            cmp is the factor by which the difference image is scaled
-            Note that cmp can be positive or negative. 
-    xgrid   List of strings for the X panels in the grid   @todo NOT IMPLEMENTED YET
-    ygrid   List of strings for the Y panels in the grid   @todo NOT IMPLEMENTED YET
+    diff    if non-zero, in pairs of two, a new difference image is computed and plotted
+            this will increase ncol from 2 to 3 (diff != 0 needs ncol=2)
+            diff is the factor by which the difference image is scaled
+            Note that diff can be positive or negative. 
+    xgrid   List of strings for the X panels in the grid
+    ygrid   List of strings for the Y panels in the grid
     plot    if given, plotfile name
 
     0,0 is top left in row,col notation
@@ -1806,9 +1807,9 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
         dmax = minmax[1]
     #
     nrow = n // ncol
-    if cmp != 0:
+    if diff != 0:
         if ncol != 2:
-            print "Cannot cmp with ncol=",ncol
+            print "Cannot compute diff with ncol=",ncol
             return
         ncol = ncol + 1
     print "Nrow/col = ",nrow,ncol
@@ -1820,14 +1821,14 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
     for row in range(nrow):
         d[row] = range(ncol)
         for col in range(ncol):
-            if cmp != 0:
+            if diff != 0:
                 if col < 2:
                     d[row][col] = dim[i]
                     i=i+1
                 else:
                     d[row][col] = d[row][col-1] - d[row][col-2]
                     print "Difference map minmax",d[row][col].min(),d[row][col].max()
-                    d[row][col]  *= cmp
+                    d[row][col]  *= diff
             else:
                 d[row][col] = dim[i]
                 i=i+1
@@ -1845,10 +1846,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, cmp=0, xgrid
             f1.set_xticklabels([])
             f1.set_yticklabels([])
             if col==0 and len(ygrid) > 0:
-                print ygrid[row]
                 f1.set_ylabel(ygrid[row])
-            if row==nrow-1 and len(xgrid) > 0:    # @todo should auto-create "diff" if cmp != 0
-                print xgrid[col]
+            if row==nrow-1 and len(xgrid) > 0:    # @todo should auto-create "diff" if diff != 0
                 f1.set_xlabel(xgrid[col])
             i = i + 1
     if plot != None:
@@ -2154,7 +2153,7 @@ class QAC(object):
             tb.open(image)
             d1 = tb.getcol("map").squeeze()            
             tb.close()
-            return None
+            return np.flipud(np.rot90(d1))
         return np.flipud(np.rot90(image))
 
     @staticmethod    
