@@ -287,6 +287,13 @@ def qac_line(im):
     start = str(start) + 'km/s'
     return {'start' : start, 'width' : width, 'nchan' : nchan, 'restfreq' : restfreq}
 
+def qac_fits(image,overwrite=True):
+    """ silly fits shortcut
+    """
+    ff = image + '.fits'
+    exportfits(image,ff,overwrite=overwrite)
+    print "Wrote ",ff
+
 def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     """
     Check (and optionally correct) that a TP image is a valid input for TP2VIS.
