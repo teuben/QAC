@@ -57,7 +57,7 @@ def getPA(imName):
     return pa_value, pa_unit
 
 # our Main, QAC style
-def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, label="", niteridx=0):
+def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, cleanup=True, label="", niteridx=0):
     """
         project     directory in which all work will be performed
         highres     high res (interferometer) image
@@ -102,7 +102,7 @@ def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, label
     # Re-gridding the lowres Single-dish cube to that of the highres Interferometer cube
     if regrid:
         print 'Regridding ... the default interpolation scheme is linear'
-        imregrid(lr,hr,lr_reg, overwrite=True)
+        imregrid(lr,hr,lr_reg, overwrite=True, asvelocity=True)
     else:
         lr_reg = lr
 
@@ -164,9 +164,12 @@ def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, label
         immath([hr, sub], 'evalexpr', combined, 'IM0 + IM1')
         print 'The missing flux has been restored' + '\n'
 
-    for f in clean_up:
-        print "cleaning ",f
-        os.system('rm -rf %s' % f)
+    if cleanup:
+        for f in clean_up:
+            print "cleaning ",f
+            os.system('rm -rf %s' % f)
+    else:
+        print "Preserving following files:",clean_up
 
     if True:
         qac_stats(lowres)
