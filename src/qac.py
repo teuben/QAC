@@ -1280,7 +1280,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
             print("TCLEAN(niter=%d)" % niter  )
             tclean(vis            = vis1,
                    imagename      = outim1,
-                   niter          = niters[0],
+                   niter          = niter,
                    gridder        = 'mosaic',
                    imsize         = imsize,
                    cell           = cell,
