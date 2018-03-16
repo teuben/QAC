@@ -30,12 +30,12 @@ bof  = np.pi / (4*math.log(2.0))          # beam oversampling factor (1.1331) : 
 stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 # nasty globals
-#restoringbeam = 'common'                # common beam for all planes
+#restoringbeam = 'common'                # common beam for all planes @todo
 restoringbeam = None                     # given the edge channel issue, a common beam is not a good idea
 
 def qac_version():
     """ qac helper functions """
-    print("qac: version 15-mar-2018")
+    print("qac: version 16-mar-2018")
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
 
@@ -1051,6 +1051,8 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
 
 def qac_sd_vis(**kwargs):
     """
+    SD2vis from the Nordic Tools
+    
     SDimage='',        
     SDchannels = -1,
     SDbaseline=7.0,
@@ -1065,7 +1067,7 @@ def qac_sd_vis(**kwargs):
     Python_DFT = False): 
 
     """
-    print("Here we plan to call SD2VIS")
+    print("Here we go directly to SD2VIS")
     sd2vis(**kwargs)
 
     #-end of qac_sd_vis()
@@ -1573,9 +1575,9 @@ def qac_summary(tp, ms=None, source=None, line=False):
     print('CRVALd:  ',phasecenterd)
     print('RESTFREQ:',restfreq[0]/1e9)
     print("FREQ:    ",freq_values[0]/1e9,freq_values[-1]/1e9)
-    print("VEL:     " + str(vmin[0]) + str(vmax[0],dv))
-    print("VELTYPE: " + rft)
-    print("UNITS:   " + h0['bunit'])
+    print("VEL:     ",vmin[0],vmax[0],dv)
+    print("VELTYPE: ",rft)
+    print("UNITS:   ",h0['bunit'])
     
     # LIST OF MS (can be empty)
     for msi in ms_list:
@@ -1663,7 +1665,11 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
 
 def qac_math(outfile, infile1, oper, infile2):
-    """  just simpler to read....
+    """  image math; just simpler to read than immath() for a few basic ones
+    
+         immath([a,b],'evalexpr',c,'IM0+IM1')
+    is
+         qac_math(c,a,'+',b)
     """
     qac_tag("math")
     if not QAC.exists(infile1) or not QAC.exists(infile2):
