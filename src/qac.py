@@ -1274,7 +1274,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         niters = [niter]
     #
     if do_alma:
-        print("Creating ALMA imaging using vis1=" + vis1)
+        print("Creating ALMA imaging using vis1=%s" % str(vis1))
         restart = True
         for niter in niters:
             print("TCLEAN(niter=%d)" % niter  )
@@ -1399,7 +1399,7 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
     immath([feather1,pb],'evalexpr',feather2,'IM0/IM1')
     # ng_math(feather2, feather1, "/", pb)
 
-    if False:
+    if True:
         qac_stats(highres)
         qac_stats(lowres)
         qac_stats(feather1)
