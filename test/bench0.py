@@ -1,5 +1,5 @@
 #  -*- python -*-
-# Resources:   MEM: 2.2 GB   DISK: 230MB  CPU: ~25'
+# Resources:   MEM: 2.2 GB   DISK: 230MB  CPU: ~8'
 #
 # parameters in this workflow (derived from bench.py)
 phasecenter = 'J2000 12h22m54.900s +15d49m15.000s'
@@ -60,7 +60,7 @@ ygrid = ['7&12 + tp', '7&12 iter','7&12&tp iter','tweak', 'feather', 'ssc']
 box   = [300,300,600,600]
 qac_plot_grid([i1,i2, i1,i3, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp.png',diff=10.0)
 
-# regression for casa 5.1.1 or 5.2.2
+# regression for casa 5.2.2-4 on RHEL7; the last column is the flux in Jy.km/s
 r = [
     '0.76510686740198042 1.4994149478897942 -0.43156760931015015 6.4568653106689453 15.995818049860048',
     '0.00015477320920210852 0.036285694517807124 -0.12811994552612305 0.37910208106040955 0.30861407063317348',
@@ -70,9 +70,10 @@ r = [
     '0.0036216214701859607 0.020609756591263156 -0.042896430939435959 0.35902613401412964 14.715509660826687',
     ]
 
-qac_stats('bench0/tp.im',                     r[0])
-qac_stats('bench0/clean/alma.image',          r[1])
-qac_stats('bench0/clean/tpalma.image',        r[2])
-qac_stats('bench0/clean/tpalma_2.tweak.image',r[3])
-qac_stats('bench0/ssc.image',                 r[4])
-qac_stats('bench0/feather.image',             r[5])
+eps = None
+qac_stats('bench0/tp.im',                     r[0], eps)
+qac_stats('bench0/clean/alma.image',          r[1], eps)
+qac_stats('bench0/clean/tpalma.image',        r[2], eps)
+qac_stats('bench0/clean/tpalma_2.tweak.image',r[3], eps)
+qac_stats('bench0/ssc.image',                 r[4], eps)
+qac_stats('bench0/feather.image',             r[5], eps)
