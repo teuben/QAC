@@ -57,7 +57,7 @@ def getPA(imName):
     return pa_value, pa_unit
 
 # our Main, QAC style
-def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, cleanup=True, label="", niteridx=0):
+def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True, cleanup=True, label="", niteridx=0):
     """
         project     directory in which all work will be performed
         highres     high res (interferometer) image
@@ -82,22 +82,20 @@ def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, clean
     print '   Single-dish: ',lowres
     print '   Interferometer: ',highres
     print '   Single-dish Telescope: ',sdTel
-
-    # Creating the prefix for all the CASA-images
-    prefix = project + '/'
+    print '   f (scaling SD):',f
 
     lr = lowres                                  # input low resolution cube
     hr = highres                                 # input high resolution cube
 
     # temp files
-    lr_reg    = prefix + 'LR_reg.im'             # regridded low resolution cube
-    hr_conv   = prefix + 'HR_conv.im'            # convolved high resolution cube
-    sub       = prefix + 'sub.im'                # observed flux only by single-dish
-    sub_bc    = prefix + 'sub_bc.im'             # Corrected flux by the ratio of beam sizes
+    lr_reg    = project + '/LR_reg.im'             # regridded low resolution cube
+    hr_conv   = project + '/HR_conv.im'            # convolved high resolution cube
+    sub       = project + '/sub.im'                # observed flux only by single-dish
+    sub_bc    = project + '/sub_bc.im'             # Corrected flux by the ratio of beam sizes
     clean_up  = [lr_reg, hr_conv, sub, sub_bc]   # collect filenames we need to clean
 
     # final results
-    combined  = prefix + 'ssc%s%s.image'  % (label,niter_label)
+    combined  = project + '/ssc%s%s.image'  % (label,niter_label)
 
     # Re-gridding the lowres Single-dish cube to that of the highres Interferometer cube
     if regrid:
@@ -138,7 +136,7 @@ def qac_ssc(project, highres=None, lowres=None, sdTel = None, regrid=True, clean
     # Missing flux
     print 'Computing the obtained flux only by single-dish ...'
     os.system('rm -rf %s' % sub)
-    immath([lr_reg, hr_conv], 'evalexpr', sub, 'IM0-IM1')
+    immath([lr_reg, hr_conv], 'evalexpr', sub, '%g*IM0-IM1' % f)
     print 'Flux difference has been determined' + '\n'
     print 'Units', getBunit(lr_reg)
 
