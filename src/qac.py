@@ -773,12 +773,11 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
-
-    project     - name (one directory deep) to which files are accumulated
-    skymodel
-    imsize
-    pixel
-    phasecenter
+    project     - name (one directory deep) to which files are accumulated - will accumulate
+    skymodel    - jy/pixel map
+    imsize      -
+    pixel       -
+    phasecenter - where to place the reference pixel
     
     See CASA/data/alma/simmos/ for the allowed (cycle,cfg) pairs
 
@@ -787,11 +786,11 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     cycle 3:   ALMA cfg = 1..8    ACA ok
     cycle 4:   ALMA cfg = 1..9    ACA ok
     cycle 5:   ALMA cfg = 1..10   ACA ok [same as 4]
+    cycle 6:   ALMA cfg = 1..10   ACA ok [same as 5]
     """
 
     # since we call it incrementally, make sure directory exists
     os.system('mkdir -p %s' % project)
-    
     
     data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
     if cfg==0:
@@ -1233,25 +1232,26 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     
     #-end of qac_clean1()
     
-def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", startmodel="", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
+def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", startmodel="", phasecenter="", niter=0, do_concat = False, do_int = False, do_cleanup = True, **line):
     """
     Simple interface to do a tclean() joint deconvolution of one TP and one or more MS
     
     project - new directory for this operation (it is removed before starting)
     tp      - the TP MS (needs to be a single MS)
-    ms      - the array MS (can be a list of MS)
-    imsize  - (square) size of the maps (list of 2 is allowed if you need rectangular)
-    pixel   - pixelsize in arcsec
-    niter   - 0 or more interactions for tclean
+    ms      - the int array MS (can be a list of MS)
+    imsize  - size of the maps (list of 2 is allowed if you need rectangular)
+    pixel   - pixelsize in arcsec, pixels are forced square
+    niter   - list of niter for (t)clean
 
     do_concat   - work around a bug in tclean ?  Default is true until this bug is fixed
-    do_alma     - also make a map from just the ms (without tp)
+    do_int      - also make a map from just the INT ms (without tp)
+    do_cleanup  - if do_concat was used, this concat ms would be removed again
     """
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
-    outim1 = '%s/alma' % project
-    outim2 = '%s/tpalma' % project
-    outms  = '%s/tpalma.ms' % project       # concat MS to bypass tclean() bug
+    outim1 = '%s/int' % project
+    outim2 = '%s/tpint' % project
+    outms  = '%s/tpint.ms' % project       # concat MS to bypass tclean() bug
     #
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
@@ -1273,8 +1273,8 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     else:
         niters = [niter]
     #
-    if do_alma:
-        print("Creating ALMA imaging using vis1=%s" % str(vis1))
+    if do_int:
+        print("Pure interferometer imaging using vis1=%s" % str(vis1))
         restart = True
         for niter in niters:
             print("TCLEAN(niter=%d)" % niter  )
@@ -1298,17 +1298,17 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
             restart = False
         print("Wrote %s with %s weighting" % (outim1,weighting))
     else:
-        print("Skipping pure ALMA imaging using vis1=",vis1)
+        print("Skipping pure interferometer imaging using vis1=%s" % str(vis1))
 
-    print("Creating TPALMA imaging using vis2=",vis2)
+    print("Creating TP+INT imaging using vis2=%s" % str(vis2))
     if do_concat:
         # first report weight 
-        print("Weights in ",vis2)
+        print("Weights in %s" % str(vis2))
         for v in vis2:
             tp2viswt(v)
         # due to a tclean() bug, the vis2 need to be run via concat
         # MS has a pointing table, this often complaints, but in workflow5 it actually crashes concat()
-        print("Using concat to bypass tclean bug - also using copypointing=False, freqtol='10kHz'")
+        print("Using concat to bypass tclean bug - also using copypointing=False")
         #concat(vis=vis2,concatvis=outms,copypointing=False,freqtol='10kHz')
         concat(vis=vis2,concatvis=outms,copypointing=False)
         vis2 = outms
@@ -1335,14 +1335,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         startmodel = ""
         restart = False
 
-#          phasecenter=phasecenter,weighting='briggs',robust=-2.0,threshold='0mJy',specmode='cube')
-
     print("Wrote %s with %s weighting" % (outim2,weighting))
-
-    if do_alma:
-        exportfits(outim1+'.image',outim1+'.fits')
-    if len(niters) == 1:
-        exportfits(outim2+'.image',outim2+'.fits')
 
     if do_concat and do_cleanup:
         print("Removing " + outms)
