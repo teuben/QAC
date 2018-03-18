@@ -1,6 +1,6 @@
 #
 
-TESTS = bench bench0
+TESTS = bench bench0 bench1
 
 #  on Mac:
 CASA  = /Applications/CASA.app/Contents/MacOS/casa
@@ -8,21 +8,26 @@ CASA  = /Applications/CASA.app/Contents/MacOS/casa
 CASA  = casa
 
 help:
-	@echo no help
+	@echo tests = $(TESTS)
 
 .PHONY: $(TESTS)
 
 bench:
 	@echo running bench.py ...
-	time casa --nogui -c bench.py > bench.log 2>&1
+	time $(CASA) --nogui -c bench.py > bench.log 2>&1
 	tail -4 bench.log
 
 benchplot:
 	@echo running bench.py ...
-	time casa --nogui -c bench.py alma=1 plot=1 > bench.log 2>&1
+	time $(CASA) --nogui -c bench.py alma=1 plot=1 > bench.log 2>&1
 	tail -4 bench.log
 
 bench0:
 	@echo running bench0.py ...
-	time casa --nogui -c bench0.py > bench0.log 2>&1
+	time $(CASA) --nogui -c bench0.py > bench0.log 2>&1
 	tail -8 bench0.log
+
+bench1:
+	@echo running bench1.py ...
+	time $(CASA) --nogui -c bench1.py > bench1.log 2>&1
+	tail -8 bench1.log
