@@ -36,7 +36,7 @@ if False:
     execfile('/astromake/opt/casa/Nordic_Tools/casairing_1.1/mytasks.py')
 
 
-#   QAC version 13-mar-2018  
+#   QAC version 18-mar-2018  
 try:
     if sys.path[0] != "":   sys.path.insert(0,'')                  # ipython5 took this out, we put it back
     qac_root  = os.environ['HOME'] + '/.casa/QAC'                  # SET THIS TO YOUR LOCATION OF QAC or use a symlink
