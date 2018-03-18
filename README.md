@@ -1,15 +1,15 @@
 # Quick Array Combinations (QAC)
 
-There are a number of techniques around to combine interferometric
-array data, in particular adding short spacings information.  The
-"QAC" functions (they are not formally CASA tasks, but use CASA) hide
-some of the complexity of writing CASA scripts and provide a simple
-interface to array combinations.
+QAC provides a set of functions that mostly call CASA tools and tasks
+to help you doing combining data from single dish and interferometer
+data. QAC hides some of the complexity of writing CASA scripts and
+provide a simple interface to array combination.
 
-The project was born alongside the TP2VIS project, where it was used
-to provide a number of examples, and regression tests. We still keep
-these within QAC as they are not distributed with
-[TP2VIS](https://github.com/tp2vis/distribute).
+The project was conceived alongside the TP2VIS project, where it was
+used to provide an easier way to call CASA, and perform regression
+tests. We still keep these within QAC as they are not distributed with
+[TP2VIS](https://github.com/tp2vis/distribute). In an earlier version
+these functions were called QTP.
 
 See the
 [INSTALL](INSTALL)
