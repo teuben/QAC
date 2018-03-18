@@ -40,20 +40,20 @@ if True:
 
 # joint deconvolution tclean (use the **line dictionary to pass other parameters to tclean)
 line['scales'] = [0]
-qac_clean('bench0/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_alma=True,**line)
+qac_clean('bench0/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=True,**line)
 # JvM tweak
-tp2vistweak('bench0/clean/tpalma', 'bench0/clean/tpalma_2')
+tp2vistweak('bench0/clean/tpint', 'bench0/clean/tpint_2')
 # classic feather
-qac_feather('bench0','bench0/clean/alma_2.image',tpim2)
+qac_feather('bench0','bench0/clean/int_2.image',tpim2)
 # Faridani's SSC
-qac_ssc('bench0','bench0/clean/alma_2.image',tpim2, regrid=True, cleanup=False)
+qac_ssc('bench0','bench0/clean/int_2.image',tpim2, regrid=True, cleanup=False)
 
 # plot various comparisons; difference maps are in the 3rd column of the plot_grid
-i1    = 'bench0/clean/alma.image'
-i2    = 'bench0/clean/tpalma.image'
-i3    = 'bench0/clean/alma_2.image'
-i4    = 'bench0/clean/tpalma_2.image'
-i5    = 'bench0/clean/tpalma_2.tweak.image'
+i1    = 'bench0/clean/int.image'
+i2    = 'bench0/clean/tpint.image'
+i3    = 'bench0/clean/int_2.image'
+i4    = 'bench0/clean/tpint_2.image'
+i5    = 'bench0/clean/tpint_2.tweak.image'
 i6    = 'bench0/feather.image'
 i7    = 'bench0/ssc.image'
 ygrid = ['7&12 + tp', '7&12 iter','7&12&tp iter','tweak', 'feather', 'ssc']
@@ -72,8 +72,8 @@ r = [
 
 eps = None
 qac_stats('bench0/tp.im',                     r[0], eps)
-qac_stats('bench0/clean/alma.image',          r[1], eps)
-qac_stats('bench0/clean/tpalma.image',        r[2], eps)
-qac_stats('bench0/clean/tpalma_2.tweak.image',r[3], eps)
+qac_stats('bench0/clean/int.image',           r[1], eps)
+qac_stats('bench0/clean/tpint.image',         r[2], eps)
+qac_stats('bench0/clean/tpint_2.tweak.image', r[3], eps)
 qac_stats('bench0/ssc.image',                 r[4], eps)
 qac_stats('bench0/feather.image',             r[5], eps)

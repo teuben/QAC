@@ -74,9 +74,9 @@ for arg in qac_argv(sys.argv):
 tpms   = test + '/tp.ms'
 ptg    = test + '.ptg'
 if alma == 1 or plot == 1:
-    do_alma = True
+    do_int = True
 else:
-    do_alma = False
+    do_int = False
 
 #   make sure all the files we need are here
 QAC.assertf(tpim)
@@ -94,42 +94,42 @@ tp2vispl([tpms,ms07,ms12],outfig=test+'/tp2vispl_rms.png')
 
 if clean == 1:
     print "Continuing benchmark with clean=1"
-    qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_alma=do_alma,**line)
+    qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,**line)
     if tweak == 1:
         print "Continuing benchmark with tweak=1"
         # loop over all 2nd and higher iterations and tweak them 
         for i in range(1,len(niter)): 
-            inamed = test+'/clean/tpalma'
-            inamec = test+'/clean/tpalma_%d' % (i+1)
+            inamed = test+'/clean/tpint'
+            inamec = test+'/clean/tpint_%d' % (i+1)
             tp2vistweak(inamed,inamec)
-            iname = test+'/clean/tpalma_%d.tweak.image' % (i+1)
+            iname = test+'/clean/tpint_%d.tweak.image' % (i+1)
             qac_plot(inamec+'.image')
     for i in range(0,len(niter)): 
         if i==0:
-            iname = test+'/clean/tpalma.image'
+            iname = test+'/clean/tpint.image'
         else:
-            iname = test+'/clean/tpalma_%d.image' % (i+1)
+            iname = test+'/clean/tpint_%d.image' % (i+1)
             qac_stats(iname)
     if tweak == 1:
         for i in range(1,len(niter)): 
-            iname = test+'/clean/tpalma_%d.tweak.image' % (i+1)
+            iname = test+'/clean/tpint_%d.tweak.image' % (i+1)
             qac_stats(iname)
 
 # regression only valid with no cmdline argument
 r1 = "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479"
 r2 = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624 0.41929447650909424 383.60327838373536"   # 5.2.1
 
-qac_stats(test+'/clean/tpalma.image')
-qac_stats(test+'/clean/tpalma_2.tweak.image', r2)
+qac_stats(test+'/clean/tpint.image')
+qac_stats(test+'/clean/tpint_2.tweak.image', r2)
 
 # final plot if enough data was accumulated for this comparison
 if plot == 1:
     print "Plotting benchmark comparison"
-    a1=test+'/clean/alma.image'
-    b1=test+'/clean/tpalma.image'
-    c1=test+'/clean/alma_2.image'
-    d1=test+'/clean/tpalma_2.image'
-    e1=test+'/clean/tpalma_2.tweak.image'
+    a1=test+'/clean/int.image'
+    b1=test+'/clean/tpint.image'
+    c1=test+'/clean/int_2.image'
+    d1=test+'/clean/tpin_2.image'
+    e1=test+'/clean/tpint_2.tweak.image'
 
     images = [a1,b1,   a1,c1,   b1,d1,      e1,d1]
     y      = ['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
