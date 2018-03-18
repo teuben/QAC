@@ -1,11 +1,12 @@
 #
 #  This is a snippet of python code you can place in ~/.casa/init.py
-#  to automatically start up QAC in your CASA session.
-#  Check future versions of the QAC/casa.init.py code if
-#  their procedure has not changed.
-#
-#  The first time you can do:
+#  to automatically start up QAC in your CASA session. For example
+#  the first time you can do:
 #       cat casa.init.py >> ~/.casa/init.py
+#
+#  Even better, you can directly execfile this
+#       execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')
+#  assuming you have placed QAC (or a symlink) in ~/.casa
 #
 #  A few other common examples of enhancing your CASA have been given
 #  but not activated since you will need to install them and put in
@@ -14,17 +15,18 @@
 
 import os, sys
 
+# https://casaguides.nrao.edu/index.php/Analysis_Utilities
 if False:
     print "Adding au"
     sys.path.append("/astromake/opt/casa/analysis_scripts")
     import analysisUtils as au
 
+# https://www.oso.nordic-alma.se/software-tools.php
 if False:
     print "Adding uvm"
     sys.path.append("/astromake/opt/casa/Nordic_Tools")
     import uvmultifit as uvm
 
-# https://www.oso.nordic-alma.se/software-tools.php
 if False:
     print "Adding SD2vis_1.4"
     execfile("/home/teuben/.casa/SD2vis_1.4/mytasks.py")
