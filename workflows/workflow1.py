@@ -57,7 +57,7 @@ ms12  = 'cloud197_aver_12.ms'
 
 ptg   = 'cloud197.ptg'
 
-new_weight  = True           # apply our new weights (DANGER: need to start from the calib_ files)
+new_weight  = False          # apply our new weights (DANGER: need to start from the calib_ files)
 nvgrp       = 4              # samples for tp2vis (14' for 16,   9' for 4, 8' for 1)
     
 #   report
@@ -92,6 +92,9 @@ qac_log("SUMMARY-2")
 #  summary again of what goes into tp2vis
 qac_summary(tpim,[ms07,ms12])
 
+# See   https://casaguides.nrao.edu/index.php/DataWeightsAndCombination
+# these data need to be re-weighted
+# Tsuyoshi now claims the weights in the calib_ files have been processes with statwt()
 if new_weight:
     qac_log("WEIGHT 7/12m")
     # set weights for 7m and 12m, classic style
@@ -121,8 +124,8 @@ qac_clean1('test1/clean_19',ms12,phasecenter=phasecenter,niter=[0,1000])
 
 #
 qac_log("CLEAN clean1")
-qac_clean('test1/clean1','test1/tp.ms',[ms07,ms12],nsize,pixel,niter=0,phasecenter=phasecenter,do_alma=True,**line)
-qac_beam('test1/clean1/tpalma.psf',plot='test1/clean1/qac_beam.png',normalized=True)
+qac_clean('test1/clean1','test1/tp.ms',[ms07,ms12],nsize,pixel,niter=0,phasecenter=phasecenter,do_int=True,**line)
+qac_beam('test1/clean1/tpint.psf',plot='test1/clean1/qac_beam.png',normalized=True)
 
 
 qac_log("TP2VISTWEAK")
@@ -135,11 +138,11 @@ tp2viswt('test1/tp.ms')
 # -> 0.010785 
 qac_log("CLEAN clean2")
 qac_clean('test1/clean2', 'test1/tp.ms',[ms07,ms12],nsize,pixel,niter=[0,1000,3000,6000],phasecenter=phasecenter,**line)
-qac_beam('test1/clean2/tpalma.psf',plot='test1/clean2/qac_beam.png',normalized=True)
+qac_beam('test1/clean2/tpint.psf',plot='test1/clean2/qac_beam.png',normalized=True)
 
-tp2vistweak('test1/clean2/tpalma','test1/clean2/tpalma_2')
-tp2vistweak('test1/clean2/tpalma','test1/clean2/tpalma_3')
-tp2vistweak('test1/clean2/tpalma','test1/clean2/tpalma_4')
+tp2vistweak('test1/clean2/tpint','test1/clean2/tpint_2')
+tp2vistweak('test1/clean2/tpint','test1/clean2/tpint_3')
+tp2vistweak('test1/clean2/tpint','test1/clean2/tpint_4')
 
 
 # standard plot (figure 5 in paper)
@@ -152,7 +155,7 @@ im1 = 'test1/clean_19/dirtymap_2.image'
 qac_plot(im1, channel=32, range=[-0.1,0.7],plot='cloud197_fig6a.png')
 qac_plot(im1, channel=30, range=[-0.1,0.7],plot='cloud197_fig6c.png')
 qac_plot(im1, channel=28, range=[-0.1,0.7],plot='cloud197_fig6e.png')
-im2 = 'test1/clean2/tpalma_2.tweak.image'
+im2 = 'test1/clean2/tpint_2.tweak.image'
 qac_plot(im2, channel=32, range=[-0.1,0.7],plot='cloud197_fig6b.png')
 qac_plot(im2, channel=30, range=[-0.1,0.7],plot='cloud197_fig6d.png')
 qac_plot(im2, channel=28, range=[-0.1,0.7],plot='cloud197_fig6f.png')
@@ -239,12 +242,12 @@ qac_stats(tpim,                               r[3], eps)
 qac_stats('test1/clean_07/dirtymap.image',    r[4], eps)
 qac_stats('test1/clean_12/dirtymap.image',    r[5], eps)
 qac_stats('test1/dirtymap.image',             r[6], eps)
-qac_stats('test1/clean1/tpalma.image',        r[9], eps)
-qac_stats('test1/clean2/tpalma.image',        r[11], eps)
-qac_stats('test1/clean2/tpalma_2.image',      r[12], eps)
-qac_stats('test1/clean2/tpalma_3.image',      r[13], eps)
-qac_stats('test1/clean2/tpalma_4.image',      r[14], eps)
-qac_stats('test1/clean2/tpalma_2.tweak.image',r[15], eps, pb='test1/clean2/tpalma.pb')
-qac_stats('test1/clean2/tpalma_3.tweak.image',r[16], eps, pb='test1/clean2/tpalma.pb')
-qac_stats('test1/clean2/tpalma_4.tweak.image',r[17], eps, pb='test1/clean2/tpalma.pb')
+qac_stats('test1/clean1/tpint.image',        r[9], eps)
+qac_stats('test1/clean2/tpint.image',        r[11], eps)
+qac_stats('test1/clean2/tpint_2.image',      r[12], eps)
+qac_stats('test1/clean2/tpint_3.image',      r[13], eps)
+qac_stats('test1/clean2/tpint_4.image',      r[14], eps)
+qac_stats('test1/clean2/tpint_2.tweak.image',r[15], eps, pb='test1/clean2/tpint.pb')
+qac_stats('test1/clean2/tpint_3.tweak.image',r[16], eps, pb='test1/clean2/tpint.pb')
+qac_stats('test1/clean2/tpint_4.tweak.image',r[17], eps, pb='test1/clean2/tpint.pb')
 
