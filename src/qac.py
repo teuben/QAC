@@ -1856,6 +1856,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     # fig.tight_layout()   # @todo this didn't work
     i = 0
     # @todo need less whitespace between boxes
+    pl.subplots_adjust(hspace=0.1)
     for row in range(nrow):
         for col in range(ncol):
             f1 = fig.add_subplot(nrow,ncol,i+1)
