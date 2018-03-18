@@ -41,6 +41,10 @@ For example, the following commands would work just fine:
 The next time CASA starts, you will see the QAC routines are loaded,
 as well have access to the tp2vis routines.
 
+An even easier way is to use the following one liner in your ~/.casa/init.py
+script:
+    execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')
+
 
 FUTURE:
 -------
@@ -49,12 +53,13 @@ In the current CASA environment there are two other ways QAC could be
 installed:
  
 - the "buildmytasks" method (supposedly deprecated?)
-- the "setup.py" method (e.g. ADMIT uses this)
+- python's "setup.py" method (e.g. ADMIT uses this)
 
 but none are supported in this development version of QAC. They might
 be in some future release, depending on further development of CASA.
 As it stands now, using the execfile() style to load the correct files
-is the more pragmatic approach.
+is the more pragmatic approach, well realizing this will have to be
+replaced when CASA switches to Python 3.
 
 
 
