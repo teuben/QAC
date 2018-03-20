@@ -853,10 +853,11 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     if niter >= 0:
         cmd1 = 'rm -rf %s.*' % outim
         os.system(cmd1)
-        tclean(vis=outms,
+        tclean(vis=outms,                         # tclean for just qac_alma()
                imagename=outim,
                niter=niter,
                gridder='mosaic',
+               deconvolver = 'clark',
                imsize=imsize,
                cell=cell,
                restoringbeam  = restoringbeam,
@@ -870,6 +871,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
             exportfits(outim+'.image',outim+'.fits')
 
     return outms
+
     #-end of qac_alma()
 
 def qac_tpdish(name, size):
@@ -1022,11 +1024,17 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     weighting = 'natural'
-
-    tclean(vis = outfile,
+    if 'scales' in line.keys():
+        deconvolver = 'multiscale'
+    else:
+        deconvolver = 'hogbom'        
+        deconvolver = 'clark'
+    
+    tclean(vis = outfile,                              # tclean() just for qac_tp_vis()
            imagename      = dirtymap,
            niter          = niter,
            gridder        = 'mosaic',
+           deconvolver    = deconvolver,
            imsize         = imsize,
            cell           = cell,
            restoringbeam  = restoringbeam,           
@@ -1143,30 +1151,32 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     #-end of qac_tp_otf()    
 
 
-def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() on one MS
+
+    Required:
     
     project - new directory for this  (it is removed before starting)
     ms      - a single MS (or a list, but no concat() is done)
 
-    imsize       512  (list of 2 is allowed if you need rectangular)
-    pixel        0.5
-    niter        0 or more ; @todo   can also be a list, in which case tclean() will be returning results for each niter
+    Optional:
+    
+    imsize       512  (list of 2 is allowed if you need rectangular area)
+    pixel        0.5 arcssec
+    niter        0 or more, can be a list
     weighting    "natural"
+    startmodel   Jy/pixel starting model [ignored in clean() mode]
     phasecenter  ""     (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
-    **line
+    t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
+    **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
     """
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
     outim1 = '%s/dirtymap' % project
-    #
-    imsize    = QAC.imsize2(imsize)
-    cell      = ['%garcsec' % pixel]
-    # weighting = 'natural'
-    # weighting = 'uniform'
-    #
-    vis1 = ms
+    imsize = QAC.imsize2(imsize)
+    cell   = ['%garcsec' % pixel]
+    vis1   = ms
     #
     if True:
         try:
@@ -1186,7 +1196,12 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         niters = niter
     else:
         niters = [niter]
-
+    if 'scales' in line.keys():
+        deconvolver = 'multiscale'
+    else:
+        deconvolver = 'hogbom'
+        deconvolver = 'clark'
+        
     if type(ms) != type([]):
         vptable = ms + '/TP2VISVP'
         if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
@@ -1203,32 +1218,57 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         use_vp = False        
         vptable = None
 
-    restart = True
-    for niter in niters:
-        print("TCLEAN(niter=%d)" % niter)
-        tclean(vis             = vis1,
-               imagename       = outim1,
-               niter           = niter,
-               gridder         = 'mosaic',
-               imsize          = imsize,
-               cell            = cell,
-               restoringbeam   = restoringbeam,           
-               stokes          = 'I',
-               pbcor           = True,
-               phasecenter     = phasecenter,
-               vptable         = vptable,
-               weighting       = weighting,
-               specmode        = 'cube',
-               startmodel      = startmodel, 
-               restart         = restart,
-               **line)
-        startmodel = ""
-        restart = False
-    
+    if t == True:
+        # tclean() mode
+        restart = True
+        for niter in niters:
+            print("TCLEAN(niter=%d)" % niter)
+            tclean(vis             = vis1,
+                   imagename       = outim1,
+                   niter           = niter,
+                   gridder         = 'mosaic',
+                   deconvolver     = deconvolver,
+                   imsize          = imsize,
+                   cell            = cell,
+                   restoringbeam   = restoringbeam,           
+                   stokes          = 'I',
+                   pbcor           = True,
+                   phasecenter     = phasecenter,
+                   vptable         = vptable,
+                   weighting       = weighting,
+                   specmode        = 'cube',
+                   startmodel      = startmodel, 
+                   restart         = restart,
+                   **line)
+            startmodel = ""
+            restart = False
+    else:
+        # old clean() ode
+        i = 0
+        for niter in niters:
+            print("CLEAN(niter=%d)" % niter)
+            if i == 0:
+                i = i + 1
+                imagename = outim1
+            else:
+                i = i + 1 
+                imagename = "%s_%d" % (outim1,i)
+            clean(vis             = vis1,
+                  imagename       = outim1,
+                  niter           = niter,
+                  imagermode      = 'mosaic',
+                  imsize          = imsize,
+                  cell            = cell,
+                  restoringbeam   = restoringbeam,           
+                  stokes          = 'I',
+                  pbcor           = True,
+                  phasecenter     = phasecenter,
+                  weighting       = weighting,
+                  mode            = 'velocity',
+                  **line)
+        # for niter
+            
     print("Wrote %s with %s weighting" % (outim1,weighting))
-
-    if len(niters) == 1:
-        exportfits(outim1+'.image',outim1+'.fits')
     
     #-end of qac_clean1()
     
@@ -1255,16 +1295,13 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     #
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
-    # weighting = 'natural'
-    # weighting = 'uniform'    
     #
     vis1 = ms
-    if type(ms) == type([]):
+    if type(ms) == type([]):               # force the MS at the end, there is a problem when not !!!!
         vis2 =  ms  + [tp] 
     else:
         vis2 = [ms] + [tp] 
     # @todo    get the weights[0] and print them
-    # vis2.reverse()         # for debugging; in 5.0 it seems to be sort of ok,but small diffs can still be seen
     print("niter=" + str(niter))
     print("line: " + str(line))
     #
@@ -1273,6 +1310,12 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     else:
         niters = [niter]
     #
+    if 'scales' in line.keys():
+        deconvolver = 'multiscale'
+    else:
+        deconvolver = 'hogbom'
+        deconvolver = 'clark'
+    
     if do_int:
         print("Pure interferometer imaging using vis1=%s" % str(vis1))
         restart = True
@@ -1282,6 +1325,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
                    imagename      = outim1,
                    niter          = niter,
                    gridder        = 'mosaic',
+                   deconvolver    = deconvolver,
                    imsize         = imsize,
                    cell           = cell,
                    restoringbeam  = restoringbeam,               
@@ -1312,7 +1356,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         #concat(vis=vis2,concatvis=outms,copypointing=False,freqtol='10kHz')
         concat(vis=vis2,concatvis=outms,copypointing=False)
         vis2 = outms
-
+        
     restart = True
     for niter in niters:
         print("TCLEAN(niter=%d)" % niter)
@@ -1320,6 +1364,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
                imagename      = outim2,
                niter          = niter,
                gridder        = 'mosaic',
+               deconvolver    = deconvolver,               
                imsize         = imsize,
                cell           = cell,
                restoringbeam  = restoringbeam,           
