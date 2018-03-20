@@ -592,11 +592,12 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
     
     #-end of qac_stats()
     
-def qac_beam(im, normalized=False, plot=None):
+def qac_beam(im, normalized=False, chan=-1, plot=None):
     """ some properties of the PSF
 
     im:           image representing the beam (usually a .psf file)
     normalized:   if True, axes are arcsec and normalized flux
+    chan:         which channel to use [-1 means halfway cube]
     plot:         if set, this is the plot created, usually a png
 
     @todo   have an option to just print beam, no volume info
@@ -606,10 +607,16 @@ def qac_beam(im, normalized=False, plot=None):
         return
 
     h0 = imhead(im)
+    nx    = h0['shape'][0]
+    ny    = h0['shape'][1]
+    nz    = max(h0['shape'][2],h0['shape'][3])
+    if nz>1 and chan<0:
+        chan = nz//2
     pix2 = abs(h0['incr'][0] * h0['incr'][1] * apr * apr)      # pixel**2 (in arcsec)
     if 'perplanebeams' in h0:
-        bmaj = h0['perplanebeams']['beams']['*0']['*0']['major']['value']
-        bmin = h0['perplanebeams']['beams']['*0']['*0']['minor']['value']
+        chans = '*%d' % chan
+        bmaj = h0['perplanebeams']['beams'][chans]['*0']['major']['value']
+        bmin = h0['perplanebeams']['beams'][chans]['*0']['minor']['value']
         pix  = sqrt(pix2)
         nppb =  bof * bmaj*bmin/pix2        
     elif 'restoringbeam' in h0:
@@ -631,17 +638,18 @@ def qac_beam(im, normalized=False, plot=None):
 
     print("QAC_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor))
 
-    xcen = h0['refpix'][0]
-    ycen = h0['refpix'][1]
-    nx = h0['shape'][0]
-    ny = h0['shape'][1]
-    nz = max(h0['shape'][2],h0['shape'][3])
-    size = np.arange(nx/2-20)
-    flux = 0.0 * size
-    zero = flux * 0.0
+    xcen  = h0['refpix'][0]
+    ycen  = h0['refpix'][1]
+    nx    = h0['shape'][0]
+    ny    = h0['shape'][1]
+    nz    = max(h0['shape'][2],h0['shape'][3])
+    size  = np.arange(nx/2-20)
+    flux  = 0.0 * size
+    zero  = flux * 0.0
+    chans = str(chan)
     for i in size:
         box = '%d,%d,%d,%d' % (xcen-i,ycen-i,xcen+i,ycen+i)
-        flux[i] = imstat(im,chans='0',box=box)['sum'][0]/factor
+        flux[i] = imstat(im,chans=chans,box=box)['sum'][0]/factor
     print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux.max(),flux[-1],flux.argmax()*pix))
     
     if plot != None:
@@ -1257,6 +1265,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
                   imagename       = outim1,
                   niter           = niter,
                   imagermode      = 'mosaic',
+                  psfmode         = deconvolver,      # careful: we're borrowing the tclean deconvolver= here
                   imsize          = imsize,
                   cell            = cell,
                   restoringbeam   = restoringbeam,           
@@ -1268,7 +1277,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
                   **line)
         # for niter
             
-    print("Wrote %s with %s weighting" % (outim1,weighting))
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
     
     #-end of qac_clean1()
     
@@ -1341,6 +1350,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
             startmodel = ""
             restart = False
         print("Wrote %s with %s weighting" % (outim1,weighting))
+        print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))        
     else:
         print("Skipping pure interferometer imaging using vis1=%s" % str(vis1))
 
@@ -1380,7 +1390,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         startmodel = ""
         restart = False
 
-    print("Wrote %s with %s weighting" % (outim2,weighting))
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
 
     if do_concat and do_cleanup:
         print("Removing " + outms)
