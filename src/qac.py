@@ -1510,6 +1510,43 @@ def qac_smooth(project, skymodel, label="", niteridx=0):
 
     #-end of qac_smooth()
 
+def qac_analyze(project, imagename, niteridx=0):
+    """
+    helper function for using simanalyze without it running clean
+
+    has a hard time with the skymodel and dirtymaps being in different directories
+
+    project     project name/directory
+    imagename   dirty image or feathered image to compare to skymodel. input as a string without '.image'
+    niteridx    same convention as qac_smooth routine for grabbing the images from different iterations on tclean
+
+    @todo get this going with it running clean to see how it compares to our manual cleaning (qac_clean1)
+    """
+
+    ng_tag('analyze')
+
+    # if the niteridx is 0, then the niter label will be an empty string
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        # otherwise the niter label reflect the tclean naming convention
+        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
+        # to get the second iteration of tclean (niter=1000), niteridx = 1
+        niter_label = "_%s"%(niteridx + 1)
+
+
+    imagename = project + '/%s%s.image' %(imagename,niter_label)
+
+
+    simanalyze(project=project,
+               image=False,
+               imagename=imagename,
+               analyze=True,
+               overwrite=True)
+
+    #-end of qac_analyze()
+
+
 def qac_phasecenter(im):
     """
     return the map reference center as a phasecenter
