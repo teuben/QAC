@@ -35,7 +35,8 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def qac_version():
     """ qac helper functions """
-    print("qac: version 16-mar-2018")
+    print("qac: version 22-mar-2018")
+    print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
 
@@ -770,11 +771,22 @@ def qac_flag1(ms1, ms2):
     
     #-end of qac_flag1()
 
-def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None,cfg="", niter=-1, ptg = None):
+def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None):
     """
     really for the ngVLA design study
+
+    cfg = 0    compact array?
+    cfg = 1    core
+    cfg = 2    214
+    cfg = 3    VLB
     """
-    print("@todo")
+    cfg_name = ['@todo.cfg', 'SWcore.cfg', 'SW214.cfg', 'SWVLB.cfg']
+
+    cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
+    print("@todo %s " % cfg_file)
+
+    # @todo   need to grab the ideas how ng_generic was done. however, qac_alma has progressed more ??
+
     return None
     
 def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
@@ -1616,16 +1628,16 @@ def qac_summary(tp, ms=None, source=None, line=False):
 
     # print the image info   @todo
     print("QAC_SUMMARY:")
-    print("TP:",tp)
-    print('OBJECT:  ',h0['object'])
-    print('SHAPE:   ',h0['shape'])
-    print('CRVAL:   ',phasecenter)
-    print('CRVALd:  ',phasecenterd)
-    print('RESTFREQ:',restfreq[0]/1e9)
-    print("FREQ:    ",freq_values[0]/1e9,freq_values[-1]/1e9)
-    print("VEL:     ",vmin[0],vmax[0],dv)
-    print("VELTYPE: ",rft)
-    print("UNITS:   ",h0['bunit'])
+    print("TP:       " + tp)
+    print('OBJECT:   ' + h0['object'])
+    print('SHAPE:    ' + str(h0['shape']))
+    print('CRVAL:    ' + phasecenter)
+    print('CRVALd:   ' + phasecenterd)
+    print('RESTFREQ: ' + str(restfreq[0]/1e9) + " Ghz")
+    print("FREQ:     " + str(freq_values[0]/1e9) + " " + str(freq_values[-1]/1e9))
+    print("VEL:      " + str(vmin[0]) + " " + str(vmax[0]) + " " + str(dv))
+    print("VELTYPE:  " + rft)
+    print("UNITS:    " + h0['bunit'])
     
     # LIST OF MS (can be empty)
     for msi in ms_list:
