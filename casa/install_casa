@@ -1,0 +1,51 @@
+#! /bin/csh -f
+#
+#   Example casa install
+#
+#   7-mar-2018  Peter Teuben      initial version written
+#
+#
+#  TODO's:
+#  - test to check if everything was installed properly and working ok
+#
+
+#   make  it work for Linux and Darwin (MacOSX)
+set uname = `uname -s`
+
+if ($uname == Darwin) set uname = osx
+if ($uname == Linux)  set uname = linux
+
+set o1 =  https://casa.nrao.edu/download/distro/osx/release/10.12/casa-release-5.1.2-4-10.12.dmg.md5
+set o2 =  https://casa.nrao.edu/download/distro/osx/prerelease/10.13/casa-prerelease-5.3.0-89-10.13.dmg
+
+set l1 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.2-4.el7.tar.gz
+set l2 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.1-5.el7.tar.gz
+set l3 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.3.0-89.el7.tar.gz
+
+if ($uname == osx) then
+   echo Sorry, I cannot help you yet dave
+   echo get the dmg, e.g.
+   echo $o1
+   ecoh $o2
+   echo And drag the app into /Applications
+   exit 0
+endif
+
+set pre = https://casa.nrao.edu/download/distro/$uname/prerelease/el7/
+set rel = https://casa.nrao.edu/download/distro/$uname/release/el7/
+
+
+set url = $l1
+
+
+#  no changes below here
+
+curl $url | tar zxf -
+
+
+set root = `pwd`
+set path = ($root/bin $path); rehash
+
+#echo 'set path = ('$root'/bin $path); rehash' >> ../sd2018_start.csh
+#echo 'export PATH='$root'/bin:$PATH'          >> ../sd2018_start.sh
+
