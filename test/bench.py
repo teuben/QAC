@@ -118,9 +118,10 @@ if clean == 1:
 # regression only valid with no cmdline argument
 r1 = "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479"
 r2 = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624 0.41929447650909424 383.60327838373536"   # 5.2.1
+r3 = "0.0038308492108101041 0.021409590356922827 -0.048478055745363235 0.41353103518486023 383.4472095101716"    # clark instead of hogbom
 
 qac_stats(test+'/clean/tpint.image')
-qac_stats(test+'/clean/tpint_2.tweak.image', r2)
+qac_stats(test+'/clean/tpint_2.tweak.image', r3)
 
 # final plot if enough data was accumulated for this comparison
 if plot == 1:
@@ -135,4 +136,3 @@ if plot == 1:
     y      = ['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
     x      = ['*','*','-diff']
     qac_plot_grid(images,ncol=2,diff=10,box=[200,200,600,600],xgrid=x,ygrid=y,plot=test+'/bench-cmp.png')
-
