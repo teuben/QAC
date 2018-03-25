@@ -60,14 +60,17 @@ ygrid = ['7&12 + tp', '7&12 iter','7&12&tp iter','tweak', 'feather', 'ssc']
 box   = [300,300,600,600]
 qac_plot_grid([i1,i2, i1,i3, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp.png',diff=10.0)
 
+ygrid = ['7&12 + tp', '7&12&tp iter','tweak', 'feather', 'ssc']
+qac_plot_grid([i1,i2, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp.png',diff=10.0)
+
 # regression for casa 5.2.2-4 on RHEL7; the last column is the flux in Jy.km/s
 r = [
     '0.76510686740198042 1.4994149478897942 -0.43156760931015015 6.4568653106689453 15.995818049860048',
     '0.00015477320920210852 0.036285694517807124 -0.12811994552612305 0.37910208106040955 0.30861407063317348',
     '0.0081229104489462297 0.039351242931759012 -0.084907762706279755 0.42440503835678101 16.006177593355094',
-    '0.0034475503699085723 0.019158814084816258 -0.036495275795459747 0.35947218537330627 13.804154300264859',
-    '0.0036214721951210163 0.020606721088766405 -0.042894229292869568 0.35897329449653625 14.714903120723477',
-    '0.0036216214701859607 0.020609756591263156 -0.042896430939435959 0.35902613401412964 14.715509660826687',
+    '0.0034475581230451538 0.019158306153815516 -0.036498650908470154 0.35938364267349243 13.804185344189444',
+    '0.003621544863512184 0.020608074847993586 -0.042910866439342499 0.35887446999549866 14.715198389685481',
+    '0.0036216937188144204 0.020611108552564272 -0.042913056910037994 0.35892730951309204 14.715803224192939',
     ]
 
 eps = None
@@ -77,3 +80,24 @@ qac_stats('bench0/clean/tpint.image',         r[2], eps)
 qac_stats('bench0/clean/tpint_2.tweak.image', r[3], eps)
 qac_stats('bench0/ssc.image',                 r[4], eps)
 qac_stats('bench0/feather.image',             r[5], eps)
+
+if False:
+    # test symmetry, and if you tinker internally with deconvolver etc., also those differences.
+    # sadly, all these maps should be the same, but they come in 3 versions, the one where tpms
+    # is up front, being the worst offender.
+    niter = [0,1000]
+    qac_clean( 'bench0/clean11',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    qac_clean1('bench0/clean12',[tpms,ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    qac_clean1('bench0/clean13',[tpms,ms07,ms12],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    qac_clean1('bench0/clean14',[ms12,ms07,tpms],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    qac_clean1('bench0/clean15',[ms07,ms12,tpms],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    qac_clean1('bench0/clean16',[ms12,tpms,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    qac_clean1('bench0/clean17',[ms07,tpms,ms12],nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    #
+    qac_stats('bench0/clean11/tpint.image')
+    qac_stats('bench0/clean12/dirtymap.image')
+    qac_stats('bench0/clean13/dirtymap.image')
+    qac_stats('bench0/clean14/dirtymap.image')
+    qac_stats('bench0/clean15/dirtymap.image')
+    qac_stats('bench0/clean16/dirtymap.image')
+    qac_stats('bench0/clean17/dirtymap.image')
