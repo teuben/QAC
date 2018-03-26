@@ -1466,6 +1466,24 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     
     #-end of qac_clean()
 
+def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
+    """
+    call tp2vistweak for a niter-series of images with a commmon basename
+
+    project     project name, e.g. 'sky1/clean2'
+    name        basename of images, e.g. 'dirtymap', 'int', 'tpint'
+    niter       the corresponding niter list that belongs to how the images were made
+                First entry should be 0, correpsonding to the dirty map, the others
+                incrementally the niters, e.g. [0,100,1000,10000]
+    kwargs      passed to tp2vistweak(), typically just pbcut=0.8 now
+    """
+    dname = "%s/%s" % (project,name)
+    for i in range(len(niter)-1):
+        cname = "%s/%s_%d" % (project,name,i+2)
+        print("tweak %s %s " % (dname,cname))
+        tp2vistweak(dname,cname,**kwargs)
+    
+
 def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
     """
     Feather combination of a highres and lowres image
