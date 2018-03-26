@@ -33,7 +33,7 @@ t2v_arrays = {}
 
 # ALMA 12m array parameters
 apara = {'observatory':'ALMA',                  # observatory name
-         'antList':    ['DA','DV'],             # list of ant names (DA##, DV##)
+         'antList':    ['DA','DV','A00'],       # list of ant names (DA##, DV##, A##)    PM## also possible
          'dish':        12.0,                   # dish diam [meters]
          'fwhm100':     65.2,                   # fwhm@100GHz [56.5"@115.2GHz]
          'maxRad':     999.0}                   # cutoff rad of FoV [arcsec]
@@ -41,7 +41,7 @@ t2v_arrays['ALMA12'] = apara.copy()
 
 # ALMA 7m
 apara = {'observatory':'ALMA',
-         'antList':    ['CM'],                  # CM##
+         'antList':    ['CM','A00'],            # CM##  (A## are from simobserve)
          'dish':         7.0,
          'fwhm100':    105.0,                   # fwhm@100GHz [35"@300GHz]
          'maxRad':     999.0}
@@ -56,14 +56,16 @@ apara = {'observatory':'ALMA',
 t2v_arrays['ALMATP'] = apara.copy()
 
 # VIRTUAL TP2VIS array [for TP visibilities]
-if False:                                       # once vpmanager is fixed,
+use_vp = False
+if use_vp:
     apara = {'observatory':'VIRTUAL',           # a primary beam of 
              'antList':    ['VIRTUAL'],         # virtual interferometer
              'dish':        12.0,               # should be defined here.
              'fwhm100':     65.2,
              'maxRad':     150.0}
     vp.reset()                                  # reset vpmanager
-    vp.setpbgauss(telescope=apara['antList'][0],# set PB of VI in vpmanager
+    vp.setpbgauss(telescope='OTHER',
+                  othertelescope=apara['antList'][0],# set PB of VI in vpmanager
                   halfwidth=str(apara['fwhm100'])+'arcsec',
                   maxrad=str(apara['maxRad'])+'arcsec',
                   reffreq='100.0GHz',
@@ -83,7 +85,7 @@ t2v_arrays['VIRTUAL']    = apara.copy()
 ## =================
     
 def tp2vis_version():
-    print "10-mar-2018"
+    print "25-mar-2018"
 
    
 def axinorder(image):
@@ -161,11 +163,14 @@ def getptg(pfile):
 
 def guessarray(msfile):
     """ guess array name from MS
-    this function uses the definitions of known arrays at the beggening
-    of this code.
+    this function uses the definitions of known arrays at the beginning
+    of this code. See t2v_arrays[]
 
     msfile:    measurement set name
     Helper function for tp2vis()
+
+    CAVEAT: analysis of the ANTENNA table is no guarentee that a dish
+    is used in the correlations.
     """
 
     # Read antenna names in MS
@@ -174,11 +179,12 @@ def guessarray(msfile):
         return None
     tb.open(msfile+'/ANTENNA')                  # open MS
     antnames = tb.getcol('NAME')                # read ant names
+    sizes = tb.getcol('DISH_DIAMETER')          # and dish sizes
     tb.close()                                  # close MS
 
     # Calculate likelihood of each array type
     probs = {}
-    for iarray in t2v_arrays.keys():            # over known arrays
+    for iarray in t2v_arrays.keys():            # loop over known arrays
         nant = 0                                # reset counter
         for iant in t2v_arrays[iarray]['antList']:  # how many ants of each
             nant += sum([(iant in x) for x in antnames]) # known array in MS
@@ -187,6 +193,11 @@ def guessarray(msfile):
 
     # Pick array and return
     mostlikelyarray = max(probs,key=probs.get)  # most likely array
+
+    if antnames[0] == 'A00':                    # special case for simobserve()
+        if sizes[0] ==  7.0: mostlikelyarray = 'ALMA07'
+        if sizes[0] == 12.0: mostlikelyarray = 'ALMA12'
+        print "guessarray %s %g -> %s" % (antnames[0],sizes[0],mostlikelyarray)
 
     return mostlikelyarray
 
@@ -277,7 +288,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     cb_fwidth  = cb_fwidth /1.0e9
     cb_reffreq = cb_reffreq/1.0e9
 
-    # Parameters for TP and virtula interferometer (VI) primary beams
+    # Parameters for TP and virtual interferometer (VI) primary beams
     # ===============================================================
 
     twopi  = 2.0*np.pi
@@ -428,8 +439,13 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     fld_distance    = '0m'                      # infinite distance
 
     # Observatory
-    obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory
-    obs_obspos      = me.observatory(obs_obsname)          # coordinate
+    if use_vp:
+        obs_obsname     = 'ALMA'
+        obs_obspos      = me.observatory(obs_obsname)          # coordinate
+        obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory        
+    else:
+        obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory
+        obs_obspos      = me.observatory(obs_obsname)          # coordinate
         
     # Telescopes
     tel_pbFWHM      = t2v_arrays['VIRTUAL']['fwhm100']*(100./spw_fstart) # asec
@@ -484,6 +500,14 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         np.random.seed(seed)
   
     sm.open(outfile)
+    
+    if use_vp:
+        vptable = outfile + '/TP2VISVP'
+        vp.saveastable(vptable)
+    else:
+        vptable = None
+
+    print obs_obsname, obs_obspos, tel_antname, tel_mounttype, tel_coordsystem, tel_antdiam
 
     sm.setconfig(telescopename=obs_obsname,
                 referencelocation=obs_obspos,
@@ -625,7 +649,11 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # ================================================
 
     sm.setdata(fieldid=range(0,npnt))           # set all fields
-    sm.setvp(dovp=True,usedefaultvp=False)      # set primary beam
+    if use_vp:                                  # set primary beam
+        # according to Kumar
+        sm.setvp(dovp=True,usedefaultvp=False, vptable=vptable)
+    else:
+        sm.setvp(dovp=True,usedefaultvp=False)
 
     print "Running sm.predict"                  # Replace amp/pha - key task
     if deconv:
@@ -1232,7 +1260,7 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8):
 ## TP2VISPL: Plot visibility weights
 ## =================================
 
-def tp2vispl(mslist, ampPlot=True, show=False, outfig='plot_tp2viswt.png'):
+def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=False, outfig='plot_tp2viswt.png'):
     """
     Plotting TP, 7m, and 12m MSs
 
@@ -1254,10 +1282,10 @@ def tp2vispl(mslist, ampPlot=True, show=False, outfig='plot_tp2viswt.png'):
     # Parameters
     # ----------
 
-    bin      =   0.5                            # rad bin width for ave [meter]
-    uvMax    = 150.0                            # max uv for plot [meter]
-    uvZoom   =  50.0                            # max uv for zoom plot [meter]
-    ampTPMax =   1.0                            # max TP amplitude
+    bin      = uvbin                            # rad bin width for ave [meter]
+    uvMax    = uvmax                            # max uv for plot [meter]
+    uvZoom   = uvzoom                           # max uv for zoom plot [meter]
+    ampTPMax = 1.0                              # max TP amplitude ( will auto-scale)
 
     # Separate MSs and find 
     # ---------------------
