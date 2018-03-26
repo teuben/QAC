@@ -289,11 +289,19 @@ def qac_line(im):
     return {'start' : start, 'width' : width, 'nchan' : nchan, 'restfreq' : restfreq}
 
 def qac_fits(image,overwrite=True):
-    """ silly fits shortcut
+    """ exportfits shortcut, appends the extension ".fits" to a casa image
+        also handles a list of images
+
+        image     casa image, or list of images, to be converted to fits
     """
-    ff = image + '.fits'
-    exportfits(image,ff,overwrite=overwrite)
-    print("Wrote " + ff)
+    if type(image) == type([]):
+        ii = image
+    else:
+        ii = [image]
+    for i in ii:
+        fi = i + '.fits'
+        exportfits(i,fi,overwrite=overwrite)
+        print("Wrote " + fi)
 
 def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     """
@@ -773,21 +781,20 @@ def qac_flag1(ms1, ms2):
 
 def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None):
     """
-    really for the ngVLA design study
+    for the ngVLA design study
 
     cfg = 0    compact array?
-    cfg = 1    core
-    cfg = 2    214
-    cfg = 3    VLB
+    cfg = 1    SWcore
+    cfg = 2    SW214
+    cfg = 3    SWVLB
     """
     cfg_name = ['@todo.cfg', 'SWcore.cfg', 'SW214.cfg', 'SWVLB.cfg']
 
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
     print("@todo %s " % cfg_file)
 
-    # @todo   need to grab the ideas how ng_generic was done. however, qac_alma has progressed more ??
-
-    return None
+    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, niter=niter, ptg = ptg)
+    return outms
     
 def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
     """
@@ -811,7 +818,13 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     # since we call it incrementally, make sure directory exists
     os.system('mkdir -p %s' % project)
-    
+
+    if cfg == 0:
+        visweightscale = (7.0/12.0)**2
+    else:
+        visweightscale = 1.0
+        
+    #                                                  os.getenv("CASAPATH").split()[0]+"/data/alma/simmos/"    
     data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
     if cfg==0:
         cfg = 'aca.cycle%d' % (cycle)                # cfg=0 means ACA (7m)
@@ -820,11 +833,36 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     print("CFG: " + cfg)
 
+    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg)
+    
+    if visweightscale != 1.0:
+        print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
+        ms2 = ms1 + '.tmp'
+        os.system('mv %s %s' % (ms1,ms2))
+        concat(ms2, ms1, visweightscale=visweightscale)
+        os.system('rm -rf %s' % ms2)
 
-    # for tclean (only used if niter>=0)
+    return outms
+
+    #-end of qac_alma()
+    
+def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None):
+    """
+    generic interferometer; called by qac_vla() and qac_alma()
+
+    project     - name (one directory deep) to which files are accumulated - will accumulate
+    skymodel    - jy/pixel map
+    imsize      -
+    pixel       -
+    phasecenter - where to place the reference pixel
+    
+    """
+
+     # for tclean (only used if niter>=0)
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     outms     = '%s/%s.%s.ms'  % (project,project,cfg)
+              # '%s/%s.%s.ms' % (project,project,cfg[cfg.rfind('/')+1:])
     outms2    = '%s/%s.%s.ms2' % (project,project,cfg)       # debug
     outim     = '%s/dirtymap' % (project)
     do_fits   = False          # output fits when you clean?
@@ -845,12 +883,19 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     graphics    = "file"       # "both" would do "screen" as well
     user_pwv    = 0.0
 
+    incell      = "%garcsec" % pixel
+    mapsize     = ["%garcsec" % (pixel*imsize[0])  ,"%garcsec"  % (pixel*imsize[1]) ]
+
+
     # we allow accumulation now ..
     # ...make sure old directory is gone
     # ...os.system("rm -rf %s" % project)
 
     if ptg == None:
         simobserve(project, skymodel,
+               indirection=phasecenter,
+               incell=incell,
+               mapsize=mapsize,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -859,6 +904,9 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     else:
         simobserve(project, skymodel,
                setpointings=False, ptgfile=ptgfile,
+               indirection=phasecenter,
+               incell=incell,
+               mapsize=mapsize,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -892,9 +940,9 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     return outms
 
-    #-end of qac_alma()
+    #-end of qac_int_generic()
 
-def qac_tpdish(name, size):
+def qac_tpdish(name, size=None):
     """
     A patch to work with dishes that are not 12m (currently hardcoded in tp2vis.py)
 
@@ -903,6 +951,12 @@ def qac_tpdish(name, size):
     qac_tpdish('ALMATP',100.0)
     qac_tpdish('VIRTUAL',100.0)
     """
+    if size == None:
+        if name in t2v_arrays.keys():
+            print(t2v_arrays[name])
+        else:
+            print("'%s' not a valid dish name, valid are : %s" % (name,str(t2v_arrays.keys())))
+        return
     old_size = t2v_arrays[name]['dish']
     old_fwhm = t2v_arrays[name]['fwhm100']
     r = size/old_size
@@ -945,8 +999,10 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
                      2   debug mode, keep all intermediate MS files
                      @todo   there is a flux difference between fix=0 and fix=1 in dirtymap
       deconv         Use the deconvolved map as model for the simulator
+                     Within CASA you can use use deconvolve() to construct a Jy/pixel map.
 
-      line           Dictionary of tclean() parameters
+      line           Dictionary of tclean() parameters, usually the line parameters are useful, e.g.
+                     line = {"restfreq":"115.271202GHz","start":"1500km/s", "width":"5km/s","nchan":5}
     """
     # assert input files
     QAC.assertf(imagename)
@@ -1467,12 +1523,18 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
     #-end of qac_feather()
 
-def qac_smooth(project, skymodel, label="", niteridx=0):
+def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux = True):
     """
     helper function to smooth skymodel using beam of feathered image
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
 
-    @todo  feather is looked for, but it also be a tp2vis? or other method?
+    project    typical  "sky3/clean2", somewhere where tclean has run
+    skymodel   a skymodel
+    name       basename, typically feather, or dirtymap, or tpint.   Default is feather
+    label      only used with OTF beams
+    niteridx   0,1,2,.... if a niter[] was used so it can be inherited in the basename
+    do_flux    if True, do the comparison in flux flat (image.pbcor) space, else noise flat (.image)
+
     """
     qac_tag("smooth")
     
@@ -1482,20 +1544,29 @@ def qac_smooth(project, skymodel, label="", niteridx=0):
         niter_label = "_%s"%(niteridx + 1)
 
     # feather image path/filename
-    feather = '%s/feather%s%s.image.pbcor' % (project, label, niter_label)
+    if do_flux:
+        feather = '%s/%s%s%s.image.pbcor' % (project, name, label, niter_label)
+    else:
+        feather = '%s/%s%s%s.image'       % (project, name, label, niter_label)
+        pb      = '%s/%s%s.pb'            % (project, name, niter_label)
     # projectpath/filename for a temporary image that will get deleted
     out_tmp = '%s/skymodel_tmp.image' % project
     # projectpath/filename for final regrid jy/beam image
-    out_smoo = '%s/skymodel.smooth%s%s.image' % (project, label, niter_label)
+    out_smoo = '%s/skymodel%s%s.smooth.image' % (project, label, niter_label)
     # projectpath/filename for subtracted image
-    out_resid= '%s/feather%s%s.residual' % (project, label, niter_label)
+    out_resid= '%s/skymodel%s%s.residual' % (project, label, niter_label)
 
     # grab beam size and position angle from feather image
+    if not QAC.exists(feather):
+        print("QAC_SMOOTH: %s does not exist" % feather)
+        return None
+    
     h0 = imhead(feather, mode='list')
     bmaj = h0['beammajor']['value']
     bmin = h0['beamminor']['value']
     pa   = h0['beampa']['value']
-
+    print("QAC_SMOOTH: using %s with beam %g x %g @ %g" % (feather,bmaj,bmin,pa))
+            
     # convolve skymodel with feather beam
     imsmooth(imagename=skymodel,
              kernel='gauss',
@@ -1512,13 +1583,21 @@ def qac_smooth(project, skymodel, label="", niteridx=0):
              overwrite=True)
 
     # subtract feather from smoothed skymodel to get a residual map
-    immath(imagename=[out_smoo, feather], 
-           expr='IM0-IM1',
-           outfile=out_resid)
+    if do_flux:
+        immath(imagename=[out_smoo, feather], 
+               expr='IM0-IM1',
+               outfile=out_resid)
+    else:
+        immath(imagename=[out_smoo, feather, pb], 
+               expr='IM0*IM2-IM1',
+               outfile=out_resid)
+        
     # ng_math(out_resid, out_smoo, '-', feather)
 
     # remove the temporary image that was created
     os.system('rm -fr %s'%out_tmp)
+
+    return out_smoo
 
     #-end of qac_smooth()
 
