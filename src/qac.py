@@ -833,7 +833,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     print("CFG: " + cfg)
 
-    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg)
+    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg)
     
     if visweightscale != 1.0:
         print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
@@ -842,7 +842,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
         concat(ms2, ms1, visweightscale=visweightscale)
         os.system('rm -rf %s' % ms2)
 
-    return outms
+    return ms1
 
     #-end of qac_alma()
     
