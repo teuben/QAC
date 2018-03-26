@@ -833,7 +833,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     print("CFG: " + cfg)
 
-    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg)
+    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg)
     
     if visweightscale != 1.0:
         print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
@@ -842,7 +842,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
         concat(ms2, ms1, visweightscale=visweightscale)
         os.system('rm -rf %s' % ms2)
 
-    return outms
+    return ms1
 
     #-end of qac_alma()
     
@@ -1465,6 +1465,24 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         shutil.rmtree(outms)
     
     #-end of qac_clean()
+
+def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
+    """
+    call tp2vistweak for a niter-series of images with a commmon basename
+
+    project     project name, e.g. 'sky1/clean2'
+    name        basename of images, e.g. 'dirtymap', 'int', 'tpint'
+    niter       the corresponding niter list that belongs to how the images were made
+                First entry should be 0, correpsonding to the dirty map, the others
+                incrementally the niters, e.g. [0,100,1000,10000]
+    kwargs      passed to tp2vistweak(), typically just pbcut=0.8 now
+    """
+    dname = "%s/%s" % (project,name)
+    for i in range(len(niter)-1):
+        cname = "%s/%s_%d" % (project,name,i+2)
+        print("tweak %s %s " % (dname,cname))
+        tp2vistweak(dname,cname,**kwargs)
+    
 
 def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
     """
