@@ -35,7 +35,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def qac_version():
     """ qac helper functions """
-    print("qac: version 22-mar-2018")
+    print("qac: version 26-mar-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -783,12 +783,12 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     """
     for the ngVLA design study
 
-    cfg = 0    compact array?
+    cfg = 0    ngvlaSA_2b_utm or ngvlaSA_2b
     cfg = 1    SWcore
     cfg = 2    SW214
     cfg = 3    SWVLB
     """
-    cfg_name = ['@todo.cfg', 'SWcore.cfg', 'SW214.cfg', 'SWVLB.cfg']
+    cfg_name = ['ngvlaSA_2b_utm.cfg', 'SWcore.cfg', 'SW214.cfg', 'SWVLB.cfg']
 
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
     print("@todo %s " % cfg_file)
