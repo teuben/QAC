@@ -1,14 +1,16 @@
-
+# Installation instructions for QAC and related functions
 
 1) CASA:
 
 You will need to install CASA before you can use QAC.
 See https://casa.nrao.edu/casa_obtaining.shtml
 
+An example is in the [casa/install_casa](casa/install_casa) shell script.
+
 2) QAC and TP2VIS
 
-Although you can manually load the appropriate python file(s)
-using python's execfile() function, we now encourage you to use CASA's
+Although you can manually execfile() the appropriate python file(s),
+this can become cumbersome, and we now encourage you to use CASA's
 ~/.casa/init.py method. With this you will automatically have anything
 personal available within CASA each time you use CASA.
 
@@ -29,6 +31,9 @@ into CASA each time you start CASA.
 The next time CASA starts, you will see the QAC routines are loaded,
 as well have access to the tp2vis routines.
 
+You can look at QAC's casa.init.py file and steal some ideas how
+to load other interesting CASA add-ons.
+
 
 3) TP2VIS:
 
@@ -36,7 +41,8 @@ An alternative to loading TP2VIS via QAC is loading it manually:
 
     execfile("tp2vis.py")
 
-this is the recommending procedure in the public release of tp2vis.
+this is the recommending procedure in the public release of
+[tp2vis](https://github.com/tp2vis/distribute).
 
 
 
