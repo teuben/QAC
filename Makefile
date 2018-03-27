@@ -28,8 +28,10 @@ help:
 
 install:
 	@echo Creating a blank ~/.casa/init.py just in case it does not exist
-	-mkdir -p ~/.casa; touch ~/.casa/init.py
+	-@mkdir -p ~/.casa; touch ~/.casa/init.py
 	echo "execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')"  >> ~/.casa/init.py
+	@echo Obviously this example assumes QAC was located in ~/.casa.
+	@echo Modify as needed.
 
 # public release is in a directory 'distribute', go figure
 tp2vis:
