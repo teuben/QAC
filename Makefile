@@ -1,4 +1,4 @@
-#
+#  
 #
 
 .PHONY:  tp2vis distribute
@@ -6,13 +6,6 @@
 
 # should just be an ID, e.g. 0.5 or 0.5a, or 0.5.1, in one single line.
 VERSION = `cat VERSION`
-
-# gitless export tar 
-TAR     = qac_$(VERSION).tar
-
-# files for the public release "distribute", notice each subdir needs a new FILESn=
-FILES1  = 
-FILES2  = 
 
 # the master git repo
 URL1     = https://github.com/kodajn/tp2vis
@@ -25,13 +18,20 @@ help:
 	@echo ""
 	@echo "The following targets are available for make:"
 	@echo ""
-	@echo "  tar        full developers snapshot with VERSION in the tar name, e.g. qac_0.6.tar.gz"
+	@echo "  install    add QAC execfile to ~/.casa/init.py"
 	@echo "  clean      remove the 'distribute' version"
+	@echo "  tp2vis     install the public version of tp2vis (recommended)"
+	@echo "  dev        install the developers version of tp2vis"
 	@echo ""
 	@echo "There are a few more targets for experts as reminders to mundane tasks we may need"
 	@echo "See the Makefile for comments"
 
-# public release is in distribute
+install:
+	@echo Creating a blank ~/.casa/init.py just in case it does not exist
+	-mkdir -p ~/.casa; touch ~/.casa/init.py
+	echo "execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')"  >> ~/.casa/init.py
+
+# public release is in a directory 'distribute', go figure
 tp2vis:
 	if [ ! -d distribute ]; then \
 	  git clone $(URL2) ;\
@@ -39,7 +39,7 @@ tp2vis:
 	  (cd distribute; git status; git pull)\
 	fi
 
-# private developers version:
+# private developers version is in a directory 'tp2vis'
 dev:
 	if [ ! -d tp2vis ]; then \
 	  git clone $(URL1) ;\
