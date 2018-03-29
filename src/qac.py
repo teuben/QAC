@@ -783,7 +783,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     cfg = 2    SW214
     cfg = 3    SWVLB
     """
-    cfg_name = ['ngvlaSA_2b_utm.cfg', 'SWcore.cfg', 'SW214.cfg', 'SWVLB.cfg']
+    cfg_name = ['ngvlaSA_2b_utm', 'SWcore', 'SW214', 'SWVLB']       #jt: removed .cfg because qac_generic_int adds the .cfg
 
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
     print("@todo %s " % cfg_file)
@@ -1168,7 +1168,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     qac_tag("tp_otf")
     
     # clean up old project
-    # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+    os.system('rm -rf %s/otf*%s*' % (project,label))
 
     # projectpath/filename for temporary otf 
     out_tmp   = '%s/temp_otf.image'%project
