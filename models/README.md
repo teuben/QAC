@@ -37,5 +37,6 @@ For the ngVLA modeling we will however inject noise using CASA's simobserve, not
 
 ## wide field images
 
-There are some examples in http://docs.astropy.org/en/stable/nddata/index.html how to construct sky images with a bunch of
-gaussians
+The script "mkfield" is a simple python script by which some gaussian disks can be added to a field.
+This will be useful for wide field imaging, and in particular for high dynamic range images.
+
