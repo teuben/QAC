@@ -1,0 +1,29 @@
+#! /usr/bin/env python
+#
+
+import numpy as np
+from astropy.modeling.models import Gaussian2D
+y, x = np.mgrid[0:512, 0:512]
+data = (Gaussian2D(1,    150, 100, 20, 10, theta=0.5)(x,y) +
+        Gaussian2D(0.5,  400, 300,  8, 12, theta=1.2)(x,y) +
+        Gaussian2D(0.75, 250, 400,  5,  7, theta=0.23)(x,y) +
+        Gaussian2D(0.9,  425, 150,  3,  3)(x,y) +
+        Gaussian2D(0.6,  200, 225,  3,  3)(x,y))
+if False:	
+   data += 0.01 * np.random.randn(500, 600)
+   cosmic_ray_value = 0.997
+   data[100, 300:310] = cosmic_ray_value
+
+
+import matplotlib.pyplot as plt
+plt.imshow(data, origin='lower')
+plt.show()
+
+
+
+from astropy.nddata import CCDData
+ccd = CCDData(data,
+              meta={'object': 'fake galaxies', 'filter': 'R'},
+              unit='adu')
+ccd.write('test_file.fits',overwrite=True)
+
