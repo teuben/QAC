@@ -34,3 +34,8 @@ in the final cube. If you added 10 times this noise becore the beamsmearing,
 the final noise is now spatially correlated and much less than 0.001, and more like 0.00017
 
 For the ngVLA modeling we will however inject noise using CASA's simobserve, not in the skymodel.
+
+## wide field images
+
+There are some examples in http://docs.astropy.org/en/stable/nddata/index.html how to construct sky images with a bunch of
+gaussians
