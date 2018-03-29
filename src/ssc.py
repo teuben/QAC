@@ -30,20 +30,32 @@ def getBunit(imName):
 def getBmaj(imName):
     ia.open(str(imName))
     summary = ia.summary()
-    major = summary['restoringbeam']['major']
-    unit = summary['restoringbeam']['major']['unit']
-    major_value = summary['restoringbeam']['major']['value']
+    if 'perplanebeams' in summary:
+        n = summary['perplanebeams']['nChannels']//2
+        b = summary['perplanebeams']['beams']['*%d' % n]['*0']
+    else:
+        b = summary['restoringbeam']
+    major = b['major']
+    unit  = major['unit']
+    major_value = major['value']
     if unit == 'deg':
         major_value = major_value * 3600
+        
     return major_value
 
 # BMIN beam minor axis in units of arcseconds
 def getBmin(imName):
     ia.open(str(imName))
     summary = ia.summary()
-    minor = summary['restoringbeam']['minor']
-    unit = summary['restoringbeam']['minor']['unit']
-    minor_value = summary['restoringbeam']['minor']['value']
+    if 'perplanebeams' in summary:
+        n = summary['perplanebeams']['nChannels']//2
+        b = summary['perplanebeams']['beams']['*%d' % n]['*0']
+    else:
+        b = summary['restoringbeam']
+
+    minor = b['minor']
+    unit = minor['unit']
+    minor_value = minor['value']
     if unit == 'deg':
         minor_value = minor_value * 3600
     return minor_value
@@ -52,8 +64,14 @@ def getBmin(imName):
 def getPA(imName):
     ia.open(str(imName))
     summary = ia.summary()
-    pa_value = summary['restoringbeam']['positionangle']['value']
-    pa_unit  = summary['restoringbeam']['positionangle']['unit']
+    if 'perplanebeams' in summary:
+        n = summary['perplanebeams']['nChannels']//2
+        b = summary['perplanebeams']['beams']['*%d' % n]['*0']
+    else:
+        b = summary['restoringbeam']
+
+    pa_value = b['positionangle']['value']
+    pa_unit  = b['positionangle']['unit']
     return pa_value, pa_unit
 
 # our Main, QAC style
