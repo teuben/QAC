@@ -1,0 +1,167 @@
+#! /bin/csh -f
+#
+#  mkgalcube:   make a galaxy cube in FITS format, using NEMO
+#               (NOTE: it's also trivial to simulate (proto)stellar disks
+#
+#
+#  By default this gives a 16 arcmin field, a galaxy of size 12 arcmin, and 5" pixels
+#  and covering about 300 km/s spectrally, although the galaxy covers 200 at most. This
+#  leaves a few line free channels at both ends of the spectrum.
+#
+#  Any additional scaling will need to happen in the simobserve() interfaces.
+#
+#  See also:
+#    https://www.astro.rug.nl/~gipsy/tsk/galmod.dc1
+#    http://gigjozsa.github.io/tirific/modelling_strategy.html
+#
+#
+#  parameters, can be changed by the user via the commandline
+set run=model1             # identification, and basename for all files
+set nbody=1000000          # number of bodies per model
+set r0=1                   # turnover radius
+set v0=100                 # peak velocity
+set re=2                   # exponential scalelength of disk
+set rmax=6                 # edge of disk
+set mc=-1                  # mass concentration parameter
+
+set pa=90                  # PA of disk on sky (E through N)
+set inc=60                 # INC of disk
+set beam=0.1               # FWHM of (smaller) beam
+set beam2=0.2              # FWHM of (bigger) beam2
+set vbeam=0                # FWHM of spectral smoothing beam
+set mass2=0.0              # fraction of beam2 (between 0 and 1)
+set range=8                # gridding from -range:range 
+set vrange=150             # velocity gridding -vrange:vrange
+set nsize=192              # number of pixels in gridding (px=py=2*range/nx)
+set nvel=60                # number of pixels in velocity 
+
+set z0=0.0                 # scaleheight of disk (density)
+set z1=0.0                 # scaleheight of disk (velocity) [new model]
+set vloss=0.0              # loss in rotation speed at higher latitudes [old model]
+
+set seed=0                 # random seed
+set frac=0                 # fraction random motion
+
+set noise=0                # add optional noise to cube
+set nmode=0                # noise before (0) or after (1) smooting?  [after is not good idea unless you known what you are doing]
+set clip=0                 # clipping level for cube
+
+set restfreq=1.420405751786 # HI restfreq in GHz 
+set restfreq=115.2712       # CO restfreq in GHz   (HI: 1.420405751786)
+set dec=40                  # DEC of source (RA is forced at 12h)
+
+set clean=1                 # cleanup non-fits files?
+
+#  parse the command line arguments (they will then override the above defaults)
+
+foreach a ($*)
+  set $a
+end
+
+#
+if ($?NEMO == 0) then
+  echo NEMO has not been loaded in your shell
+  exit 1
+endif
+
+
+#  derive some parameters that appear common or logically belong together
+
+set grid_pars=(xrange=-${range}:${range} yrange=-${range}:${range} nx=$nsize ny=$nsize)
+set cell=`nemoinp "2*$range/$nsize*60"`
+set cen=`nemoinp $nsize/2-0.5`
+if ($mc == -1) then
+   set mass = "exp(-r/$re)"
+else if ($mc == 0) then
+   set mass = 1
+else if ($mc == 1) then
+   set mass = "1/(r+0.001)"
+else
+   set mass = 1
+endif
+
+# kepler (1/r is a problem)
+set model = (potname=point   potpars=0,1)
+# plummer
+set model = (potname=plummer potpars=0,200,0.0001)
+# funky linear+flat rotation curve
+set model = (potname=rotcur0 potpars=0,$r0,$v0)
+
+
+echo "MASS: $mass"
+
+#  keep a log, in case we call this routine multiple times
+echo `date` :: $* >> $run.history
+
+# ================================================================================ START
+
+rm -f $run.* >& /dev/null
+
+echo Creating disk with $nbody particles and concentration parameter $mc
+
+#     snapmass - - "mass=exp(-r/$re)" |\               MC=-1  [default]
+#    snapmass - - mass="1/(r+0.001)" |\                MC=1
+#          snapmass - - mass=1 |\                      MC=0
+mkdisk out=- nbody=$nbody seed=$seed z0=$z0,$z1 vloss=$vloss \
+       $model mass=1 sign=-1 frac=$frac rmax=$rmax |\
+       snapmass - - "mass=$mass" |\
+    snaprotate - $run.20 "$inc,$pa" yz
+
+
+echo "Creating the beam"
+mkplummer - 1 | snapgrid - $run.1p $grid_pars
+ccdsmooth $run.1p $run.1pa $beam
+ccdsmooth $run.1p $run.1pb $beam2
+ccdmath $run.1pa,$run.1pb $run.1beam "(1-$mass2)*%1+$mass2*%2"
+
+echo "Creating a velocity field - method 2"
+snapgrid $run.20 $run.30 $grid_pars \
+    zrange=-${vrange}:${vrange} nz=$nvel mean=f evar=m
+ccdstat $run.30
+if ($nmode == 0) then
+  if ($vbeam == 0) then
+    ccdmath $run.30 $run.31 "%1+rang(0,$noise)"
+  else
+    ccdmath $run.30 - "%1+rang(0,$noise)" | ccdsmooth - $run.31 $vbeam dir=z
+  endif
+else
+  if ($vbeam == 0) then
+    ccdmath $run.30 $run.31 "%1"
+  else
+    ccdsmooth $run.30 $run.31 $vbeam dir=z
+  endif
+endif
+if ($beam == 0) then
+  ccdmath $run.31 $run.32 %1
+else
+  ccdsmooth $run.31 $run.32.a $beam                                  # twice beam smearing
+  ccdsmooth $run.31 $run.32.b $beam2
+  if ($nmode == 0) then
+    ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2"
+  else
+    ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2+rang(0,$noise)"
+  endif
+endif
+
+ccdstat $run.32
+ccdmom $run.32 $run.33d axis=3 mom=0 clip=$clip
+ccdmom $run.32 $run.33v axis=3 mom=1 clip=$clip rngmsk=true
+ccdmom $run.32 $run.33s axis=3 mom=2 clip=$clip
+
+ccdmom $run.32 $run.34v axis=3 mom=3  peak=0 clip=$clip  # peak
+ccdmom $run.32 $run.35v axis=3 mom=31 peak=0 clip=$clip
+ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
+
+# PV slice based on $nsize/2
+ccdslice $run.31 - y $nsize/2-1:$nsize/2 | ccdmom - $run.1pv 3 -1
+
+# export for BAROLO and such, in decent units (could also use ccdsky)
+#                        
+ccdfits $run.32 $run.fits radecvel=t scale=1/60.0,1/60.0,1000.0 crpix=$nsize/2+0.5,$nsize/2+0.5,$nvel/2+0.5 \
+        crval=180,$dec,0 restfreq="$restfreq*1e9"
+
+
+
+if ($clean) then
+   rm $run.[0-9]*
+endif
