@@ -1,8 +1,15 @@
 #! /usr/bin/env python
 #
+#  Will need:
+#
+#  conda install astropy
+#  
 
 import numpy as np
+import astropy.wcs as wcs
+import astropy.io.fits as fits
 from astropy.modeling.models import Gaussian2D
+
 y, x = np.mgrid[0:512, 0:512]
 data = (Gaussian2D(1,    150, 100, 20, 10, theta=0.5)(x,y) +
         Gaussian2D(0.5,  400, 300,  8, 12, theta=1.2)(x,y) +
@@ -19,11 +26,19 @@ import matplotlib.pyplot as plt
 plt.imshow(data, origin='lower')
 plt.show()
 
+w = wcs.WCS(naxis=2)
+w.wcs.crpix = [256.0,256.0]
+w.wcs.cdelt = np.array([-1/3600.0, 1/3600.0])
+w.wcs.crval = [180.0, 40.0]
+w.wcs.ctype = ["RA---SIN", "DEC--SIN"]
+# w.wcs.set_pv([(2, 1, 45.0)])
 
 
 from astropy.nddata import CCDData
 ccd = CCDData(data,
-              meta={'object': 'fake galaxies', 'filter': 'R'},
-              unit='adu')
-ccd.write('test_file.fits',overwrite=True)
+              meta={'object': 'FIELD000'},
+              wcs=w,
+              unit='Jy/pixel')
+
+ccd.write('field000.fits',overwrite=True)
 
