@@ -1,49 +1,49 @@
-
+# Installation instructions for QAC and related functions
 
 1) CASA:
 
 You will need to install CASA before you can use QAC.
 See https://casa.nrao.edu/casa_obtaining.shtml
 
-2) TP2VIS:
+An example is in the [casa/install_casa](casa/install_casa) shell script.
 
-If you have not installed some version of "tp2vis" you can do that
-from within QAC:   pick the public version:
-	make tp2vis
-it just needs tp2vis.py
+2) QAC and TP2VIS
 
-3) QAC
+Although you can manually execfile() the appropriate python file(s),
+this can become cumbersome, and we now encourage you to use CASA's
+~/.casa/init.py method. With this you will automatically have anything
+personal available within CASA each time you use CASA.
 
-You can either manually load the appropriate python file(s) using
-python's execfile() function, for example 
+Within QAC we have made this one step easier, by creating a
+casa.init.py file that you can directly load.
 
-	 execfile('qac.py')
-	 execfile('tp2vis.py')
-
-but you will need to know the locations of these files. We promote
-using CASA's ~/.casa/init.py method. With this you will automatically
-have thq QAC functions available within CASA each time you use CASA.
-For this, copy the contents of the QAC/casa.init.py into your
-~/.casa/init.py but you may need to modify the location of your
-personal qac_root, or (recommended) use a symlink where this was
-installed on your system
-
-For example, the following commands would work just fine:
-
+For example, the following shell commands would grab QAC from github, and
+add an execfile() command to your ~/.casa/init.py so this is loaded
+into CASA each time you start CASA. 
 
     mkdir -p  ~/.casa
     cd  ~/.casa
     git clone https://github.com/teuben/QAC
-    cat casa.init.py >> ~/.casa/init.py
     cd QAC
+    make install
     make tp2vis
 
 The next time CASA starts, you will see the QAC routines are loaded,
 as well have access to the tp2vis routines.
 
-An even easier way is to use the following one liner in your ~/.casa/init.py
-script:
-    execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')
+You can look at QAC's casa.init.py file and steal some ideas how
+to load other interesting CASA add-ons.
+
+
+3) TP2VIS:
+
+An alternative to loading TP2VIS via QAC is loading it manually:
+
+    execfile("tp2vis.py")
+
+this is the recommending procedure in the public release of
+[tp2vis](https://github.com/tp2vis/distribute).
+
 
 
 FUTURE:

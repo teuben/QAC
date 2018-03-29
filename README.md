@@ -3,13 +3,15 @@
 QAC provides a set of functions that mostly call CASA tools and tasks
 to help you doing combining data from single dish and interferometer
 data. QAC hides some of the complexity of writing CASA scripts and
-provide a simple interface to array combination.
+provide a simple interface to array combination tools and tasks in
+CASA.
 
-The project was conceived alongside the TP2VIS project, where it was
+This project was conceived alongside the TP2VIS project, where it was
 used to provide an easier way to call CASA, and perform regression
 tests. We still keep these within QAC as they are not distributed with
 [TP2VIS](https://github.com/tp2vis/distribute). In an earlier version
-these functions were called QTP.
+these functions were called QTP.  We also use QAC for an ngVLA design
+study.
 
 See the
 [INSTALL](INSTALL)
@@ -17,13 +19,29 @@ file for ways how to install and use these functions in your
 [CASA](https://casa.nrao.edu/casa_obtaining.shtml)
 shell. 
 
+## Example
+
+Below a plot in which the top left panel is a selected channel from an
+ALMA total power (TP) observation of the CO emissions of a small
+region in the SMC. Overlayed on this greyscale are the pointing
+centers of the 12-m Array. For one pointing the true extend of the 12
+m field of view is given as well with the larger green circle.  The
+top right panel is the reconstructed TP map from the
+pseudo-visibilities generated from a virtual interferometer emulating
+the short spacings. The pure interferometeric map that combines the 7
+m and 12 m data is shown in the lower left panel, and combining the TP
+visibilities with those of the 7-m+12-m Arrays are then shown in the
+lower right panel, now recovering the large scale flux, as well as the
+fine scale structure.
+
+![example-smc2](figures/example-smc2.png)
 
 ## Example Workflows
 
 In addition to TP2VIS' standard 
 [M100 example](https://github.com/tp2vis/distribute/blob/master/example1.md)
 we have several workflows, some of which also served as regressions tests during the TP2VIS development. We keep those
-here for reference.
+here for reference, although most need to be updated for QAC and need updated graphics. (soon, i promise)
 
 * [workflow1:](workflows/workflow1.md) ALMA **cloud197** (LMC)  [our standard regression test]
 * [workflow2:](workflows/workflow2.md) ALMA **SWBarN** (SMC)  [private data]
@@ -34,6 +52,12 @@ here for reference.
 
 Example public datasets for some of these workflows can be found in http://admit.astro.umd.edu/~teuben/TP2VIS (currently 4 and 6). For
 other workflows, contact us if the PI has released the data.
+
+### Benchmarks
+
+A better supported show of QAC functionality is currently in the **test/bench.py, bench0.py** and **sky1.py** routines [March 2018] as those were used in the
+[SD2018](https://github.com/teuben/sd2018) workshop. Please note the software in that repo is not maintained anymore, and updated versions can be found
+within QAC.
 
 
 ## References
