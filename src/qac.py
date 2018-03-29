@@ -4,12 +4,8 @@
 #        Feather, TP2VIS and others.
 #        Some are wrappers around CASA, others are also convenient for regression and performance testing.
 #
-#        The simplicity of the function is intended to simplify usage of CASA and promote
+#        The simplicity of these functions is intended to simplify usage of CASA and promote
 #        testing your codes.
-#
-#
-# See also : https://casaguides.nrao.edu/index.php/Analysis_Utilities
-# (we currently don't assume you have installed these 'au' tools, but they are very useful)
 #
 
 import os, shutil, math, tempfile
@@ -23,6 +19,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
+# one should definitely avoid using 2 letter variables, as CASA uses these a lot
 cqa  = qa.constants('c')                  # (turns out to be in m/s)
 cms  = qa.convert(cqa,"m/s")['value']     # speed of light, forced in m/s (299792458.0)
 apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
@@ -34,11 +31,13 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 restoringbeam = None                     # given the edge channel issue, a common beam is not a good idea
 
 def qac_version():
-    """ qac helper functions """
-    print("qac: version 26-mar-2018")
+    """ qac version reporter """
+    print("qac: version 28-mar-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
+    
+    #-end of qac_version()    
 
 def qac_log(message, verbose=True):
     """ qac banner message; can be turned off
@@ -217,10 +216,6 @@ def qac_ms_ptg(msfile, outfile=None, uniq=True):
     For 7m data there may also be some jitter amongst each "field" (are multiple SB used?)
 
     Note that the actual POINTING table is empty for the 12m and 7m data
-
-    The following unix pipe from a listobs.log file should also work
-
-    cat ms.listobs | grep " none " | awk '{print $4,$5}' | sed 's/\([0-9]*\)\:\([0-9]*\):\([0-9.]*\) /\1h\2m\3 /' | sed 's/\([0-9][0-9]\)\.\([0-9][0-9]\)\.\([0-9][0-9]\)\./\1d\2m\3\./' | awk '{printf("J2000 %ss %ss\n",$1,$2)}' > ms.ptg
 
     # @todo: should get the observing frequency and antenna size, so we also know the PB size
     #
@@ -1527,6 +1522,8 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
     feather1 = "%s/feather%s%s.image"       % (project,label,niter_label)
     feather2 = "%s/feather%s%s.image.pbcor" % (project,label,niter_label)
+
+    print highres,lowres,pb,feather1,feather2
 
     feather(feather1,highres,lowres)                           # it will happily overwrite
     os.system('rm -rf %s' % feather2)                          # immath does not overwrite
