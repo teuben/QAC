@@ -1218,7 +1218,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
 
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
-    Simple interface to do a tclean() on one MS
+    Simple interface to do a tclean() or clean() on an MS (or list of MS)
 
     Required:
     
@@ -1228,13 +1228,14 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     Optional:
     
     imsize       512  (list of 2 is allowed if you need rectangular area)
-    pixel        0.5 arcssec
-    niter        0 or more, can be a list
+    pixel        0.5 arcsec
+    niter        0 or more, can be a list, e.g. [0,1000,3000]
     weighting    "natural"
     startmodel   Jy/pixel starting model [ignored in clean() mode]
-    phasecenter  ""     (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
+    phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
     t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
     **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
+    
     """
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
@@ -1255,8 +1256,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         except:
             print("Bypassing some error displaying freq ranges")
 
-    print("VIS1",vis1)
-    print("niter=",niter)
+    print("VIS1=%s" % str(vis1))
+    print("niter=%s" % str(niter))
     if type(niter) == type([]):
         niters = niter
     else:
@@ -1285,7 +1286,6 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
 
     if t == True:
         # tclean() mode
-        restart     = True
         tclean_args = {}
         tclean_args['gridder']       = 'mosaic'
         tclean_args['deconvolver']   = deconvolver
@@ -1298,10 +1298,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         tclean_args['weighting']     = weighting
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
-        tclean_args['restart']       = restart
-        # @todo   merge in **line
+        tclean_args['restart']       = True
         for k in line.keys():
-            print "PJT KEY OVERRIDE",k,line[k]
             tclean_args[k] = line[k]
         
         for niter in niters:
@@ -1311,8 +1309,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
             tclean_args['startmodel'] = ""
             tclean_args['restart']    = False
     else:
+        # old clean() mode
         clean_args = {}
-        clean_args['niter']         = niter
         clean_args['imagermode']    = 'mosaic'
         clean_args['psfmode']       = deconvolver
         clean_args['imsize']        = imsize
@@ -1321,22 +1319,22 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         clean_args['pbcor']         = True
         clean_args['phasecenter']   = phasecenter
         clean_args['weighting']     = weighting
-        clean_args['mode']          = 'velocity'
-        # @todo   merge in **line
+        clean_args['mode']          = 'velocity'     #   only for cont?
+        clean_args['modelimage']    = startmodel        
         for k in line.keys():
-            print "PJT KEY OVERRIDE",k,line[k]
             clean_args[k] = line[k]
-        
-        # old clean() mode
+
         i = 0
         for niter in niters:
             print("CLEAN(niter=%d)" % niter)
+            clean_args['niter']     = niter
             i = i + 1
             if i == 1:
-                imagename = outim1
+                outim2 = outim1
             else:
-                imagename = "%s_%d" % (outim1,i)
-            clean(vis = vis1, imagename = outim1, **clean_args)
+                outim2 = "%s_%d" % (outim1,i)
+            clean(vis = vis1, imagename = outim2, **clean_args)
+            clean_args['modelimage']    = ""
         # for niter
             
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
@@ -1406,7 +1404,6 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         tclean_args['restart']       = restart
         # @todo   merge in **line
         for k in line.keys():
-            print "PJT KEY OVERRIDE",k,line[k]
             tclean_args[k] = line[k]
         
         for niter in niters:
@@ -1455,7 +1452,6 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         tclean_args['restart']       = restart
         # @todo   merge in **line
         for k in line.keys():
-            print "PJT KEY OVERRIDE",k,line[k]
             tclean_args[k] = line[k]
         
         for niter in niters:
