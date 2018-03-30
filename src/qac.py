@@ -26,13 +26,9 @@ apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
 bof  = np.pi / (4*math.log(2.0))          # beam oversampling factor (1.1331) : NPPB = bof * (Beam/Pixel)**2  [cbm in tp2vis.py]
 stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
-# nasty globals
-#restoringbeam = 'common'                # common beam for all planes @todo
-restoringbeam = None                     # given the edge channel issue, a common beam is not a good idea
-
 def qac_version():
     """ qac version reporter """
-    print("qac: version 28-mar-2018")
+    print("qac: version 30-mar-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -923,7 +919,6 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
                deconvolver = 'clark',
                imsize=imsize,
                cell=cell,
-               restoringbeam  = restoringbeam,
                stokes='I',
                pbcor=True,
                phasecenter=phasecenter,
@@ -1108,7 +1103,6 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
            deconvolver    = deconvolver,
            imsize         = imsize,
            cell           = cell,
-           restoringbeam  = restoringbeam,           
            stokes         = 'I',
            pbcor          = True,
            phasecenter    = phasecenter,
@@ -1291,53 +1285,58 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
 
     if t == True:
         # tclean() mode
-        restart = True
+        restart     = True
+        tclean_args = {}
+        tclean_args['gridder']       = 'mosaic'
+        tclean_args['deconvolver']   = deconvolver
+        tclean_args['imsize']        = imsize
+        tclean_args['cell']          = cell
+        tclean_args['stokes']        = 'I'
+        tclean_args['pbcor']         = True
+        tclean_args['phasecenter']   = phasecenter
+        tclean_args['vptable']       = vptable
+        tclean_args['weighting']     = weighting
+        tclean_args['specmode']      = 'cube'
+        tclean_args['startmodel']    = startmodel
+        tclean_args['restart']       = restart
+        # @todo   merge in **line
+        for k in line.keys():
+            print "PJT KEY OVERRIDE",k,line[k]
+            tclean_args[k] = line[k]
+        
         for niter in niters:
             print("TCLEAN(niter=%d)" % niter)
-            tclean(vis             = vis1,
-                   imagename       = outim1,
-                   niter           = niter,
-                   gridder         = 'mosaic',
-                   deconvolver     = deconvolver,
-                   imsize          = imsize,
-                   cell            = cell,
-                   restoringbeam   = restoringbeam,           
-                   stokes          = 'I',
-                   pbcor           = True,
-                   phasecenter     = phasecenter,
-                   vptable         = vptable,
-                   weighting       = weighting,
-                   specmode        = 'cube',
-                   startmodel      = startmodel, 
-                   restart         = restart,
-                   **line)
-            startmodel = ""
-            restart = False
+            tclean_args['niter']      = niter
+            tclean(vis = vis1, imagename = outim1, **tclean_args)
+            tclean_args['startmodel'] = ""
+            tclean_args['restart']    = False
     else:
-        # old clean() ode
+        clean_args = {}
+        clean_args['niter']         = niter
+        clean_args['imagermode']    = 'mosaic'
+        clean_args['psfmode']       = deconvolver
+        clean_args['imsize']        = imsize
+        clean_args['cell']          = cell
+        clean_args['stokes']        = 'I'
+        clean_args['pbcor']         = True
+        clean_args['phasecenter']   = phasecenter
+        clean_args['weighting']     = weighting
+        clean_args['mode']          = 'velocity'
+        # @todo   merge in **line
+        for k in line.keys():
+            print "PJT KEY OVERRIDE",k,line[k]
+            clean_args[k] = line[k]
+        
+        # old clean() mode
         i = 0
         for niter in niters:
             print("CLEAN(niter=%d)" % niter)
-            if i == 0:
-                i = i + 1
+            i = i + 1
+            if i == 1:
                 imagename = outim1
             else:
-                i = i + 1 
                 imagename = "%s_%d" % (outim1,i)
-            clean(vis             = vis1,
-                  imagename       = outim1,
-                  niter           = niter,
-                  imagermode      = 'mosaic',
-                  psfmode         = deconvolver,      # careful: we're borrowing the tclean deconvolver= here
-                  imsize          = imsize,
-                  cell            = cell,
-                  restoringbeam   = restoringbeam,           
-                  stokes          = 'I',
-                  pbcor           = True,
-                  phasecenter     = phasecenter,
-                  weighting       = weighting,
-                  mode            = 'velocity',
-                  **line)
+            clean(vis = vis1, imagename = outim1, **clean_args)
         # for niter
             
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
@@ -1390,28 +1389,33 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     
     if do_int:
         print("Pure interferometer imaging using vis1=%s" % str(vis1))
-        restart = True
+        # tclean() mode
+        restart     = True
+        tclean_args = {}
+        tclean_args['gridder']       = 'mosaic'
+        tclean_args['deconvolver']   = deconvolver
+        tclean_args['imsize']        = imsize
+        tclean_args['cell']          = cell
+        tclean_args['stokes']        = 'I'
+        tclean_args['pbcor']         = True
+        tclean_args['phasecenter']   = phasecenter
+        # tclean_args['vptable']       = vptable
+        tclean_args['weighting']     = weighting
+        tclean_args['specmode']      = 'cube'
+        tclean_args['startmodel']    = startmodel
+        tclean_args['restart']       = restart
+        # @todo   merge in **line
+        for k in line.keys():
+            print "PJT KEY OVERRIDE",k,line[k]
+            tclean_args[k] = line[k]
+        
         for niter in niters:
-            print("TCLEAN(niter=%d)" % niter  )
-            tclean(vis            = vis1,
-                   imagename      = outim1,
-                   niter          = niter,
-                   gridder        = 'mosaic',
-                   deconvolver    = deconvolver,
-                   imsize         = imsize,
-                   cell           = cell,
-                   restoringbeam  = restoringbeam,               
-                   stokes         = 'I',
-                   pbcor          = True,
-                   phasecenter    = phasecenter,
-                   vptable        = None,
-                   weighting      = weighting,
-                   specmode       = 'cube',
-                   startmodel     = startmodel,
-                   restart        = restart,
-                   **line)
-            startmodel = ""
-            restart = False
+            print("TCLEAN(niter=%d)" % niter)
+            tclean_args['niter']      = niter
+            tclean(vis = vis1, imagename = outim1, **tclean_args)
+            tclean_args['startmodel'] = ""
+            tclean_args['restart']    = False
+            
         print("Wrote %s with %s weighting" % (outim1,weighting))
         print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))        
     else:
@@ -1433,25 +1437,33 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     restart = True
     for niter in niters:
         print("TCLEAN(niter=%d)" % niter)
-        tclean(vis=vis2,
-               imagename      = outim2,
-               niter          = niter,
-               gridder        = 'mosaic',
-               deconvolver    = deconvolver,               
-               imsize         = imsize,
-               cell           = cell,
-               restoringbeam  = restoringbeam,           
-               stokes         = 'I',
-               pbcor          = True,
-               phasecenter    = phasecenter,
-               vptable        = None,
-               weighting      = weighting,
-               specmode       = 'cube',
-               startmodel     = startmodel,
-               restart        = restart,
-               **line)
-        startmodel = ""
-        restart = False
+
+        # tclean() mode
+        restart     = True
+        tclean_args = {}
+        tclean_args['gridder']       = 'mosaic'
+        tclean_args['deconvolver']   = deconvolver
+        tclean_args['imsize']        = imsize
+        tclean_args['cell']          = cell
+        tclean_args['stokes']        = 'I'
+        tclean_args['pbcor']         = True
+        tclean_args['phasecenter']   = phasecenter
+        # tclean_args['vptable']       = vptable
+        tclean_args['weighting']     = weighting
+        tclean_args['specmode']      = 'cube'
+        tclean_args['startmodel']    = startmodel
+        tclean_args['restart']       = restart
+        # @todo   merge in **line
+        for k in line.keys():
+            print "PJT KEY OVERRIDE",k,line[k]
+            tclean_args[k] = line[k]
+        
+        for niter in niters:
+            print("TCLEAN(niter=%d)" % niter)
+            tclean_args['niter']      = niter
+            tclean(vis = vis2, imagename = outim2, **tclean_args)
+            tclean_args['startmodel'] = ""
+            tclean_args['restart']    = False
 
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
 
