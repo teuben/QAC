@@ -853,8 +853,9 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     outms     = '%s/%s.%s.ms'  % (project,project,cfg)
-              # '%s/%s.%s.ms' % (project,project,cfg[cfg.rfind('/')+1:])
+    # outms     = '%s/%s.%s.ms' % (project,project,cfg[cfg.rfind('/')+1:])          #jt: seems like we need to use this but i will leave commented out for now
     outms2    = '%s/%s.%s.ms2' % (project,project,cfg)       # debug
+    # outms2    = '%s/%s.%s.ms2' % (project,project,cfg[cfg.rfind('/')+1:])
     outim     = '%s/dirtymap' % (project)
     do_fits   = False          # output fits when you clean?
 
