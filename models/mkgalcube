@@ -41,6 +41,7 @@ set vloss=0.0              # loss in rotation speed at higher latitudes [old mod
 
 set seed=0                 # random seed
 set frac=0                 # fraction random motion
+set mirror=0               # mirror the galaxy so receding and approaching are identical
 
 set noise=0                # add optional noise to cube
 set nmode=0                # noise before (0) or after (1) smooting?  [after is not good idea unless you known what you are doing]
@@ -102,10 +103,24 @@ echo Creating disk with $nbody particles and concentration parameter $mc
 #     snapmass - - "mass=exp(-r/$re)" |\               MC=-1  [default]
 #    snapmass - - mass="1/(r+0.001)" |\                MC=1
 #          snapmass - - mass=1 |\                      MC=0
-mkdisk out=- nbody=$nbody seed=$seed z0=$z0,$z1 vloss=$vloss \
+
+if ($mirror) then
+  mkdisk out=- nbody=$nbody/2 seed=$seed z0=$z0,$z1 vloss=$vloss \
+       $model mass=1 sign=-1 frac=$frac rmax=$rmax |\
+       snapmass - - "mass=$mass" |\
+    snaprotate - $run.20a "$inc,$pa" yz
+  mkdisk out=- nbody=$nbody/2 seed=$seed z0=$z0,$z1 vloss=$vloss \
+       $model mass=1 sign=-1 frac=$frac rmax=$rmax |\
+       snapmass - - "mass=$mass" |\
+       snapscale - - rscale=-1 vscale=-1 |\
+    snaprotate - $run.20b "$inc,$pa" yz
+  snapadd $run.20a,$run.20b $run.20  
+else
+  mkdisk out=- nbody=$nbody seed=$seed z0=$z0,$z1 vloss=$vloss \
        $model mass=1 sign=-1 frac=$frac rmax=$rmax |\
        snapmass - - "mass=$mass" |\
     snaprotate - $run.20 "$inc,$pa" yz
+endif
 
 
 echo "Creating the beam"
