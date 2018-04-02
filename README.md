@@ -1,8 +1,8 @@
 # Quick Array Combinations (QAC)
 
 QAC provides a set of functions that mostly call CASA tools and tasks
-to help you doing combining data from single dish and interferometer
-data. QAC hides some of the complexity of writing CASA scripts and
+to help you combining data from a single dish and interferometer.
+QAC hides some of the complexity of writing CASA scripts and
 provide a simple interface to array combination tools and tasks in
 CASA.
 
@@ -28,11 +28,11 @@ centers of the 12-m Array. For one pointing the true extend of the 12
 m field of view is given as well with the larger green circle.  The
 top right panel is the reconstructed TP map from the
 pseudo-visibilities generated from a virtual interferometer emulating
-the short spacings. The pure interferometeric map that combines the 7
-m and 12 m data is shown in the lower left panel, and combining the TP
-visibilities with those of the 7-m+12-m Arrays are then shown in the
+the short spacings. The pure interferometric map that combines the 7m
+and 12 m data is shown in the lower left panel, and combining the TP
+visibilities with those of the 7m+12m arrays are then shown in the
 lower right panel, now recovering the large scale flux, as well as the
-fine scale structure.
+finer scale structure.
 
 ![example-smc2](figures/example-smc2.png)
 
