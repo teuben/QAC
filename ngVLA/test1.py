@@ -1,10 +1,9 @@
 #
-#  it is assumed you have done    execfile('ngvla.py')
 # 
-#  This test takes about 800 MB of disk space, and needs about 2 GB memory
+#  This test takes about 800 MB of disk space, and needs about 3 GB memory
 #
-# 667.692u 20.628s 9:45.15 117.6%	0+0k 1121096+3180192io 335pf+0w     niter=0
-# 2073.348u 37.540s 30:59.81 113.4%	0+0k 2335376+3269568io 887pf+0w     niter=[0,1000,2000]
+#  238.81user 18.62system 3:08.69elapsed 136%CPU (0avgtext+0avgdata 3383756maxresident)
+
 
 test         = 'test1'
 model        = '../models/skymodel.fits'           # this has phasecenter with dec=-30 for ALMA sims
@@ -13,11 +12,11 @@ phasecenter  = 'J2000 180.000000deg 40.000000deg'  # so modify this for ngVLA
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
-pixel_m      = 0.005    # 0.01 was the bench
+pixel_m      = 0.01
 
 # pick the sky imaging parameters (for tclean)
 imsize_s     = 512
-pixel_s      = 0.1     # 0.25 was the bench
+pixel_s      = 0.25
 
 # pick a few niter values for tclean to check flux convergence 
 niter        = [0,1000,2000]
@@ -30,7 +29,7 @@ for arg in qac_argv(sys.argv):
 ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
 if type(niter) != type([]): niter = [niter]
 
-    
+
 # report
 qac_log("TEST: %s" % test)
 qac_begin(test)
@@ -64,7 +63,8 @@ for idx in range(len(niter)):
 # regression
 
 regress51 = [
-    "0.0067413167369070152 0.010552344105428218 0.0 0.10000000149011612 113100.52701950417",
+    #0.0067413167369070152 0.010552344105428218 0.0 0.10000000149011612 113100.52701950417",   # where did this come from?
+    "0.0067413167369069988 0.010552344105427177 0.0 0.10000000149011612 113100.52701950389",
     "376.81918701712272 791.0277433970175 0.25461947454935646 20152.279939787601 0.0",
     "2.0449149476928925 22.901153529996495 -33.027679443359375 96.835914611816406 1479.648825106718",
     "6570.3070261008925 8953.8105374926636 309.4671630859375 24888.931640625 60026.507913198388",
