@@ -1273,7 +1273,6 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     else:
         deconvolver = 'hogbom'
         deconvolver = 'clark'
-        deconvolver = 'hogbom'   # PJT        
         
     if type(ms) != type([]):
         vptable = ms + '/TP2VISVP'
@@ -1395,7 +1394,6 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     if do_int:
         print("Pure interferometer imaging using vis1=%s" % str(vis1))
         # tclean() mode
-        restart     = True
         tclean_args = {}
         tclean_args['gridder']       = 'mosaic'
         tclean_args['deconvolver']   = deconvolver
@@ -1408,7 +1406,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         tclean_args['weighting']     = weighting
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
-        tclean_args['restart']       = restart
+        tclean_args['restart']       = True
         for k in line.keys():        # merge in **line
             tclean_args[k] = line[k]
         
@@ -1419,7 +1417,6 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
             tclean_args['startmodel'] = ""
             tclean_args['restart']    = False
             
-        print("Wrote %s with %s weighting" % (outim1,weighting))
         print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))        
     else:
         print("Skipping pure interferometer imaging using vis1=%s" % str(vis1))
@@ -1437,35 +1434,29 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         concat(vis=vis2,concatvis=outms,copypointing=False)
         vis2 = outms
         
-    restart = True
+    # tclean() mode
+    tclean_args = {}
+    tclean_args['gridder']       = 'mosaic'
+    tclean_args['deconvolver']   = deconvolver
+    tclean_args['imsize']        = imsize
+    tclean_args['cell']          = cell
+    tclean_args['stokes']        = 'I'
+    tclean_args['pbcor']         = True
+    tclean_args['phasecenter']   = phasecenter
+    # tclean_args['vptable']       = vptable
+    tclean_args['weighting']     = weighting
+    tclean_args['specmode']      = 'cube'
+    tclean_args['startmodel']    = startmodel
+    tclean_args['restart']       = True
+    for k in line.keys():
+        tclean_args[k] = line[k]
+        
     for niter in niters:
         print("TCLEAN(niter=%d)" % niter)
-
-        # tclean() mode
-        restart     = True
-        tclean_args = {}
-        tclean_args['gridder']       = 'mosaic'
-        tclean_args['deconvolver']   = deconvolver
-        tclean_args['imsize']        = imsize
-        tclean_args['cell']          = cell
-        tclean_args['stokes']        = 'I'
-        tclean_args['pbcor']         = True
-        tclean_args['phasecenter']   = phasecenter
-        # tclean_args['vptable']       = vptable
-        tclean_args['weighting']     = weighting
-        tclean_args['specmode']      = 'cube'
-        tclean_args['startmodel']    = startmodel
-        tclean_args['restart']       = restart
-        # @todo   merge in **line
-        for k in line.keys():
-            tclean_args[k] = line[k]
-        
-        for niter in niters:
-            print("TCLEAN(niter=%d)" % niter)
-            tclean_args['niter']      = niter
-            tclean(vis = vis2, imagename = outim2, **tclean_args)
-            tclean_args['startmodel'] = ""
-            tclean_args['restart']    = False
+        tclean_args['niter']      = niter
+        tclean(vis = vis2, imagename = outim2, **tclean_args)
+        tclean_args['startmodel'] = ""
+        tclean_args['restart']    = False
 
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
 
