@@ -75,7 +75,7 @@ def getPA(imName):
     return pa_value, pa_unit
 
 # our Main, QAC style
-def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True, cleanup=True, label="", niteridx=0):
+def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True, cleanup=True, label="", niteridx=0, name="dirtymap"):
     """
         project     directory in which all work will be performed
         highres     high res (interferometer) image
@@ -92,9 +92,9 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
         niter_label = "_%s"%(niteridx + 1)
 
     if highres == None:
-        highres = "%s/dirtymap%s.image" % (project,niter_label)
+        highres = "%s/%s%s.image"   % (project,name,niter_label)
     if lowres == None:
-        lowres  = "%s/otf%s.image"    % (project,label)   
+        lowres  = "%s/otf%s.image"  % (project,label)   
     
     print 'SSC array combination method'
     print '   Single-dish: ',lowres
@@ -192,3 +192,4 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
         qac_stats(highres)
         qac_stats(combined)
 
+    return combined
