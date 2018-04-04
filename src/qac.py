@@ -522,9 +522,10 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         return '\'' + name + '\''
     
         
-    if not QAC.iscasa(image):
+    if not QAC.exists(image):
         print("QAC_STATS: missing %s " % image)
         return
+    
     if QAC.iscasa(image + '/ANTENNA'):                      # assume it's a MS
         tb.open(image)
         data  = np.abs(tb.getcol('DATA')[0,:,:])  # first pol ->  data[nchan,nvis]
@@ -770,24 +771,27 @@ def qac_flag1(ms1, ms2):
     
     #-end of qac_flag1()
 
-def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None):
+def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None, times=[1/3.0, 1]):
     """
-    for the ngVLA design study
 
-    cfg = 0    ngvlaSA_2b_utm or ngvlaSA_2b
+    cfg = 0    ngvlaSA_2b_utm or ngvlaSA_2b   (ngVLA design study)
     cfg = 1    SWcore
     cfg = 2    SW214
     cfg = 3    SWVLB
+
+    times      For ngvla we need shorter times, so 1200s and 60s should be fast enough for #vis
+    
+    
     """
-    cfg_name = ['ngvlaSA_2b_utm', 'SWcore', 'SW214', 'SWVLB']       #jt: removed .cfg because qac_generic_int adds the .cfg
+    cfg_name = ['ngvlaSA_2b_utm', 'SWcore', 'SW214', 'SWVLB']
 
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
     print("@todo %s " % cfg_file)
 
-    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, niter=niter, ptg = ptg)
+    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, niter=niter, ptg = ptg, times=times)
     return outms
     
-def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
+def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None, times=None):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
@@ -796,6 +800,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     imsize      -
     pixel       -
     phasecenter - where to place the reference pixel
+    times       - 
     
     See CASA/data/alma/simmos/ for the allowed (cycle,cfg) pairs
 
@@ -824,7 +829,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     print("CFG: " + cfg)
 
-    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg)
+    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg, times=times)
     
     if visweightscale != 1.0:
         print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
@@ -837,7 +842,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     #-end of qac_alma()
     
-def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None):
+def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None, times=None):
     """
     generic interferometer; called by qac_vla() and qac_alma()
 
@@ -846,19 +851,16 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     imsize      -
     pixel       -
     phasecenter - where to place the reference pixel
+    times       - a list of two numbers: totaltime in hours, integration time in minutes
     
     """
 
-     # for tclean (only used if niter>=0)
+    # for tclean (only used if niter>=0)
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
-    outms     = '%s/%s.%s.ms'  % (project,project,cfg)
-    # outms     = '%s/%s.%s.ms' % (project,project,cfg[cfg.rfind('/')+1:])          #jt: seems like we need to use this but i will leave commented out for now
-    outms2    = '%s/%s.%s.ms2' % (project,project,cfg)       # debug
-    # outms2    = '%s/%s.%s.ms2' % (project,project,cfg[cfg.rfind('/')+1:])
-    outim     = '%s/dirtymap' % (project)
-    do_fits   = False          # output fits when you clean?
-
+    outms     = '%s/%s.%s.ms'  % (project,project,cfg[cfg.rfind('/')+1:]) 
+    outms2    = '%s/%s.%s.ms2' % (project,project,cfg[cfg.rfind('/')+1:])
+    outim     = '%s/dirtymap'  % (project)
 
     if ptg != None:
         setpointings = False
@@ -866,8 +868,13 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     # obsmode     = "int"
     antennalist = "%s.cfg" % cfg     # can this be a list?
 
-    totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)
-    integration = "30s"        # prevent too many samples for MS
+    if times == None:
+        totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)
+        integration = "30s"        # prevent too many samples for MS
+    else:
+        totaltime   = "%gs" % (times[0]*3600)
+        integration = "%gs" % (times[1]*60)
+        
 
     thermalnoise= ""
     verbose     = True
@@ -926,8 +933,6 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
                weighting='natural',
                specmode='cube')
         qac_stats(outim + '.image')
-        if do_fits:
-            exportfits(outim+'.image',outim+'.fits')
 
     return outms
 
@@ -1268,6 +1273,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     else:
         deconvolver = 'hogbom'
         deconvolver = 'clark'
+        deconvolver = 'hogbom'   # PJT        
         
     if type(ms) != type([]):
         vptable = ms + '/TP2VISVP'
@@ -1403,8 +1409,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = restart
-        # @todo   merge in **line
-        for k in line.keys():
+        for k in line.keys():        # merge in **line
             tclean_args[k] = line[k]
         
         for niter in niters:
