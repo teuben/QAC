@@ -1219,6 +1219,8 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     # remove the temporary OTF image that was created
     os.system('rm -fr %s'%out_tmp)
 
+    return out_image
+
     #-end of qac_tp_otf()    
 
 
@@ -1484,7 +1486,7 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
         tp2vistweak(dname,cname,**kwargs)
     
 
-def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
+def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="dirtymap"):
     """
     Feather combination of a highres and lowres image
 
@@ -1517,7 +1519,7 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
 
     if highres == None:
-        highres = "%s/dirtymap%s.image" % (project,niter_label) 
+        highres = "%s/%s%s.image" % (project,name,niter_label) 
     if lowres  == None:
         lowres  = "%s/otf%s.image"    % (project,label)        # noise flat OTF image
     pb = highres[:highres.rfind('.')] + ".pb"
