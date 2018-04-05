@@ -1,7 +1,7 @@
 #
 #
 
-TESTS = test1 test2 test1-alma test1-SSA
+TESTS = test1 test2 test1-alma test1-SSA test5
 
 help:	
 	@echo no help
@@ -25,3 +25,7 @@ test1-SSA:
 test2:
 	rm -rf test2
 	time casa --nogui -c test2.py > test2.log 2>&1
+
+test5:
+	rm -rf test5
+	time casa --nogui -c test5.py > test5.log 2>&1
