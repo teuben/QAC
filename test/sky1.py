@@ -53,7 +53,9 @@ grid         = 30
 #grid         = 0
 
 # dish size in m; uvmax will be taken as 5/6 of this
+# @todo   this now seems broken, tclean() now crashes if dish not 12m
 dish         = 12.0
+dish3        = 12.0
 #dish         = 25.0
 
 # scaling factors
@@ -89,10 +91,12 @@ qac_log("TP2VIS")
 if True:
     qac_tpdish('ALMATP',dish)    # e.g. 25m
     qac_tpdish('VIRTUAL',dish)   # e.g. 12m
+    
 maxuv = 5.0*dish/6.0
 tpms = qac_tp_vis(test,model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
 tp2viswt(tpms,wfactor,'multiply')
 qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter)
+qac_plot(test+'/clean0/dirtymap.image',mode=1)
 
 # create an MS based on a model and antenna configuration for ACA/ALMA
 qac_log("ALMA 7m/12m")
