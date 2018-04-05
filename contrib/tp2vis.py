@@ -79,13 +79,16 @@ else:                                           # without vpmanager working,
              'maxRad':     999.0}
 t2v_arrays['VIRTUAL']    = apara.copy()
 
+# softer dish sampling instead of the VIRTUAL dish size
+dish3 = None
+
 
 ## =================
 ## Support functions
 ## =================
     
 def tp2vis_version():
-    print "25-mar-2018"
+    print "4-apr-2018"
 
    
 def axinorder(image):
@@ -453,6 +456,9 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     tel_coordsystem = 'local'                   # coordinate of antpos
     tel_antname     = t2v_arrays['VIRTUAL']['antList'][0]
     tel_dish        = t2v_arrays['VIRTUAL']['dish']
+    if dish3 != None:
+        print "WARNING: using non-standard tel_dish = %g " % dish3
+        tel_dish = dish3
 
     # Fake antenna parms
     tel_antposx     = np.arange(nant)*1000.0    # fake ant positions
@@ -1149,7 +1155,9 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8):
     dirty = dirtyname + '.image'
     clean = cleanname + '.image'
     resid = cleanname + '.residual'
-    pbmap = cleanname + '.pb'
+    pbmap = cleanname + '.pb'              # '.pb'  for tclean()
+    if not os.path.exists(pbmap):          # clean or tclean?
+        pbmap = cleanname + '.flux'        # '.flux' for clean()
     
     # New File names
     newclean = cleanname + '.tweak.image'
