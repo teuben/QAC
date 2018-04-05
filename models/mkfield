@@ -26,11 +26,11 @@ import matplotlib.pyplot as plt
 plt.imshow(data, origin='lower')
 plt.show()
 
-w = wcs.WCS(naxis=2)
-w.wcs.crpix = [256.0,256.0]
-w.wcs.cdelt = np.array([-1/3600.0, 1/3600.0])
-w.wcs.crval = [180.0, 40.0]
-w.wcs.ctype = ["RA---SIN", "DEC--SIN"]
+w = wcs.WCS(naxis=4)
+w.wcs.crpix = [256.0,256.0,1.0,1.0]
+w.wcs.cdelt = np.array([-1/3600.0, 1/3600.0, 1.0e9, 1.0])
+w.wcs.crval = [180.0, 40.0, 1.15e11, 1.0 ]
+w.wcs.ctype = ["RA---SIN", "DEC--SIN", "FREQ", "STOKES"]
 # w.wcs.set_pv([(2, 1, 45.0)])
 
 
