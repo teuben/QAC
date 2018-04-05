@@ -70,6 +70,12 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
     """
     Generate hex-grid of pointing centers that covers a specified area. 
     Can optionally output in file or as list. Can check for overlap with input image areas
+
+    One can also use simobserve() to generate a pointing file. Note that it has two
+    conventions:  maptype = "HEX" or "ALMA". For "HEX" the base of the triangle is horizontal,
+    for "ALMA" the base of the triangle is vertical. This is also the shortest distance between
+    two pointings.
+    Our qac_im_ptg() only has one convention: the "HEX" maptype.
     
     Required Parameters
     -------------------
@@ -788,6 +794,8 @@ def qac_flag1(ms1, ms2):
 def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None, times=[1/3.0, 1]):
     """
 
+    NOTE: each cfg will append its data to any existing data for that same cfg
+    
     cfg = 0    ngvlaSA_2b_utm or ngvlaSA_2b   (ngVLA design study)
     cfg = 1    SWcore
     cfg = 2    SW214
@@ -814,7 +822,9 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     imsize      -
     pixel       -
     phasecenter - where to place the reference pixel
-    times       - 
+    times       -
+
+    NOTE: each (cycle,cfg) pair will append its data to any existing data for that same pair
     
     See CASA/data/alma/simmos/ for the allowed (cycle,cfg) pairs
 

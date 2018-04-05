@@ -6,10 +6,14 @@ help:
 
 skymodel: skymodel.fits
 
-fits:     skymodel.fits
+
+fits:     skymodel.fits field000.fits
 
 skymodel.fits:
-	wget http://admit.astro.umd.edu/~teuben/TP2VIS/skymodel.fits
+	wget http://admit.astro.umd.edu/~teuben/QAC/skymodel.fits
+
+field000.fits:
+	wget http://admit.astro.umd.edu/~teuben/QAC/field000.fits
 
 test:
 	./mkgalcube run=model0 beam=0
