@@ -654,6 +654,7 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
     size  = np.arange(nx/2-20)
     flux  = 0.0 * size
     zero  = flux * 0.0
+    ones  = zero + 1.0
     chans = str(chan)
     if False:
         for i in size:
@@ -679,6 +680,7 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
             pl.ylabel("Flux")
             size = size * pix
             r1   = r1   * pix
+            pl.plot(size,ones)
         else:
             pl.title("%s : Cumulative sum" % im)
             pl.xlabel("size/2 (pixels)")
