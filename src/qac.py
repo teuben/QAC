@@ -28,7 +28,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 30-mar-2018")
+    print("qac: version 5-apr-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -594,10 +594,11 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
     #-end of qac_stats()
     
 def qac_beam(im, normalized=False, chan=-1, plot=None):
-    """ some properties of the PSF
+    """ show some properties of the PSF
 
     im:           image representing the beam (usually a .psf file)
     normalized:   if True, axes are arcsec and normalized flux
+                  otherwise pixels
     chan:         which channel to use [-1 means halfway cube]
     plot:         if set, this is the plot created, usually a png
 
@@ -648,10 +649,21 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
     flux  = 0.0 * size
     zero  = flux * 0.0
     chans = str(chan)
-    for i in size:
-        box = '%d,%d,%d,%d' % (xcen-i,ycen-i,xcen+i,ycen+i)
-        flux[i] = imstat(im,chans=chans,box=box)['sum'][0]/factor
-    print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux.max(),flux[-1],flux.argmax()*pix))
+    if False:
+        for i in size:
+            box = '%d,%d,%d,%d' % (xcen-i,ycen-i,xcen+i,ycen+i)
+            flux[i] = imstat(im,chans=chans,box=box)['sum'][0]/factor
+        print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux.max(),flux[-1],flux.argmax()*pix))
+
+    tb.open(im)
+    d1 = tb.getcol("map").squeeze()
+    tb.close()
+    p1 = radialProfile.azimuthalAverage(d1)
+    r1 = np.arange(len(p1))
+    f1 = 2*math.pi*r1*p1
+    flux2 = f1.cumsum() / factor
+        
+    print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux2.max(),flux2[-1],flux2.argmax()*pix))    
     
     if plot != None:
         pl.figure()
@@ -659,13 +671,15 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
             pl.title("%s : Normalized cumulative flux" % im)
             pl.xlabel("size/2 (arcsec)")
             pl.ylabel("Flux")
-            size = size * sqrt(pix2)
+            size = size * pix
+            r1   = r1   * pix
         else:
             pl.title("%s : Cumulative sum" % im)
             pl.xlabel("size/2 (pixels)")
             pl.ylabel("Sum")
         pl.plot(size,flux)
         pl.plot(size,zero)
+        pl.plot(r1,flux2)
         pl.savefig(plot)
         pl.show()
     
@@ -1226,7 +1240,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
 
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
-    Simple interface to do a tclean() or clean() on an MS (or list of MS)
+    Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
 
     Required:
     
@@ -1237,12 +1251,14 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     
     imsize       512  (list of 2 is allowed if you need rectangular area)
     pixel        0.5 arcsec
-    niter        0 or more, can be a list, e.g. [0,1000,3000]
+    niter        0 or more, can be a list as well, e.g. [0,1000,3000]
     weighting    "natural"
     startmodel   Jy/pixel starting model [ignored in clean() mode]
     phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
     t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
     **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
+
+    Note that clean() uses a different naming convention (e.g. .flux)
     
     """
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
