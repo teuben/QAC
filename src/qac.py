@@ -2282,6 +2282,7 @@ def qac_begin(label="QAC", log=True):
     """
     if log:
         from utils import Dtime
+        import logging
         # @todo until the logging + print problem solved, this is disabled
         logging.basicConfig(level = logging.INFO)
         root_logger = logging.getLogger()
