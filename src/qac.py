@@ -214,7 +214,7 @@ def qac_ms_ptg(msfile, outfile=None, uniq=True):
     'J2000 19h00m00.00000 -030d00m00.000000',...
     This is a little trickier than it sounds, because the FIELD table has more entries than
     you will find in the FIELD_ID column (often central coordinate may be present as well,
-    if it's not part of the observing fields, and locatations of the Tsys measurements
+    if it's not part of the observing fields, and locations of the Tsys measurements
     For 7m data there may also be some jitter amongst each "field" (are multiple SB used?)
 
     Note that the actual POINTING table is empty for the 12m and 7m data
@@ -527,6 +527,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         """
         return '\'' + name + '\''
     
+    qac_tag("plot")    
         
     if not QAC.exists(image):
         print("QAC_STATS: missing %s " % image)
@@ -807,6 +808,8 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     
     
     """
+    qac_tag("vla")
+    
     cfg_name = ['ngvlaSA_2b_utm', 'SWcore', 'SW214', 'SWVLB']
 
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
@@ -837,7 +840,8 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     cycle 5:   ALMA cfg = 1..10   ACA ok [same as 4]
     cycle 6:   ALMA cfg = 1..10   ACA ok [same as 5]
     """
-
+    qac_tag("alma")
+    
     # since we call it incrementally, make sure directory exists
     os.system('mkdir -p %s' % project)
 
@@ -973,6 +977,7 @@ def qac_tpdish(name, size=None):
     qac_tpdish('ALMATP',100.0)
     qac_tpdish('VIRTUAL',100.0)
     """
+    qac_tag("tpdish")    
     if size == None:
         if name in t2v_arrays.keys():
             print(t2v_arrays[name])
@@ -1026,6 +1031,8 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
       line           Dictionary of tclean() parameters, usually the line parameters are useful, e.g.
                      line = {"restfreq":"115.271202GHz","start":"1500km/s", "width":"5km/s","nchan":5}
     """
+    qac_tag("tp_vis")
+    
     # assert input files
     QAC.assertf(imagename)
     
@@ -1171,6 +1178,7 @@ def qac_sd_vis(**kwargs):
     Python_DFT = False): 
 
     """
+    qac_tag("sd_vis")
     print("Here we go directly to SD2VIS")
     sd2vis(**kwargs)
 
@@ -1273,6 +1281,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     Note that clean() uses a different naming convention (e.g. .flux)
     
     """
+    qac_tag("clean1")
+    
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
     outim1 = '%s/dirtymap' % project
@@ -1392,6 +1402,8 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     do_int      - also make a map from just the INT ms (without tp)
     do_cleanup  - if do_concat was used, this concat ms would be removed again
     """
+    qac_tag("clean")
+    #
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
     outim1 = '%s/int' % project
@@ -1507,6 +1519,8 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
                 incrementally the niters, e.g. [0,100,1000,10000]
     kwargs      passed to tp2vistweak(), typically just pbcut=0.8 now
     """
+    qac_tag("tp_tweak")
+    
     dname = "%s/%s" % (project,name)
     for i in range(len(niter)-1):
         cname = "%s/%s_%d" % (project,name,i+2)
@@ -1919,6 +1933,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
     mode=1     force casa
     mode=2     force numpy/imshow
     """
+    qac_tag("plot")
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
@@ -2018,10 +2033,11 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
     @todo   allow for a single image, to set a list of channels
     """
+    qac_tag("plot_grid")
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
-        
+    #
     print("QAC_PLOT_GRID",images)
     n = len(images)
     dim = range(n)
@@ -2256,14 +2272,16 @@ def qac_getkey(key):
 
 
 
-def qac_begin(label="ngvla"):
+def qac_begin(label="QAC", log=True):
     """
     Every script should start with qac_begin() if you want to use the logger
-    and/or Dtime output for performance testing
+    and/or Dtime output for performance testing. You can safely leave this
+    call out, or set log=False
 
     See also qac_tag() and qac_end()
     """
-    if False:
+    if log:
+        from utils import Dtime
         # @todo until the logging + print problem solved, this is disabled
         logging.basicConfig(level = logging.INFO)
         root_logger = logging.getLogger()
@@ -2273,11 +2291,11 @@ def qac_begin(label="ngvla"):
         print('handler stream:', handler.stream)
         import sys
         print('sys.stderr:', sys.stderr)
-        QAC.dt = Dtime(label)
+        QAC.dt = Dtime.Dtime(label)
 
 def qac_tag(label):
     """
-    Dtime.tag()
+    Create a time/memory tag for the logger using  Dtime.tag()
     
     See also qac_begin()
     """
@@ -2286,7 +2304,7 @@ def qac_tag(label):
 
 def qac_end():
     """
-    Dtime.end()
+    Stop logging. Calls    Dtime.end()
     
     See also qac_begin()
     """
