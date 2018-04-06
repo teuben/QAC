@@ -28,8 +28,7 @@
 #           748.144u 19.440s 5:02.15 254.0%	0+0k 2104+2799288io 2pf+0w
 #           803.884u 168.912s 8:11.96 197.7%	0+0k 640496+3091592io 1209pf+0w  530
 #           740.076u 17.432s 5:33.21 227.3%	0+0k 501552+3074184io 1121pf+0w  512
-
-
+#
 #  dante:   385.062u 14.358s 2:42.37 245.9%	0+0k 624+2013376io 0pf+0w            i7-3820 CPU @ 3.60GHz
 #           393.835u 17.946s 2:42.70 253.0%	0+0k 218248+2016744io 240pf+0w (HDD)
 #           402.181u 14.695s 2:15.24 308.2%	0+0k 616+104io 0pf+0w (SHM)
@@ -77,6 +76,12 @@ if alma == 1 or plot == 1:
     do_int = True
 else:
     do_int = False
+
+#   report
+qac_log("TEST: %s" % test)
+qac_begin(test)
+qac_version()
+
 
 #   make sure all the files we need are here
 QAC.assertf(tpim)
@@ -136,3 +141,6 @@ if plot == 1:
     y      = ['a-tpa', 'a-a_2', 'tpa-tpa_2','tpa_2tweak-tpa_2']
     x      = ['*','*','-diff']
     qac_plot_grid(images,ncol=2,diff=10,box=[200,200,600,600],xgrid=x,ygrid=y,plot=test+'/bench-cmp.png')
+
+# done
+qac_end()
