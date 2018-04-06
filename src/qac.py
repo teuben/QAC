@@ -607,6 +607,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
     plot:         if set, this is the plot created, usually a png
 
     @todo   have an option to just print beam, no volume info
+    @todo   does not work when image is not square            
     """
     if not QAC.iscasa(im):
         print("QAC_BEAM: missing %s " % im)
@@ -663,7 +664,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
     tb.open(im)
     d1 = tb.getcol("map").squeeze()
     tb.close()
-    if nz > 0:
+    if nz > 1:
         d1 = d1[:,:,chan]
     p1 = radialProfile.azimuthalAverage(d1)
     r1 = np.arange(len(p1))
