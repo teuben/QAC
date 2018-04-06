@@ -10,12 +10,9 @@
 
 import os, shutil, math, tempfile
 import os.path
-# from buildmosaic import buildmosaic
 from utils import constutils as const
 from utils import radialProfile
 import numpy as np
-# import numpy.ma as ma
-# import pyfits as fits
 import matplotlib.pyplot as pl
 
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
@@ -600,7 +597,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
     
     #-end of qac_stats()
     
-def qac_beam(im, normalized=False, chan=-1, plot=None):
+def qac_beam(im, normalized=True, chan=-1, plot=None):
     """ show some properties of the PSF
 
     im:           image representing the beam (usually a .psf file)
@@ -666,6 +663,8 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
     tb.open(im)
     d1 = tb.getcol("map").squeeze()
     tb.close()
+    if nz > 0:
+        d1 = d1[:,:,chan]
     p1 = radialProfile.azimuthalAverage(d1)
     r1 = np.arange(len(p1))
     f1 = 2*math.pi*r1*p1
@@ -681,7 +680,6 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
             pl.ylabel("Flux")
             size = size * pix
             r1   = r1   * pix
-            pl.plot(size,ones)
         else:
             pl.title("%s : Cumulative sum" % im)
             pl.xlabel("size/2 (pixels)")
@@ -689,6 +687,8 @@ def qac_beam(im, normalized=False, chan=-1, plot=None):
         pl.plot(size,flux)
         pl.plot(size,zero)
         pl.plot(r1,flux2)
+        if normalized:
+            pl.plot(size,ones)
         pl.savefig(plot)
         pl.show()
     
