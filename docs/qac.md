@@ -17,9 +17,26 @@ called 'test1', 'test1-alma', 'test1-SSA', 'test2', etc.
 
 A typical simulation script might look as follows. Explanations follow later:
 
+
     qac_ptr(phasecenter,"test123.ptg")
     qac_vla("test123","skymodel.fits", 4096, 0.01, ptg="test123.ptg",phasecenter=phasecenter)
     qac_clean1("test123/clean1",phasecenter=phasecenter)
+
+## execfile vs. import
+
+The current QAC uses **execfile()**.  This only works in python2, which
+is what CASA uses. However, CASA will probably (1-2 year timescale) switch
+to python3, and a new solution is needed.
+
+The obvious more pythonic implementation is to use the standard
+**import** method.  E.g.
+
+    qac_ptr(phasecenter,"test123.ptg")
+
+would simply become
+
+    qac.ptr(phasecenter,"test123.ptg")
+
 
 ## Logging
 
