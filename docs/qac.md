@@ -15,8 +15,7 @@ called 'test1', 'test1-alma', 'test1-SSA', 'test2', etc.
 
 ## Summary
 
-A typical simulation script might ook as follows. Explanations follow
-next:
+A typical simulation script might look as follows. Explanations follow later:
 
     qac_ptr(phasecenter,"test123.ptg")
     qac_vla("test123","skymodel.fits", 4096, 0.01, ptg="test123.ptg",phasecenter=phasecenter)
@@ -24,7 +23,7 @@ next:
 
 ## Logging
 
-Standard CASA logging is using , and you can use the python **print** function
+Standard CASA logging is used, and you can use the python **print** function
 in the usual way.  You can use the function
 
     qac_log(msg)
