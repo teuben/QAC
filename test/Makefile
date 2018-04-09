@@ -1,6 +1,6 @@
 #
 
-TESTS = bench bench0 bench1 sky1
+TESTS = bench bench0 bench1 sky1 test2 test3 test4
 
 #  on Mac:
 CASA  = /Applications/CASA.app/Contents/MacOS/casa
@@ -36,3 +36,21 @@ sky1:
 	@echo running sky1.py ...
 	time $(CASA) --nogui -c sky1.py > sky1.log 2>&1
 	tail -20 sky1.log
+
+test2:
+	@echo running test2.py ...
+	rm -fr test2
+	time $(CASA) --nogui -c test2.py > test2.log 2>&1
+	tail -8 test2.log
+
+test3:
+	@echo running test3.py ...
+	rm -fr test3
+	time $(CASA) --nogui -c test3.py > test3.log 2>&1
+	tail -8 test3.log
+
+test4:
+	@echo running test4.py ...
+	rm -fr test4
+	time $(CASA) --nogui -c test4.py > test4.log 2>&1
+	tail -8 test4.log
