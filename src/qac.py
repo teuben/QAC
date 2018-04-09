@@ -1346,6 +1346,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = True
+        # tclean_args['restoringbeam'] = 'common'
         for k in line.keys():
             tclean_args[k] = line[k]
         
@@ -1367,7 +1368,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         clean_args['phasecenter']   = phasecenter
         clean_args['weighting']     = weighting
         clean_args['mode']          = 'velocity'     #   only for cont?
-        clean_args['modelimage']    = startmodel        
+        clean_args['modelimage']    = startmodel
         for k in line.keys():
             clean_args[k] = line[k]
 
@@ -1511,7 +1512,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
 
 def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
     """
-    call tp2vistweak for a niter-series of images with a commmon basename
+    call tp2vistweak for a niter-series of images with a common basename
 
     project     project name, e.g. 'sky1/clean2'
     name        basename of images, e.g. 'dirtymap', 'int', 'tpint'
@@ -1666,7 +1667,7 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
 
     #-end of qac_smooth()
 
-def qac_analyze(project, imagename, niteridx=0):
+def qac_analyze(project, imagename, skymodel=None, niteridx=0):
     """
     helper function for using simanalyze without it running clean
 
@@ -1690,14 +1691,14 @@ def qac_analyze(project, imagename, niteridx=0):
         # to get the second iteration of tclean (niter=1000), niteridx = 1
         niter_label = "_%s"%(niteridx + 1)
 
-
-    imagename = project + '/%s%s.image' %(imagename,niter_label)
-
+    imagename = '%s%s.image' %(imagename,niter_label)
 
     simanalyze(project=project,
                image=False,
                imagename=imagename,
+               skymodel=skymodel,
                analyze=True,
+               verbose=True,
                overwrite=True)
 
     #-end of qac_analyze()
