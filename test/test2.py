@@ -60,7 +60,7 @@ qac_vla(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
 qac_log('CLEAN')
-qac_clean1(test+'/clean1', test+'/'+test+'.SWcore.ms', imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
+qac_clean1(test+'/clean1', test+'/'+test+'.SWcore.ms', imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common')
 
 # create two OTF maps 
 qac_log('OTF')
@@ -73,12 +73,10 @@ for idx in range(len(niter)):
 	qac_feather(test+'/clean1',label='45',niteridx=idx)
 	qac_feather(test+'/clean1',label='18',niteridx=idx)
 
-
 # smooth out skymodel image with feather beam so we can compare feather to original all in jy/beam
-# qac_log('SMOOTH')
-# for idx in range(len(niter)):
-#     qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='18', niteridx=idx)
-#     qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=idx)
+qac_log('SMOOTH')
+qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='18', niteridx=0)
+qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=0)
 
 qac_log('ANALYZE')
 os.system('mv %s/clean1/dirtymap*image %s'%(test, test))
@@ -96,33 +94,12 @@ os.system('mv %s/feather* %s/clean1'%(test, test))
 #
 qac_end()
 
-
-# --------------------------------------------------------------------------------------------------------------
-# regression
-
-# regress51 = [
-#     "1.6544389694376587e-05 0.0002642084282218718 0.0 0.0098144030198454857 0.60989238169349846"
-#     ]
-
-
-# r = regress51
-    
-
-# # regression
-# qac_stats(model,                                 r[0])
-# # qac_stats('test2/test2.SWcore.ms',               r[1])
-# qac_stats('test2/clean1/dirtymap.image')
-# qac_stats('test2/clean1/dirtymap_2.image')
-# qac_stats('test2/clean1/otf45.image')
-# qac_stats('test2/clean1/otf18.image.pbcor')
-# qac_stats('test2/clean1/otf45.image')
-# qac_stats('test2/clean1/otf18.image.pbcor')
-# qac_stats('test2/clean1/feather18_2.image')
-# qac_stats('test2/clean1/feather18_2.image.pbcor')
-# qac_stats('test2/clean1/feather45_2.image')
-# qac_stats('test2/clean1/feather45_2.image.pbcor')
-
-# qac_stats('test2/clean1/feather18.image.pbcor')
-# qac_stats('test2/clean1/feather18_2.image.pbcor')
-# qac_stats('test2/clean1/feather45.image.pbcor')
-# qac_stats('test2/clean1/feather45_2.image.pbcor')
+# check fluxes
+qac_stats('test2/clean1/skymodel18_3.residual')
+qac_stats('test2/clean1/skymodel18_3.smooth.image')
+qac_stats('test2/clean1/feather18_3.image')
+qac_stats('test2/clean1/feather18_3.image.pbcor')
+qac_stats('test2/clean1/skymodel45_3.residual')
+qac_stats('test2/clean1/skymodel45_3.smooth.image')
+qac_stats('test2/clean1/feather45_3.image')
+qac_stats('test2/clean1/feather45_3.image.pbcor')

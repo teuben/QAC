@@ -21,8 +21,8 @@ imsize_s     = 512
 pixel_s      = 0.1
 
 # pick a few niter values for tclean to check flux convergence
-# niter = [0,1000,2000]
-niter = [0,100,200,300,400,500,600,700,800,900,1000,1500,2000,2500]
+niter = [0,1000]
+# niter = [0,100,200,300,400,500,600,700,800,900,1000,1500,2000,2500]
 
 # decide if you want the whole cube (chans=-1) or just a specific channel
 chans        = '-1' # must be a string. for a range of channels --> '24~30'
@@ -45,7 +45,6 @@ if chans != '-1':
 
 ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
 if type(niter) != type([]): niter = [niter]
-
 
 # report
 qac_log('TEST: %s' % test)
@@ -96,14 +95,14 @@ os.system('mv %s/feather* %s/clean1'%(test, test))
 qac_end()
 
 # check fluxes
-qac_stats('test5/clean1/skymodel18_3.residual')
-qac_stats('test5/clean1/skymodel18_3.smooth.image')
-qac_stats('test5/clean1/feather18_3.image')
-qac_stats('test5/clean1/feather18_3.image.pbcor')
-qac_stats('test5/clean1/skymodel45_3.residual')
-qac_stats('test5/clean1/skymodel45_3.smooth.image')
-qac_stats('test5/clean1/feather45_3.image')
-qac_stats('test5/clean1/feather45_3.image.pbcor')
+qac_stats('test5/clean1/skymodel18.residual')
+qac_stats('test5/clean1/skymodel18.smooth.image')
+qac_stats('test5/clean1/feather18_2.image')
+qac_stats('test5/clean1/feather18_2.image.pbcor')
+qac_stats('test5/clean1/skymodel45.residual')
+qac_stats('test5/clean1/skymodel45.smooth.image')
+qac_stats('test5/clean1/feather45_2.image')
+qac_stats('test5/clean1/feather45_2.image.pbcor')
 
 plt.close('all')
 
@@ -123,3 +122,5 @@ plt.title(test, size=18)
 plt.legend(loc='best')
 plt.savefig(clean_dir+'flux_vs_niter.png')
 plt.show()
+
+# looks like niter=1000 is sufficient --> beyond 1000 gives same fluxes
