@@ -20,8 +20,9 @@ pixel_m      = 0.1
 imsize_s     = 512
 pixel_s      = 0.1
 
-# pick a few niter values for tclean to check flux convergence 
-niter = [0,1000, 2000]
+# pick a few niter values for tclean to check flux convergence
+# niter = [0,1000,2000]
+niter = [0,100,200,300,400,500,600,700,800,900,1000,1500,2000,2500]
 
 # decide if you want the whole cube (chans=-1) or just a specific channel
 chans        = '-1' # must be a string. for a range of channels --> '24~30'
@@ -73,12 +74,10 @@ for idx in range(len(niter)):
 	qac_feather(test+'/clean1',label='45',niteridx=idx)
 	qac_feather(test+'/clean1',label='18',niteridx=idx)
 
-
 # smooth out skymodel image with feather beam so we can compare feather to original all in jy/beam
 qac_log('SMOOTH')
-for idx in range(len(niter)):
-    qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='18', niteridx=idx)
-    qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=idx)
+qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='18', niteridx=0)
+qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=0)
 
 qac_log('ANALYZE')
 os.system('mv %s/clean1/dirtymap*image %s'%(test, test))
@@ -96,7 +95,6 @@ os.system('mv %s/feather* %s/clean1'%(test, test))
 #
 qac_end()
 
-
 # check fluxes
 qac_stats('test5/clean1/skymodel18_3.residual')
 qac_stats('test5/clean1/skymodel18_3.smooth.image')
@@ -106,3 +104,22 @@ qac_stats('test5/clean1/skymodel45_3.residual')
 qac_stats('test5/clean1/skymodel45_3.smooth.image')
 qac_stats('test5/clean1/feather45_3.image')
 qac_stats('test5/clean1/feather45_3.image.pbcor')
+
+plt.close('all')
+
+# plot of flux vs niter
+clean_dir = test+'/clean1/'
+niter_label = ['_'+str(i+1) if i > 0 else '' for i in range(len(niter)) ]
+flux_dm = np.array([ imstat(clean_dir+'dirtymap%s.image'%(n))['flux'][0] for n in niter_label])
+flux_18 = np.array([ imstat(clean_dir+'feather18%s.image'%(n))['flux'][0] for n in niter_label])
+flux_45 = np.array([ imstat(clean_dir+'feather45%s.image'%(n))['flux'][0] for n in niter_label])
+
+plt.plot(niter, flux_dm, 'k^-', label='dirtymap')
+plt.plot(niter, flux_18, 'm^-', label='feather 18m')
+plt.plot(niter, flux_45, 'c^-', label='feather 45m')
+plt.xlabel('niter', size=18)
+plt.ylabel('Flux (Jy/beam)', size=18)
+plt.title(test, size=18)
+plt.legend(loc='best')
+plt.savefig(clean_dir+'flux_vs_niter.png')
+plt.show()
