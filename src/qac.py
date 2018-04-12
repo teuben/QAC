@@ -540,7 +540,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         flux = 0.0
         tb.close()
         del data
-    else:                                    # assume it's an IM
+    else:                                                   # assume it's an IM
         maskarea = None
         if pbcut != None:
             # this requires a .pb file to be parallel to the .image file
@@ -1185,11 +1185,11 @@ def qac_sd_vis(**kwargs):
 
     #-end of qac_sd_vis()
         
-def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
+def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name="dirtymap"):
     """
     helper function to create on the fly total power map
     
-    dish:       dish diameter in meters
+    dish:       dish diameter in meters - no default
     freq:       frequency in GHz, if you want to override the image header value 
     template:   dirty image --> must come from tclean so there is both *.image and *.pb
     
@@ -1224,6 +1224,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     # calculate beam size in arcsecs
     # @todo check if alma uses 1.22*lam/D or just 1.0*lam/D
     beam = cms / (freq * dish) * apr
+    print("TP_OTF: %g %g %g" % (dish, freq/1e9, beam))
 
     # convolve skymodel with beam. assumes circular beam
     imsmooth(imagename=skymodel,
@@ -1237,8 +1238,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     # regrid
     if template == None:
         # inherit template from dirty map if template has not be specified in the input
-        # @todo need a way to grab the last dirtymap (e.g. dirtymap7.image) or grab a specified dirty map (e.g. dirtymap7 is bad so we want dirtymap6)
-        template = '%s/dirtymap.image'%project
+        template = '%s/%s.image' % (project,name)
 
     imregrid(imagename=out_tmp,
              template=template,
@@ -2412,6 +2412,15 @@ class QAC(object):
         if filename == None: return
         assert os.path.exists(filename),  "QAC.assertf: %s does not exist" % filename
         return
+    
+    @staticmethod
+    def label(idx):
+        if idx==0:
+            lab = ""
+        else:
+            lab = "_%d" % (idx+1)
+        return lab
+        
         
     
 #- end of qac.py
