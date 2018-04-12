@@ -35,4 +35,5 @@ bench1:
 sky1:
 	@echo running sky1.py ...
 	time $(CASA) --nogui -c sky1.py > sky1.log 2>&1
+	cp sky1.py sky1.log sky1
 	tail -20 sky1.log
