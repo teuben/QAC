@@ -40,7 +40,7 @@ if False:
 try:
     if sys.path[0] != "":   sys.path.insert(0,'')                  # ipython5 took this out, we put it back
     qac_root  = os.environ['HOME'] + '/.casa/QAC'                  # SET THIS TO YOUR LOCATION OF QAC or use a symlink
-    py_files  = ['src/qac', 'src/ssc', 'src/plot', 'contrib/tp2vis', 'tp2vis/tp2vis']
+    py_files  = ['src/qac', 'src/ssc', 'src/plot', 'contrib/tp2vis', 'distribute/tp2vis', 'tp2vis/tp2vis']
     sys.path.append(qac_root + '/src')
     work_dir = os.getcwd()
     os.chdir(qac_root)
