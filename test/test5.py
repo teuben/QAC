@@ -8,7 +8,7 @@
 #
 # @todo figure out regression for this test
 
-test 		 = 'test2'
+test 		 = 'test5'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
 
@@ -20,8 +20,9 @@ pixel_m      = 0.1
 imsize_s     = 512
 pixel_s      = 0.1
 
-# pick a few niter values for tclean to check flux convergence 
-niter = [0,1000, 2000]
+# pick a few niter values for tclean to check flux convergence
+niter = [0,1000]
+# niter = [0,100,200,300,400,500,600,700,800,900,1000,1500,2000,2500]
 
 # decide if you want the whole cube (chans=-1) or just a specific channel
 chans        = '-1' # must be a string. for a range of channels --> '24~30'
@@ -45,7 +46,6 @@ if chans != '-1':
 ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
 if type(niter) != type([]): niter = [niter]
 
-
 # report
 qac_log('TEST: %s' % test)
 qac_begin(test)
@@ -60,7 +60,7 @@ qac_vla(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
 qac_log('CLEAN')
-qac_clean1(test+'/clean1', test+'/'+test+'.SWcore.ms', imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common')
+qac_clean1(test+'/clean1', test+'/'+test+'.SWcore.ms', imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=[0,5,15], restoringbeam='common')
 
 # create two OTF maps 
 qac_log('OTF')
@@ -95,11 +95,32 @@ os.system('mv %s/feather* %s/clean1'%(test, test))
 qac_end()
 
 # check fluxes
-qac_stats('test2/clean1/skymodel18_3.residual')
-qac_stats('test2/clean1/skymodel18_3.smooth.image')
-qac_stats('test2/clean1/feather18_3.image')
-qac_stats('test2/clean1/feather18_3.image.pbcor')
-qac_stats('test2/clean1/skymodel45_3.residual')
-qac_stats('test2/clean1/skymodel45_3.smooth.image')
-qac_stats('test2/clean1/feather45_3.image')
-qac_stats('test2/clean1/feather45_3.image.pbcor')
+qac_stats('test5/clean1/skymodel18.residual')
+qac_stats('test5/clean1/skymodel18.smooth.image')
+qac_stats('test5/clean1/feather18_2.image')
+qac_stats('test5/clean1/feather18_2.image.pbcor')
+qac_stats('test5/clean1/skymodel45.residual')
+qac_stats('test5/clean1/skymodel45.smooth.image')
+qac_stats('test5/clean1/feather45_2.image')
+qac_stats('test5/clean1/feather45_2.image.pbcor')
+
+plt.close('all')
+
+# plot of flux vs niter
+clean_dir = test+'/clean1/'
+niter_label = ['_'+str(i+1) if i > 0 else '' for i in range(len(niter)) ]
+flux_dm = np.array([ imstat(clean_dir+'dirtymap%s.image'%(n))['flux'][0] for n in niter_label])
+flux_18 = np.array([ imstat(clean_dir+'feather18%s.image'%(n))['flux'][0] for n in niter_label])
+flux_45 = np.array([ imstat(clean_dir+'feather45%s.image'%(n))['flux'][0] for n in niter_label])
+
+plt.plot(niter, flux_dm, 'k^-', label='dirtymap')
+plt.plot(niter, flux_18, 'm^-', label='feather 18m')
+plt.plot(niter, flux_45, 'c^-', label='feather 45m')
+plt.xlabel('niter', size=18)
+plt.ylabel('Flux (Jy/beam)', size=18)
+plt.title(test, size=18)
+plt.legend(loc='best')
+plt.savefig(clean_dir+'flux_vs_niter.png')
+plt.show()
+
+# looks like niter=1000 is sufficient --> beyond 1000 gives same fluxes
