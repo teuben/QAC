@@ -27,6 +27,19 @@ niter = [0,1000]
 # decide if you want the whole cube (chans=-1) or just a specific channel
 chans        = '-1' # must be a string. for a range of channels --> '24~30'
 
+# choose ngVLA antennae configuation
+cfg          = 1
+
+# change this if you want mosiac (True) or not (False)
+mosiac       = False
+
+if mosiac == False:
+    ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
+else:
+    ptg = None
+    os.system('export VI1=1')
+
+if type(niter) != type([]): niter = [niter]
 
 # -- do not change parameters below this ---
 import sys
@@ -43,9 +56,6 @@ if chans != '-1':
     # rewrite the model variable with our new model
     model = model_out
 
-ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
-if type(niter) != type([]): niter = [niter]
-
 # report
 qac_log('TEST: %s' % test)
 qac_begin(test)
@@ -56,16 +66,20 @@ qac_ptg(phasecenter,ptg)
 
 # create a MS based on a model and antenna configuration
 qac_log('VLA')
-qac_vla(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter)
+ms1 = {}
+ms1[cfg] = qac_vla(test,model,imsize_m,pixel_m,cfg=cfg,ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
 qac_log('CLEAN')
-qac_clean1(test+'/clean1', test+'/'+test+'.SWcore.ms', imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=[0,5,15], restoringbeam='common')
+qac_clean1(test+'/clean1', ms1[cfg], imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=[0,5,15], restoringbeam='common')
+
+# grab name of start/input model
+startmodel = ms1[cfg].replace('.ms','.skymodel')
 
 # create two OTF maps 
 qac_log('OTF')
-qac_tp_otf(test+'/clean1',test+'/'+test+'.SWcore.skymodel', 45.0, label='45')
-qac_tp_otf(test+'/clean1',test+'/'+test+'.SWcore.skymodel', 18.0, label='18')
+qac_tp_otf(test+'/clean1', startmodel, 45.0, label='45')
+qac_tp_otf(test+'/clean1', startmodel, 18.0, label='18')
 
 # combine TP + INT using feather, for all niters
 qac_log('FEATHER')
@@ -75,8 +89,8 @@ for idx in range(len(niter)):
 
 # smooth out skymodel image with feather beam so we can compare feather to original all in jy/beam
 qac_log('SMOOTH')
-qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='18', niteridx=0)
-qac_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=0)
+qac_smooth(test+'/clean1', startmodel, label='18', niteridx=0)
+qac_smooth(test+'/clean1', startmodel, label='45', niteridx=0)
 
 qac_log('ANALYZE')
 os.system('mv %s/clean1/dirtymap*image %s'%(test, test))
@@ -95,24 +109,23 @@ os.system('mv %s/feather* %s/clean1'%(test, test))
 qac_end()
 
 # check fluxes
-qac_stats('test5/clean1/skymodel18.residual')
-qac_stats('test5/clean1/skymodel18.smooth.image')
-qac_stats('test5/clean1/feather18_2.image')
-qac_stats('test5/clean1/feather18_2.image.pbcor')
-qac_stats('test5/clean1/skymodel45.residual')
-qac_stats('test5/clean1/skymodel45.smooth.image')
-qac_stats('test5/clean1/feather45_2.image')
-qac_stats('test5/clean1/feather45_2.image.pbcor')
-
-plt.close('all')
+qac_stats(test+'/clean1/skymodel18.residual')
+qac_stats(test+'/clean1/skymodel18.smooth.image')
+qac_stats(test+'/clean1/feather18_2.image')
+qac_stats(test+'/clean1/feather18_2.image.pbcor')
+qac_stats(test+'/clean1/skymodel45.residual')
+qac_stats(test+'/clean1/skymodel45.smooth.image')
+qac_stats(test+'/clean1/feather45_2.image')
+qac_stats(test+'/clean1/feather45_2.image.pbcor')
 
 # plot of flux vs niter
 clean_dir = test+'/clean1/'
-niter_label = ['_'+str(i+1) if i > 0 else '' for i in range(len(niter)) ]
+niter_label = [QAC.label(i) for i in np.arange(0, len(niter), 1)]
 flux_dm = np.array([ imstat(clean_dir+'dirtymap%s.image'%(n))['flux'][0] for n in niter_label])
 flux_18 = np.array([ imstat(clean_dir+'feather18%s.image'%(n))['flux'][0] for n in niter_label])
 flux_45 = np.array([ imstat(clean_dir+'feather45%s.image'%(n))['flux'][0] for n in niter_label])
 
+plt.figure()
 plt.plot(niter, flux_dm, 'k^-', label='dirtymap')
 plt.plot(niter, flux_18, 'm^-', label='feather 18m')
 plt.plot(niter, flux_45, 'c^-', label='feather 45m')
@@ -122,5 +135,3 @@ plt.title(test, size=18)
 plt.legend(loc='best')
 plt.savefig(clean_dir+'flux_vs_niter.png')
 plt.show()
-
-# looks like niter=1000 is sufficient --> beyond 1000 gives same fluxes
