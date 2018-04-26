@@ -1,6 +1,6 @@
 #
 # 
-#  This test takes about 200 MB of disk space, and needs about 3 GB memory
+#  This test takes ~200 MB of disk space, and needs ~3 GB memory, and runs in ~3 mins
 #
 #  238.81user 18.62system 3:08.69elapsed 136%CPU (0avgtext+0avgdata 3383756maxresident)
 #
@@ -82,7 +82,7 @@ qac_log("**** REGRESSION STATS ****")
 
 # regression
 qac_stats(model,                                 r[0])
-qac_stats('test1/test1.SWcore.ms',               r[1])
+qac_stats(ms1,                                   r[1])
 qac_stats('test1/clean1/dirtymap.image',         r[2])
 qac_stats('test1/clean1/otf18.image.pbcor',      r[3])
 qac_stats('test1/clean1/otf45.image.pbcor')
