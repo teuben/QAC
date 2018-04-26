@@ -909,7 +909,6 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     
     """
 
-    # for tclean (only used if niter>=0)
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
     outms     = '%s/%s.%s.ms'  % (project,project,cfg[cfg.rfind('/')+1:]) 
@@ -929,7 +928,6 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
         totaltime   = "%gs" % (times[0]*3600)
         integration = "%gs" % (times[1]*60)
         
-
     thermalnoise= ""
     verbose     = True
     overwrite   = True
@@ -939,10 +937,9 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     incell      = "%garcsec" % pixel
     mapsize     = ["%garcsec" % (pixel*imsize[0])  ,"%garcsec"  % (pixel*imsize[1]) ]
 
-
     # we allow accumulation now ..
-    # ...make sure old directory is gone
-    # ...os.system("rm -rf %s" % project)
+    # ...or make sure old directory is gone
+    # ...qac_project(project)
 
     if ptg == None:
         simobserve(project, skymodel,
@@ -971,26 +968,6 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
         tb.open(outms+'/POINTING', nomodify=False)
         tb.removerows(range(tb.nrows()))
         tb.done()
-
-            
-
-    # this will be deprecated, use qac_clean1() 
-    if niter >= 0:
-        cmd1 = 'rm -rf %s.*' % outim
-        os.system(cmd1)
-        tclean(vis=outms,                         # tclean for just qac_alma()
-               imagename=outim,
-               niter=niter,
-               gridder='mosaic',
-               deconvolver = 'clark',
-               imsize=imsize,
-               cell=cell,
-               stokes='I',
-               pbcor=True,
-               phasecenter=phasecenter,
-               weighting='natural',
-               specmode='cube')
-        qac_stats(outim + '.image')
 
     return outms
 
@@ -1141,45 +1118,6 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
             tb.flush()
             tb.close()
         # removecols removekeyword removecolkeyword
-
-    if False:
-        # Plot UV - tp2vispl() does this better
-        figfile = outfile + ".png"
-        print("PLOTUV " + figfile)
-        plotuv(outfile,figfile=figfile)
-
-    if niter < 0 or imsize < 0:
-        return outfile
-
-    # finalize by making a tclean()
-
-    print("Final test clean around phasecenter = '%s'" % phasecenter)
-    dirtymap = '%s/dirtymap' % project
-    imsize    = QAC.imsize2(imsize)
-    cell      = ['%garcsec' % pixel]
-    weighting = 'natural'
-    if 'scales' in line.keys():
-        deconvolver = 'multiscale'
-    else:
-        deconvolver = 'hogbom'        
-        deconvolver = 'clark'
-    
-    tclean(vis = outfile,                              # tclean() just for qac_tp_vis()
-           imagename      = dirtymap,
-           niter          = niter,
-           gridder        = 'mosaic',
-           deconvolver    = deconvolver,
-           imsize         = imsize,
-           cell           = cell,
-           stokes         = 'I',
-           pbcor          = True,
-           phasecenter    = phasecenter,
-           vptable        = vptable,
-           weighting      = weighting,
-           specmode       = 'cube',
-           **line)
-    
-    exportfits(dirtymap + ".image", dirtymap + ".fits")
 
     return outfile
 
