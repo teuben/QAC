@@ -1,7 +1,7 @@
 #  
 #
 
-.PHONY:  tp2vis distribute
+.PHONY:  tp2vis distribute install
 
 
 # should just be an ID, e.g. 0.5 or 0.5a, or 0.5.1, in one single line.
