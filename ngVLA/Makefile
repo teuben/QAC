@@ -1,7 +1,7 @@
 #
 #
 
-TESTS = test1 test2 test1-alma test1-SSA test5
+TESTS = test1 test1a test2 test1-alma test1-SSA test5
 
 help:	
 	@echo no help
@@ -11,8 +11,10 @@ help:
 all:	$(TESTS)
 
 test1:
-	rm -rf test1
 	time casa --nogui -c test1.py > test1.log 2>&1
+
+test1a:
+	time casa --nogui -c test1a.py > test1a.log 2>&1
 
 test1-alma:
 	rm -rf test1-alma
