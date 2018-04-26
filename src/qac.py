@@ -805,11 +805,13 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
 
     NOTE: each cfg will append its data to any existing data for that same cfg
     
+             #ant  cfg_name              #ant  cfg_name             extent    comments
+             -----------------------     ------------------------   --------  --------
     cfg = 0    19  ngvlaSA_2b_utm          19  ngvla-sba-revB       < 
     cfg = 1   114  SWcore                  94  ngvla-core-revB      < 1km
     cfg = 2   214  SW214                  168  ngvla-plains-revB    < 30km
     cfg = 3   223  SWVLB                  214  ngvla-revB           < 1000km
-    cfg = 4        -                      225  ngvla-gb-vlba-revB   < 
+    cfg = 4     0  -                      225  ngvla-gb-vlba-revB   <         [+6 25m VLBI dishes, +5 18m at GBO]
 
     times      For ngvla we need shorter times, so 1200s and 60s should be fast enough for #vis
     fix        fix=1    removing pointing table
@@ -818,13 +820,24 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     """
     qac_tag("vla")
 
-    # revB names, will be in CASA 5.3, but for now we have them in QAC/cfg
     cfg_name = ['ngvla-sba-revB', 'ngvla-core-revB', 'ngvla-plains-revB', 'ngvla-revB', 'ngvla-gb-vlba-revB'] 
 
+    # revB names, will be in CASA 5.3, but for now we have them in QAC/cfg
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
     print("@todo %s " % cfg_file)
 
+    if cfg == 0:
+        vp.reset()
+        #vp.setpbgauss(telescope='NGVLA',halfwidth='130arcsec',maxrad='3.5deg',reffreq='100.0GHz',dopb=True)
+        vp.setpbairy(telescope='NGVLA',dishdiam=6.0,blockagediam=0.0,maxrad='3.5deg',reffreq='1.0GHz',dopb=True)
+
     outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, niter=niter, ptg = ptg, times=times)
+
+    if cfg == 0:
+        vptable = '%s/QAC.vp' % outms
+        vp.saveastable(vptable)
+        print("QAC_VLA: added vptable=%s" % vptable)
+    
     return outms
     
 def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None, times=None, fix=0):
@@ -1273,7 +1286,6 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
 
     #-end of qac_tp_otf()    
 
-    # clean1s()
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
@@ -1304,19 +1316,32 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     outim1 = '%s/dirtymap' % project
     imsize = QAC.imsize2(imsize)
     cell   = ['%garcsec' % pixel]
-    vis1   = ms
+    if type(ms) == type([]):
+        vis1   = ms
+    else:
+        vis1   = [ms]
     #
-    if True:
+    vp.reset()
+    nvp = 0
+    for msi in vis1:
+        if QAC.exists(msi+'/QAC.vp'):
+            vp.loadfromtable(msi+'/QAC.vp')
+            nvp = nvp + 1
         try:
-            tb.open(ms + '/SPECTRAL_WINDOW')
+            tb.open(msi + '/SPECTRAL_WINDOW')
             chan_freq = tb.getcol('CHAN_FREQ')
             tb.close()
-            tb.open(ms + '/SOURCE')
+            tb.open(msi + '/SOURCE')
             ref_freq = tb.getcol('REST_FREQUENCY')
             tb.close()
             print('FREQ: %g %g %g' % (chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9))
         except:
             print("Bypassing some error displaying freq ranges")
+    if nvp > 0:
+        vptable = project + '/QAC.vp'
+        vp.saveastable(vptable)
+    else:
+        vptable = None
 
     print("VIS1=%s" % str(vis1))
     print("niter=%s" % str(niter))
@@ -1329,22 +1354,26 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     else:
         deconvolver = 'hogbom'
         deconvolver = 'clark'
-        
-    if type(ms) != type([]):
-        vptable = ms + '/TP2VISVP'
-        if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
-            print("Note: using TP2VISVP, and attempting to use vp from" + vptable)
-            use_vp = True
-            vp.reset()
-            vp.loadfromtable(vptable)
+
+    if False:
+        if type(ms) != type([]):
+            vptable = ms + '/TP2VISVP'
+            if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
+                print("Note: using TP2VISVP, and attempting to use vp from" + vptable)
+                use_vp = True
+                vp.reset()
+                vp.loadfromtable(vptable)
+            else:
+                print("Note: did not find TP2VISVP, not using vp")
+                use_vp = False
+                vptable = None
+
         else:
-            print("Note: did not find TP2VISVP, not using vp")
-            use_vp = False
+            use_vp = False        
             vptable = None
-        vp.summarizevps()
-    else:
-        use_vp = False        
-        vptable = None
+
+    if vptable != None:
+        vp.summarizevps()        
 
     if t == True:
         # tclean() mode
@@ -1404,7 +1433,6 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     
     #-end of qac_clean1()
 
-    # clean1f()
 def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS) - faster niterlist version using 
