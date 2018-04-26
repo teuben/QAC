@@ -7,6 +7,7 @@ import time
 import os
 import numpy as np
 import logging
+import subprocess
 
 #  For some variations on this theme, e.g.  time.time vs. time.clock, see
 #  http://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
