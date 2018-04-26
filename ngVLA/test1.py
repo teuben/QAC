@@ -20,6 +20,11 @@ pixel_s      = 0.25
 
 # pick a few niter values for tclean to check flux convergence 
 niter        = [0,1000,2000]
+#niter        = [0]
+
+# pick a cfg
+cfg          = 1
+#cfg          = 0
 
 # -- do not change parameters below this ---
 import sys
@@ -38,9 +43,12 @@ qac_version()
 # create a single pointing mosaic
 qac_ptg(phasecenter, ptg)
 
+# start from a fresh project
+qac_project(test)
+
 # create a MS based on a model and antenna configuration
 qac_log("VLA")
-ms1 = qac_vla(test, model, imsize_m, pixel_m, cfg=1, ptg=ptg, phasecenter=phasecenter)
+ms1 = qac_vla(test, model, imsize_m, pixel_m, cfg=cfg, ptg=ptg, phasecenter=phasecenter)
 
 # image and clean this interferometric map a bit
 qac_log("CLEAN")
