@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 5-apr-2018")
+    print("qac: version 25-apr-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -41,6 +41,11 @@ def qac_log(message, verbose=True):
         print("")
         
     #-end of qac_log()
+
+def qac_project(project):
+    """ start a new project (directory) """
+    print("QAC_PROJECT %s" % project)
+    os.system('rm -rf %s ; mkdir -p %s' % (project,project))
 
 def qac_tmp(prefix, tmpdir='.'):
     """ Create a temporary file in a tmpdir
@@ -795,23 +800,26 @@ def qac_flag1(ms1, ms2):
     
     #-end of qac_flag1()
 
-def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None, times=[1/3.0, 1]):
+def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None, times=[1/3.0, 1], fix=0):
     """
 
     NOTE: each cfg will append its data to any existing data for that same cfg
     
-    cfg = 0    ngvlaSA_2b_utm or ngvlaSA_2b   (ngVLA design study)
-    cfg = 1    SWcore
-    cfg = 2    SW214
-    cfg = 3    SWVLB
+    cfg = 0    19  ngvlaSA_2b_utm          19  ngvla-sba-revB       < 
+    cfg = 1   114  SWcore                  94  ngvla-core-revB      < 1km
+    cfg = 2   214  SW214                  168  ngvla-plains-revB    < 30km
+    cfg = 3   223  SWVLB                  214  ngvla-revB           < 1000km
+    cfg = 4        -                      225  ngvla-gb-vlba-revB   < 
 
     times      For ngvla we need shorter times, so 1200s and 60s should be fast enough for #vis
+    fix        fix=1    removing pointing table
     
     
     """
     qac_tag("vla")
-    
-    cfg_name = ['ngvlaSA_2b_utm', 'SWcore', 'SW214', 'SWVLB']
+
+    # revB names, will be in CASA 5.3, but for now we have them in QAC/cfg
+    cfg_name = ['ngvla-sba-revB', 'ngvla-core-revB', 'ngvla-plains-revB', 'ngvla-revB', 'ngvla-gb-vlba-revB'] 
 
     cfg_file = qac_root + '/cfg/' + cfg_name[cfg]
     print("@todo %s " % cfg_file)
@@ -819,7 +827,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, niter=niter, ptg = ptg, times=times)
     return outms
     
-def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None, times=None):
+def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None, times=None, fix=0):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
@@ -829,6 +837,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     pixel       -
     phasecenter - where to place the reference pixel
     times       -
+    fix         - fix=1   remove pointing table
 
     NOTE: each (cycle,cfg) pair will append its data to any existing data for that same pair
     
@@ -873,7 +882,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     #-end of qac_alma()
     
-def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None, times=None):
+def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None, times=None, fix=0):
     """
     generic interferometer; called by qac_vla() and qac_alma()
 
@@ -883,6 +892,7 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     pixel       -
     phasecenter - where to place the reference pixel
     times       - a list of two numbers: totaltime in hours, integration time in minutes
+    fix         - fix=1 remove pointing table
     
     """
 
@@ -943,11 +953,15 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
                verbose=verbose, overwrite=overwrite,                   
                user_pwv = 0.0, thermalnoise= "")
 
-    if True:
-        # there appears to be also something wrong with the POINTING table via simobserve
-        print("CONCAT: removing POINTING table into " + outms2)
-        concat(outms,outms2,copypointing=False)
+    if fix == 1:
+        print("fix=1: removing POINTING table from " + outms)
+        tb.open(outms+'/POINTING', nomodify=False)
+        tb.removerows(range(tb.nrows()))
+        tb.done()
 
+            
+
+    # this will be deprecated, use qac_clean1() 
     if niter >= 0:
         cmd1 = 'rm -rf %s.*' % outim
         os.system(cmd1)
@@ -1038,7 +1052,8 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     QAC.assertf(imagename)
     
     # clean up old project
-    os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+    # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+    qac_project(project)
 
     # report phasecenter in a proper phasecenter format (tp2vis used to do that)
     if True:
@@ -1258,7 +1273,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
 
     #-end of qac_tp_otf()    
 
-
+    # clean1s()
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
@@ -1283,8 +1298,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     
     """
     qac_tag("clean1")
-    
-    os.system('rm -rf %s; mkdir -p %s' % (project,project))
+
+    qac_project(project)
     #
     outim1 = '%s/dirtymap' % project
     imsize = QAC.imsize2(imsize)
@@ -1349,7 +1364,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         # tclean_args['restoringbeam'] = 'common'
         for k in line.keys():
             tclean_args[k] = line[k]
-        
+
         for niter in niters:
             print("TCLEAN(niter=%d)" % niter)
             tclean_args['niter']      = niter
@@ -1358,6 +1373,147 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
             tclean_args['restart']    = False
     else:
         # old clean() mode
+        clean_args = {}
+        clean_args['imagermode']    = 'mosaic'
+        clean_args['psfmode']       = deconvolver
+        clean_args['imsize']        = imsize
+        clean_args['cell']          = cell
+        clean_args['stokes']        = 'I'
+        clean_args['pbcor']         = True
+        clean_args['phasecenter']   = phasecenter
+        clean_args['weighting']     = weighting
+        clean_args['mode']          = 'velocity'     #   only for cont?
+        clean_args['modelimage']    = startmodel
+        for k in line.keys():
+            clean_args[k] = line[k]
+
+        i = 0
+        for niter in niters:
+            print("CLEAN(niter=%d)" % niter)
+            clean_args['niter']     = niter
+            i = i + 1
+            if i == 1:
+                outim2 = outim1
+            else:
+                outim2 = "%s_%d" % (outim1,i)
+            clean(vis = vis1, imagename = outim2, **clean_args)
+            clean_args['modelimage']    = ""
+        # for niter
+            
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
+    
+    #-end of qac_clean1()
+
+    # clean1f()
+def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
+    """
+    Simple interface to do a tclean() [or clean()] on an MS (or list of MS) - faster niterlist version using 
+
+    Required:
+    
+    project - new directory for this  (it is removed before starting)
+    ms      - a single MS (or a list, but no concat() is done)
+
+    Optional:
+    
+    imsize       512  (list of 2 is allowed if you need rectangular area)
+    pixel        0.5 arcsec
+    niter        0 or more, can be a list as well, e.g. [0,1000,3000]
+    weighting    "natural"
+    startmodel   Jy/pixel starting model [ignored in clean() mode]
+    phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
+    t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
+    **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
+
+    Note that clean() uses a different naming convention (e.g. .flux)
+    
+    """
+    qac_tag("clean1")
+
+    qac_project(project)
+    #
+    outim1 = '%s/dirtymap' % project
+    imsize = QAC.imsize2(imsize)
+    cell   = ['%garcsec' % pixel]
+    vis1   = ms
+    #
+    if True:
+        try:
+            tb.open(ms + '/SPECTRAL_WINDOW')
+            chan_freq = tb.getcol('CHAN_FREQ')
+            tb.close()
+            tb.open(ms + '/SOURCE')
+            ref_freq = tb.getcol('REST_FREQUENCY')
+            tb.close()
+            print('FREQ: %g %g %g' % (chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9))
+        except:
+            print("Bypassing some error displaying freq ranges")
+
+    print("VIS1=%s" % str(vis1))
+    print("niter=%s" % str(niter))
+    if type(niter) == type([]):
+        niters = niter
+    else:
+        niters = [niter]
+    if 'scales' in line.keys():
+        deconvolver = 'multiscale'
+    else:
+        deconvolver = 'hogbom'
+        deconvolver = 'clark'
+        
+    if type(ms) != type([]):
+        vptable = ms + '/TP2VISVP'
+        if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
+            print("Note: using TP2VISVP, and attempting to use vp from" + vptable)
+            use_vp = True
+            vp.reset()
+            vp.loadfromtable(vptable)
+        else:
+            print("Note: did not find TP2VISVP, not using vp")
+            use_vp = False
+            vptable = None
+        vp.summarizevps()
+    else:
+        use_vp = False        
+        vptable = None
+
+    if t == True:
+        # tclean() mode
+        tclean_args = {}
+        tclean_args['gridder']       = 'mosaic'
+        tclean_args['deconvolver']   = deconvolver
+        tclean_args['imsize']        = imsize
+        tclean_args['cell']          = cell
+        tclean_args['stokes']        = 'I'
+        tclean_args['pbcor']         = True
+        tclean_args['phasecenter']   = phasecenter
+        tclean_args['vptable']       = vptable
+        tclean_args['weighting']     = weighting
+        tclean_args['specmode']      = 'cube'
+        tclean_args['startmodel']    = startmodel
+        tclean_args['restart']       = True
+        tclean_args['calcres']       = True
+        tclean_args['calcpsf']       = True
+
+        # tclean_args['restoringbeam'] = 'common'
+        for k in line.keys():
+            tclean_args[k] = line[k]
+
+        for (niter,idx) in zip(niters,range(len(niters))):
+            print("TCLEAN(niter=%d)" % niter)
+            tclean_args['niter']      = niter
+            tclean(vis = vis1, imagename = outim1, **tclean_args)
+            tclean_args['startmodel'] = ""
+            tclean_args['restart']    = True
+            tclean_args['calcres']    = False
+            tclean_args['calcpsf']    = False
+            for ext in ['image', 'image.pbcor', 'residual', 'model']:
+                cmd = 'cp -r %s.%s %s_%d.%s'    % (outim1,ext,outim1,idx+1,ext)
+                print "CMD: ",cmd
+                os.system(cmd)
+            
+    else:
+        # old clean() mode, really not recommended
         clean_args = {}
         clean_args['imagermode']    = 'mosaic'
         clean_args['psfmode']       = deconvolver
@@ -1406,7 +1562,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", start
     """
     qac_tag("clean")
     #
-    os.system('rm -rf %s; mkdir -p %s' % (project,project))
+    qac_project(project)
     #
     outim1 = '%s/int' % project
     outim2 = '%s/tpint' % project
@@ -1914,6 +2070,8 @@ def qac_math(outfile, infile1, oper, infile2):
          immath([a,b],'evalexpr',c,'IM0+IM1')
     is
          qac_math(c,a,'+',b)
+
+    @todo     should infile2 inherit beam from infile1?
     """
     qac_tag("math")
     if not QAC.exists(infile1) or not QAC.exists(infile2):
