@@ -5,9 +5,11 @@ TESTS = bench bench0 bench1 \
 	cas_11271a cas_11271b \
         test1 test2 test3 test4 test5
 
-#  on Mac: (usually can't assume it's in the $PATH)
+#  example on Mac:
 CASA  = /Applications/CASA.app/Contents/MacOS/casa
-#  on Linux: (here we assume it's in your $PATH)
+#  example on Linux if you used the install_casa script
+CASA  = ../casa/casa-release-5.1.2-4.el7/bin/casa
+#  example on Linux: (assuming it's in your $PATH - the portable solution)
 CASA  = casa
 
 help:
