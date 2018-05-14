@@ -70,6 +70,7 @@ if use_vp:
                   maxrad=str(apara['maxRad'])+'arcsec',
                   reffreq='100.0GHz',
                   dopb=True)
+    # antnames='DV00' etc.
     vp.summarizevps()
 else:                                           # without vpmanager working,
     apara = {'observatory':'ALMA',              # use ALMA for now
@@ -88,7 +89,7 @@ dish3 = None
 ## =================
     
 def tp2vis_version():
-    print "4-apr-2018"
+    print "4-apr-2018 PJT"
 
    
 def axinorder(image):
@@ -121,7 +122,10 @@ def arangeax(image):
     """
         Re-arrange axes and make a RA-DEC-POL-FREQ cube. assume
         axinorder() is already run and 4 axes exist in order.
-        Helper function for tp2vis()    
+        Helper function for tp2vis()
+
+        input:   image
+        output:  temporary image name
     """
 
     dd = ''.join(re.findall('[0-9]',str(datetime.datetime.now())))
@@ -139,12 +143,14 @@ def arangeax(image):
     if len(order) == 4:                         # all axes exist
         # on older CASA before 5.0 you will loose beam and
         # object name (bugs.txt #017)
+        print "transpose order=%s" % order
         ia2 = ia.transpose(outfile=imageout,order=order)
         ia2.done()
         ia.done()
         print "Written transposed ",imageout
     else:
-        return
+        print "bad transpose order=%d" % order
+        return None
 
     return imageout
 
@@ -264,8 +270,10 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Ensure RA-DEC-POL-FREQ axis order (CASA simulator needs it)
     if axinorder(infile):                       # if 4 axes in order
         imagename = infile                      # use original file
+        delimage  = False
     else:                                       # if not, rearrange
         imagename = arangeax(infile)            # and use re-aranged data
+        delimage  = True        
 
     # Parameters from TP cube header
     # ==============================
@@ -723,6 +731,9 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         rf = rf * 0 + restfreq
         tb.putcol('REF_FREQUENCY',rf)
         tb.close()
+
+    if delimage:
+        os.system('rm -rf %s' % imagename)
 
     #-end of tp2vis()
 

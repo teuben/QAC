@@ -1,6 +1,7 @@
 #  
 #
 
+
 .PHONY:  tp2vis distribute install
 
 
@@ -12,6 +13,9 @@ URL1     = https://github.com/kodajn/tp2vis
 
 # the distribute git repo
 URL2     = https://github.com/tp2vis/distribute
+
+# data url
+URL3     = http://admit.astro.umd.edu/~teuben/TP2VIS/
 
 help:
 	@echo QAC VERSION=`cat VERSION`
@@ -32,6 +36,12 @@ install:
 	echo "execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')"  >> ~/.casa/init.py
 	@echo Obviously this example assumes QAC was located in ~/.casa.
 	@echo Modify as needed.
+
+data:
+	mkdir -p data
+	(cd data; wget $(URL3)/skymodel.fits)
+	(cd data; wget $(URL3)/skymodel.ptg)
+	(cd data; wget $(URL3)/qac_bench.tar.gz -O - | tar zxf -)
 
 # public release is in a directory 'distribute', go figure
 tp2vis:
