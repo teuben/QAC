@@ -1027,7 +1027,7 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
       fix            Various fixes such that tclean() can handle a list of ms.
                      ** this parameter will disappear or should have default 1
                      0   no fix, you need to run mstransform()/concat() on the tp.ms
-                     1   output only the CORRECTED_DATA column, remove other *DATA*
+                     1   output only the CORRECTED_DATA column, remove other *DATA*, POINTING table also removed
                      2   debug mode, keep all intermediate MS files
                      @todo   there is a flux difference between fix=0 and fix=1 in dirtymap
       deconv         Use the deconvolved map as model for the simulator
@@ -2060,6 +2060,11 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
     mode=2     force numpy/imshow
     """
     qac_tag("plot")
+
+    if not QAC.exists(image):
+        print("QAC_PLOT: missing %s " % image)
+        return
+    
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
