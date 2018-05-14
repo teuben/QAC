@@ -57,6 +57,10 @@ wfactor      = 0.01
 fix          = 1
 #fix          = 0
 
+# for simulation we need concat = False instead of the default True, tclean() will crash otherwise
+do_concat       = False
+#do_concat       = True
+
 # -- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
@@ -85,12 +89,14 @@ qac_log("TP2VIS:")
 tpms0 = qac_tp_vis(test+'/tp0',model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,fix=0)
 tpms1 = qac_tp_vis(test+'/tp1',model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,fix=1)
 
-qac_log("CLEAN1:")
+qac_log("TP2VISWT:")
 tp2viswt(tpms0,wfactor,'multiply')
 tp2viswt(tpms1,wfactor,'multiply')
+
+qac_log("CLEAN1:")
 line = {}
 if mosaic == 0:
-    line['gridder']     =  'standard'      # 'standard' or 'mosaic' 
+    line['gridder']     =  'standard'      # 'standard' or 'mosaic' (default)
 qac_clean1(test+'/clean0', tpms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
 qac_clean1(test+'/clean1', tpms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
 
@@ -120,11 +126,11 @@ if len(cfg) > 0:
     # JD clean for tp2vis
     qac_log("CLEAN with TP2VIS")
     try:
-        qac_clean(test+'/clean3',tpms0,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True,**line)
+        qac_clean(test+'/clean3',tpms0,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=do_concat,**line)
     except:
         print("QAC_CLEAN clean3 failed")
     try:
-        qac_clean(test+'/clean4',tpms1,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True,**line)
+        qac_clean(test+'/clean4',tpms1,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=do_concat,**line)
     except:
         print("QAC_CLEAN clean4 failed")        
     for idx in range(len(niter)):
