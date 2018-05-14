@@ -7,6 +7,8 @@
 #  run this script twice, once with setting the VI1 environment variable set to 1,
 #  and once not set at all. VI1 will cause CASA to to not use new features.
 #
+#  Uses ~340MB 
+#
 
 
 test         = 'cas_11271'                          # name of directory within which everything will reside
@@ -51,8 +53,9 @@ mosaic       = 1
 # scaling factors
 wfactor      = 0.01
 
-# the tp2vis/qac fix on POINTING
+# the tp2vis/qac fix on POINTING (1 means no POINTING table)
 fix          = 1
+#fix          = 0
 
 # -- do not change parameters below this ---
 import sys
@@ -98,8 +101,10 @@ for idx in range(len(niter)):
     im3 = test+'/clean1/dirtymap%s.image'       % QAC.label(idx)
     im4 = test+'/clean1/dirtymap%s.image.pbcor' % QAC.label(idx)
     qac_plot(im2,mode=1)      # casa based plot w/ colorbar
+    qac_stats(im1)            # noise flat
     qac_stats(im2)            # noise flat
     qac_plot(im4,mode=1)      # casa based plot w/ colorbar
+    qac_stats(im3)            # noise flat
     qac_stats(im4)            # noise flat
 
 if len(cfg) > 0:
@@ -114,8 +119,14 @@ if len(cfg) > 0:
 
     # JD clean for tp2vis
     qac_log("CLEAN with TP2VIS")
-    qac_clean(test+'/clean3',tpms0,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
-    qac_clean(test+'/clean4',tpms1,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)    
+    try:
+        qac_clean(test+'/clean3',tpms0,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True,**line)
+    except:
+        print("QAC_CLEAN clean3 failed")
+    try:
+        qac_clean(test+'/clean4',tpms1,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True,**line)
+    except:
+        print("QAC_CLEAN clean4 failed")        
     for idx in range(len(niter)):
         im1 = test+'/clean3/int%s.image'         % QAC.label(idx)
         im2 = test+'/clean3/int%s.image.pbcor'   % QAC.label(idx)
