@@ -75,6 +75,6 @@ set root = `pwd`
 set bin1=$root/$dir/bin
 set bin2=$root/$dir/lib/casa/bin
 
-echo "set path = ($bin1 $bin2 $path); rehash"  >> casa_start.csh
-echo "export PATH=${bin1}:${bin2}:$PATH"       >> casa_start.sh
+echo "set path = ($bin1 $bin2 "'$path); rehash'  >> casa_start.csh
+echo "export PATH=${bin1}:${bin2}:"'$PATH'       >> casa_start.sh
 
