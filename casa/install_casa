@@ -12,14 +12,13 @@
 #   By default it will install the latest release, but optionally a URL with the tar.gz file
 #   can be given. Examples below.
 #
-#
-#   7-mar-2018  Peter Teuben      initial version written
+#   7-mar-2018  Peter Teuben      initial version written for SD2018
 #
 #  TODO's:
 #  - test to check if everything was installed properly and working ok
 #
 
-#   make  it work for Linux and Darwin (MacOSX)
+#   make it (sort of) work for Linux and Darwin (MacOSX)
 set uname = `uname -s`
 
 if ($uname == Darwin) set uname = osx
@@ -73,8 +72,9 @@ endif
 
 
 set root = `pwd`
-set path = ($root/bin $path); rehash
+set bin1=$root/$dir/bin
+set bin2=$root/$dir/lib/casa/bin
 
-echo 'set path = ('$root'/bin $path); rehash' >> casa_start.csh
-echo 'export PATH='$root'/bin:$PATH'          >> casa_start.sh
+echo "set path = ($bin1 $bin2 $path); rehash"  >> casa_start.csh
+echo "export PATH=${bin1}:${bin2}:$PATH"       >> casa_start.sh
 
