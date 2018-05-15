@@ -2,8 +2,18 @@
 #
 #   Example casa install
 #
-#   7-mar-2018  Peter Teuben      initial version written
+#   By default this will install the latest released casa under the QAC/casa directory.
+#   Adding CASAROOT/bin and CASAROOT/lib/casa/bin is the responsibility of the user.
 #
+#   Usage:
+#
+#     install_casa [url]
+#
+#   By default it will install the latest release, but optionally a URL with the tar.gz file
+#   can be given. Examples below.
+#
+#
+#   7-mar-2018  Peter Teuben      initial version written
 #
 #  TODO's:
 #  - test to check if everything was installed properly and working ok
@@ -46,6 +56,6 @@ curl $url | tar zxf -
 set root = `pwd`
 set path = ($root/bin $path); rehash
 
-#echo 'set path = ('$root'/bin $path); rehash' >> ../sd2018_start.csh
-#echo 'export PATH='$root'/bin:$PATH'          >> ../sd2018_start.sh
+echo 'set path = ('$root'/bin $path); rehash' >> casa_start.csh
+echo 'export PATH='$root'/bin:$PATH'          >> casa_start.sh
 
