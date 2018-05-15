@@ -36,21 +36,40 @@ if ($uname == osx) then
    echo Sorry, I cannot help you yet dave
    echo get the dmg, e.g.
    echo $o1
-   ecoh $o2
+   echo $o2
    echo And drag the app into /Applications
    exit 0
+else
+   echo Running on linux, good. Some common versions you might use
+   echo $l1
+   echo $l2
+   echo $l3
 endif
 
 set pre = https://casa.nrao.edu/download/distro/$uname/prerelease/el7/
 set rel = https://casa.nrao.edu/download/distro/$uname/release/el7/
 
 
-set url = $l1
 
+if ($#argv > 0) then
+   set url = $1
+else
+   set url = $l1
+endif
+
+echo Using $url
 
 #  no changes below here
 
-curl $url | tar zxf -
+set targz = $url:t
+set dir   = $targz:r:r
+
+
+if (-d $dir) then
+    echo $dir already exists, not installing again
+else
+    curl $url | tar zxf -
+endif
 
 
 set root = `pwd`
