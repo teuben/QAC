@@ -89,7 +89,7 @@ dish3 = None
 ## =================
     
 def tp2vis_version():
-    print "4-apr-2018 PJT"
+    print "15-may-2018 PJT"
 
    
 def axinorder(image):
@@ -828,6 +828,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
                 chan1freq = spwinfo[ispw]['Chan1Freq'] / 1.0e9 # GHz
                 chanwidth = spwinfo[ispw]['ChanWidth'] / 1.0e9 # GHz
 
+                ms.selectinit(reset=True)           # new since 5.3.0-97
                 ms.selectinit(datadescid=spwid)
 
                 field_id  = np.unique(ms.getdata('field_id')['field_id'])
@@ -1050,6 +1051,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             fwhm0 = t2v_arrays[iarray]['fwhm100']   # beam FHWM @100GHz[arcsec]
             for ispw in spwlist:                    # loop over SPWs
                 spwid     = spwinfo[ispw]['SpectralWindowId']  # spw #
+                ms.selectinit(reset=True)                      # new since 5.3.0-97
                 ms.selectinit(datadescid=spwid)                # this SPW alone
                 c1freq = spwinfo[ispw]['Chan1Freq'] / 1.0e9    # 1st chan  [GHz]
                 cwidth = spwinfo[ispw]['ChanWidth'] / 1.0e9    # chanwidth [GHz]
@@ -1073,6 +1075,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             ms.selectinit(reset=True)               # all spws
             for ispw in spwlist:                    # loop over SPWs
                 spwid  = spwinfo[ispw]['SpectralWindowId']     # spw id
+                ms.selectinit(reset=True)           # new since 5.3.0-97                
                 ms.selectinit(datadescid=spwid)     # this SPW alone
                 npnt   = len(np.unique(ms.getdata('field_id')['field_id']))
                 weight = ms.getdata('weight')['weight']        # (npol,nvis)
@@ -1100,6 +1103,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             fwhm0   = t2v_arrays[iarray]['fwhm100'] # beam FHWM @100GHz [arcsec]
             for ispw in spwlist:                    # loop over SPWs
                 spwid     = spwinfo[ispw]['SpectralWindowId']  # spw #
+                ms.selectinit(reset=True)                      # new since 5.3.0-97                
                 ms.selectinit(datadescid=spwid)                # this SPW alone
                 c1freq = spwinfo[ispw]['Chan1Freq'] / 1.0e9    # 1st chan  [GHz]
                 cwidth = spwinfo[ispw]['ChanWidth'] / 1.0e9    # chanwidth [GHz]
@@ -1415,8 +1419,13 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
             ichan = np.argmin(np.abs(cfreq - targetfreq)) # closest to target
 
             # Limit data to load
-            ms.selectinit(datadescid=spwid)     # this SPW only
-            ms.select({'uvdist':[0.0,uvMax]})   # limit uv range
+            ms.selectinit(reset=True)                  # needed since 5.3.0-97
+            if not ms.selectinit(datadescid=spwid):    # this SPW only
+                print "MS.SELECTINIT bad selection for spwid=%d - CASA bug?" % spwid
+                continue
+            if not ms.select({'uvdist':[0.0,uvMax]}):  # limit uv range
+                print "MS.SELECT nothing returned for spwid=%d - CASA bug?" % spwid
+                continue
 
             # Read parameters [note: wt(pol,vis)]
             fid    = np.append(fid,ms.getdata('field_id')['field_id'])
