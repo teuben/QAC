@@ -14,7 +14,7 @@ these functions were called QTP.  We also use QAC for an ngVLA design
 study.
 
 See the
-[INSTALL](INSTALL)
+[INSTALL](INSTALL.md)
 file for ways how to install and use these functions in your
 [CASA](https://casa.nrao.edu/casa_obtaining.shtml)
 shell. 
