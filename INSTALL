@@ -1,5 +1,26 @@
 # Installation instructions for QAC and related functions
 
+0) Executive Summary
+
+On a linux machine with "nothing" installed, the following commands should get you to run the benchmark
+(about 2 minutes):
+
+   cd ~
+   git clone https://github.com/teuben/QAC
+   cd QAC/casa
+   ./install_casa
+   source casa_start.sh
+   cd ..
+   make data
+   make install
+   cd ~/.casa
+   ln -s ~/QAC
+   cd ~/QAC/test
+   ln -s ../data/M100_TP_CO_cube.bl.fits
+   ln -s ../data/M100_aver_12.ms
+   ln -s ../data/M100_aver_7.ms
+   make bench
+
 1) CASA:
 
 You will need to install CASA before you can use QAC.
