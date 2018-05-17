@@ -3,14 +3,18 @@
 ## 0) Executive Summary
 
 On a linux machine with "nothing" installed, the following commands should get you to run the benchmark
-(about 2 minutes):
+(about 2 minutes). 
 
     cd ~
     git clone https://github.com/teuben/QAC
+    
+    # phase 1: install CASA (skip this if "casa" is in your path)
     cd QAC/casa
     ./install_casa
     source casa_start.sh
     cd ..
+    
+    # phase 2: prepare install and run benchmark
     make data
     make install
     cd ~/.casa
