@@ -9,7 +9,10 @@ set rel  = $1
 set casa = casa-prerelease-5.3.0-$rel.el7
 set url  = https://casa.nrao.edu/download/distro/linux/prerelease/el7/$casa.tar.gz
 ./install_casa $url
-
+#   re-use the CASA/data directory, assuming that was created before manually
+if (-e data) then
+   (cd $casa; rm -rf data; ln -s ../data)
+endif
 
 
 #   run the test
