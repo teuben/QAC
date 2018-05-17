@@ -16,6 +16,7 @@
 #
 #  TODO's:
 #  - test to check if everything was installed properly and working ok
+#  - use modules to load different versions (or astromake)
 #
 
 #   make it (sort of) work for Linux and Darwin (MacOSX)
