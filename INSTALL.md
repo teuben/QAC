@@ -1,13 +1,34 @@
 # Installation instructions for QAC and related functions
 
-1) CASA:
+## 0) Executive Summary
+
+On a linux machine with "nothing" installed, the following commands should get you to run the benchmark
+(about 2 minutes):
+
+    cd ~
+    git clone https://github.com/teuben/QAC
+    cd QAC/casa
+    ./install_casa
+    source casa_start.sh
+    cd ..
+    make data
+    make install
+    cd ~/.casa
+    ln -s ~/QAC
+    cd ~/QAC/test
+    ln -s ../data/M100_TP_CO_cube.bl.fits
+    ln -s ../data/M100_aver_12.ms
+    ln -s ../data/M100_aver_7.ms
+    make bench
+
+## 1) CASA:
 
 You will need to install CASA before you can use QAC.
 See https://casa.nrao.edu/casa_obtaining.shtml
 
 An example is in the [casa/install_casa](casa/install_casa) shell script.
 
-2) QAC and TP2VIS
+## 2) QAC and TP2VIS
 
 Although you can manually execfile() the appropriate python file(s),
 this can become cumbersome, and we now encourage you to use CASA's
@@ -35,7 +56,7 @@ You can look at QAC's casa.init.py file and steal some ideas how
 to load other interesting CASA add-ons.
 
 
-3) TP2VIS:
+## 3) TP2VIS:
 
 An alternative to loading TP2VIS via QAC is loading it manually:
 
@@ -46,8 +67,7 @@ this is the recommending procedure in the public release of
 
 
 
-FUTURE:
--------
+## FUTURE:
 
 In the current CASA environment there are two other ways QAC could be
 installed:
