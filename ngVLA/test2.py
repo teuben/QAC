@@ -1,6 +1,6 @@
 """
 ngVLA simulated observation of input galaxy model
-feathering INT with 45 and 18 m single dish TP
+feathering INT with 45 and 18 m single dish  for TP
 
 Variable    Description                     Default value   Notes
 --------------------------------------------------------------------------------
@@ -10,16 +10,16 @@ pixel_m     model image pixel size          0.1             this with image size
 imsize_s    image size passed to TCLEAN     512
 pixel_s     pixel size passed to TCLEAN     0.1
 niter       iterations for TCLEAN           [0,1000]
-chans       channels of input model to use  '-1'            -1 uses all channels in input model
+chans       channels of input model to use  '-1'            '-1' uses all channels in input model
 cfg         ngVLA ant config for INT        1               0=SBA, 1=core 94 ant, 2=plains 168 ant, 3=full 214 ant, 4=full ngVLA + VLBI + GBO
-mosiac      toggle mosiac imaging           False           True gives automatic mosiac pointings
-scales      multiscale cleaning values      [0,5,15]        no multiscale cleaning --> scales = None
+mosiac      toggle mosiac imaging           False           True gives automatic mosiac pointings as determined by simobserve
+scales      multiscale cleaning values      [0,5,15]        for no multiscale cleaning set scales = None
 
 qac_feather and qac_analyze requires restoringbeam='common' for tclean
 
-3'43" running in /dev/shm at uwyo for full channels 
+2'02" running in /dev/shm at uwyo for default values
 
-it is assumed you have done    execfile('qac.py')
+it is assumed you have done execfile('qac.py')
 
 to run from casa shell with default values:
 execfile('test2.py')
@@ -31,7 +31,7 @@ to run from Makefile with default values and output to a log file
 make test2
 
 to run from bash/csh shell with modified variable values:
-casa --nogui -c test2.py "test='test000'" "imsize_m=1080"
+casa --nogui -c test2.py "test='test000'" "imsize_m=256"
 """
 
 test 		 = 'test2'
