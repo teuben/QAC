@@ -1,9 +1,16 @@
 #  -*- python -*-
 # Resources:   MEM: 2.2 GB   DISK: 230MB  CPU: ~8'
 #
+# Example cpu:
+#  T530
+#  T480       892.5 13.9 4:13 
+#  desktop    851.5 14.4 4:46 
+#  dante
+#
 # parameters in this workflow (derived from bench.py)
 phasecenter = 'J2000 12h22m54.900s +15d49m15.000s'
 line        = {"restfreq":"115.271202GHz","start":"1500km/s", "width":"5km/s","nchan":1}
+#line       = {"restfreq":"115.271202GHz","start":"1480km/s", "width":"5km/s","nchan":5}
 chans       = '20'                   # must agree with the line={}    @todo casa regrid bug?
 tpim        = 'M100_TP_CO_cube.bl.image'
 ms07        = 'M100_aver_7.ms'
@@ -11,13 +18,16 @@ ms12        = 'M100_aver_12.ms'
 nsize       = 800
 pixel       = 0.5
 niter       = [0,1000]
+cmp1        = 0            # standard cmp plot
+cmp2        = 0            # comparing order of feeding ms in the mslist, only stats
+cmp3        = 1            # comparing clean and tclean, with plot
 
 #-- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
 
-#-- hardcoded for this demo
+#-- "bench0" is hardcoded for this demo
 tpms   = 'bench0/tp.ms'
 ptg    = 'bench0.ptg'
 
@@ -39,7 +49,7 @@ if True:
     tpim2 = 'bench0/tp.im'
 
 # joint deconvolution tclean (use the **line dictionary to pass other parameters to tclean)
-line['scales'] = [0]
+# line['restoringbeam'] = 'common'     # HACK for feather for cubes > 1 channel
 qac_clean('bench0/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=True,**line)
 # JvM tweak
 tp2vistweak('bench0/clean/tpint', 'bench0/clean/tpint_2')
@@ -48,22 +58,23 @@ qac_feather('bench0','bench0/clean/int_2.image',tpim2)
 # Faridani's SSC
 qac_ssc('bench0','bench0/clean/int_2.image',tpim2, regrid=True, cleanup=False)
 
-# plot various comparisons; difference maps are in the 3rd column of the plot_grid
-i1    = 'bench0/clean/int.image'
-i2    = 'bench0/clean/tpint.image'
-i3    = 'bench0/clean/int_2.image'
-i4    = 'bench0/clean/tpint_2.image'
-i5    = 'bench0/clean/tpint_2.tweak.image'
-i6    = 'bench0/feather.image'
-i7    = 'bench0/ssc.image'
-ygrid = ['7&12 + tp', '7&12 iter','7&12&tp iter','tweak', 'feather', 'ssc']
-box   = [300,300,600,600]
-qac_plot_grid([i1,i2, i1,i3, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp.png',diff=10.0)
+if cmp1 != 0:
+    # plot various comparisons; difference maps are in the 3rd column of the plot_grid
+    i1    = 'bench0/clean/int.image'
+    i2    = 'bench0/clean/tpint.image'
+    i3    = 'bench0/clean/int_2.image'
+    i4    = 'bench0/clean/tpint_2.image'
+    i5    = 'bench0/clean/tpint_2.tweak.image'
+    i6    = 'bench0/feather.image'
+    i7    = 'bench0/ssc.image'
+    ygrid = ['7&12 + tp', '7&12 iter','7&12&tp iter','tweak', 'feather', 'ssc']
+    box   = [300,300,600,600]
+    # qac_plot_grid([i1,i2, i1,i3, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp.png',diff=10.0)
+    
+    ygrid = ['7&12 + tp', '7&12&tp iter','tweak', 'feather', 'ssc']
+    qac_plot_grid([i1,i2, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp1.png',diff=10.0)
 
-ygrid = ['7&12 + tp', '7&12&tp iter','tweak', 'feather', 'ssc']
-qac_plot_grid([i1,i2, i2,i4, i5,i4, i6,i4, i6,i7],box=box,ygrid=ygrid,plot='bench0/bench0.cmp.png',diff=10.0)
-
-# regression for casa 5.2.2-4 on RHEL7; the last column is the flux in Jy.km/s
+# regression for casa 5.1.2-4 on RHEL7; the last column is the flux in Jy.km/s
 r = [
     '0.76510686740198042 1.4994149478897942 -0.43156760931015015 6.4568653106689453 15.995818049860048',
     '0.00015477320920210852 0.036285694517807124 -0.12811994552612305 0.37910208106040955 0.30861407063317348',
@@ -81,7 +92,7 @@ qac_stats('bench0/clean/tpint_2.tweak.image', r[3], eps)
 qac_stats('bench0/ssc.image',                 r[4], eps)
 qac_stats('bench0/feather.image',             r[5], eps)
 
-if False:
+if cmp2 != 0:
     # test symmetry, and if you tinker internally with deconvolver etc., also those differences.
     # sadly, all these maps should be the same, but they come in 3 versions, the one where tpms
     # is up front, being the worst offender.
@@ -101,3 +112,18 @@ if False:
     qac_stats('bench0/clean15/dirtymap.image')
     qac_stats('bench0/clean16/dirtymap.image')
     qac_stats('bench0/clean17/dirtymap.image')
+
+if cmp3 != 0:
+    # test clean vs. tclean
+    if True:
+        qac_clean1('bench0/tclean20',[ms07,ms12,tpms],nsize,pixel,niter=niter,phasecenter=phasecenter,t=True, **line)
+        qac_clean1('bench0/clean20', [ms07,ms12,tpms],nsize,pixel,niter=niter,phasecenter=phasecenter,t=False,**line)
+    else:
+        qac_clean1('bench0/tclean20',[ms07,ms12],nsize,pixel,niter=niter,phasecenter=phasecenter,t=True, **line)
+        qac_clean1('bench0/clean20', [ms07,ms12],nsize,pixel,niter=niter,phasecenter=phasecenter,t=False,**line)
+    j1    = 'bench0/tclean20/dirtymap.image'
+    j2    = 'bench0/tclean20/dirtymap_2.image'
+    j11   = 'bench0/clean20/dirtymap.image'
+    j12   = 'bench0/clean20/dirtymap_2.image'
+    box   = [300,300,600,600]
+    qac_plot_grid([j1,j2,j11,j12,j1,j11,j2,j12],plot='bench0/bench0.cmp3.png',box=box,diff=10.0)
