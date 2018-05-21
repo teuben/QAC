@@ -3,7 +3,7 @@
 ## 0) Executive Summary
 
 On a linux machine with "nothing" installed, the following commands should get you to run the benchmark
-(about 2 minutes):
+(about 2 minutes). Explainations and alternate ways to install are detailed below.
 
     cd ~
     git clone https://github.com/teuben/QAC
