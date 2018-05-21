@@ -31,13 +31,10 @@ pixel_m      = 0.05
 imsize_s     = 256
 pixel_s      = 0.8
 
-# number of TP cycles
-nvgrp        = 4
-
 # pick a few niter values for tclean to check flux convergence 
 # niter        = [0,500,1000,2000]
-#niter        = [0,100]
-#niter        = [0,100,1000]
+# niter        = [0,100]
+# niter        = [0,100,1000]
 niter        = [0,1000]
 # niter        = [0,1000,4000]
 # niter        = [0]
@@ -53,7 +50,7 @@ times        = [1, 1]     # 1 hrs in 1 min integrations
 grid         =  0        # this can be pointings good for small dish nyquist
 
 # tp dish size
-dish         = 12
+dish         = 50
 
 # scaling factors
 wfactor      = 0.01
@@ -103,15 +100,12 @@ qac_log("OTF")
 # create an OTF TP map using a [12m] dish
 qac_tp_otf(test+'/clean3', startmodel, dish, template=test+'/clean3/dirtymap.image')
 
-
-#@todo check naming - int vs dirtymap
 qac_log("FEATHER")
 # combine TP + INT using feather and ssc, for all niter's
 for idx in range(len(niter)):
     qac_feather(test+'/clean3',             niteridx=idx, name="dirtymap")
     qac_ssc    (test+'/clean3',             niteridx=idx, name="dirtymap")
     qac_smooth (test+'/clean3', startmodel, niteridx=idx, name="dirtymap")
-
 
 # the real flux
 qac_log("REGRESSION")

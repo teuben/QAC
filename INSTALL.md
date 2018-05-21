@@ -2,8 +2,9 @@
 
 ## 0) Executive Summary
 
-On a linux machine with "nothing" installed, the following commands should get you to run the QAC benchmark
-(about 2 minutes). 
+On a linux machine with "nothing" installed, the following commands should get you to be able
+to run the benchmark  Explanations and alternate ways to install are detailed below. This benchmark
+should take around 2 minutes to run.
 
     cd ~
     git clone https://github.com/teuben/QAC
