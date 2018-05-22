@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 25-apr-2018")
+    print("qac: version 21-may-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -894,6 +894,36 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     return ms1
 
     #-end of qac_alma()
+
+def qac_carma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=0, niter=-1, ptg = None, times=None, fix=0):
+    """
+    helper function to create an MS from a skymodel for a given CARMA configuration
+
+    project     - name (one directory deep) to which files are accumulated - will accumulate
+    skymodel    - jy/pixel map
+    imsize      -
+    pixel       -
+    phasecenter - where to place the reference pixel
+    times       -
+    fix         - fix=1   remove pointing table
+    cfg         - 0=E, 1=D, 2=C, 3=B, 4=A
+
+    """
+    qac_tag("carma")
+    
+    # since we call it incrementally, make sure directory exists
+    os.system('mkdir -p %s' % project)
+
+    cfg_name = ['e', 'd', 'c', 'b', 'a'] 
+    cfg = 'carma.%s' % cfg_name[cfg]
+    print("CFG: " + cfg)
+
+    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg, times=times)
+    
+
+    return ms1
+
+    #-end of qac_carma()
     
 def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None, times=None, fix=0):
     """
