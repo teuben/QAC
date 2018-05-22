@@ -10,7 +10,7 @@ imsize_m     = 192
 pixel_m      = 1
 
 # pick the sky imaging parameters (for tclean)
-imsize_s     = 512
+imsize_s     = 256
 pixel_s      = 1
 
 # grid size for mosaic
@@ -55,6 +55,12 @@ qac_project(test)
 # qac_begin(test)
 qac_version()
 
+# make vp
+vp.reset()
+vp.setpbairy(telescope='CARMA', dishdiam=8.0, blockagediam=0.0, maxrad='3.5deg', reffreq='1.0GHz', dopb=True)
+vp.saveastable('CARMA.vp')
+
+
 # create a single pointing mosaic
 if grid > 0:
     p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
@@ -63,14 +69,19 @@ else:
     p = [phasecenter]
 
 # create a MS based on a model and antenna configuration
-
+#vp.reset()
+#vp.loadfromtable('CARMA.vp')
 ms0 = qac_carma(test,model,imsize_m,pixel_m,cfg=0,ptg=ptg, phasecenter=phasecenter)
+#vp.reset()
+#vp.loadfromtable('CARMA.vp')
 ms1 = qac_carma(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
 qac_log('CLEAN')
-qac_clean1(test+'/clean0', ms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales)
-qac_clean1(test+'/clean1', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales)
+qac_clean1(test+'/clean0', ms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
+qac_clean1(test+'/clean1', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
+
+
 
 # combine D and E
 qac_log('FEATHER')
@@ -91,13 +102,9 @@ if False:
         os.system('mv %s/%s.analysis.png %s/feather_%s.analysis.png'% (test, test, test, idx))
 
 #
+
+qac_stats(test+'/clean0/dirtymap.image')
+qac_stats(test+'/clean1/dirtymap.image')
+
 qac_end()
 
-# check fluxes
-if False:
-    qac_stats('test3/skymodel.residual')
-    qac_stats('test3/skymodel.smooth.image')
-    qac_stats('test3/feather.image')
-    qac_stats('test3/feather.image.pbcor')
-    qac_stats('test3/feather_2.image')
-    qac_stats('test3/feather_2.image.pbcor')
