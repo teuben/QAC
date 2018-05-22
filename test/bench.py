@@ -74,10 +74,15 @@ ms12        = 'M100_aver_12.ms'
 nsize       = 800
 pixel       = 0.5
 niter       = [0,1000]
+clean1      = 0
 clean       = 1
 tweak       = 1
 alma        = 0
 plot        = 0
+
+clean1 = 0
+alma   = 0
+plot   = 0
 
 #-- do not change parameters below this ---
 import sys
@@ -112,9 +117,16 @@ qac_ms_ptg(ms12,ptg)
 qac_tp_vis(test,tpim,ptg,rms=0.15)
 tp2vispl([tpms,ms07,ms12],outfig=test+'/tp2vispl_rms.png')
 
+if clean1 == 1:
+    qac_clean1(test+'/clean1',tpms,nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
+    if plot == 1:
+        qac_plot(test+'/clean1/dirtymap.image')
+    
+
 if clean == 1:
     print "Continuing benchmark with clean=1"
-    qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,**line)
+    #qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,**line)
+    qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=True,**line)    
     if tweak == 1:
         print "Continuing benchmark with tweak=1"
         # loop over all 2nd and higher iterations and tweak them 
@@ -149,7 +161,7 @@ if plot == 1:
     a1=test+'/clean/int.image'
     b1=test+'/clean/tpint.image'
     c1=test+'/clean/int_2.image'
-    d1=test+'/clean/tpin_2.image'
+    d1=test+'/clean/tpint_2.image'
     e1=test+'/clean/tpint_2.tweak.image'
 
     images = [a1,b1,   a1,c1,   b1,d1,      e1,d1]
