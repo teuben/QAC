@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 21-may-2018")
+    print("qac: version 23-may-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -930,7 +930,7 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     generic interferometer; called by qac_vla() and qac_alma()
 
     project     - name (one directory deep) to which files are accumulated - will accumulate
-    skymodel    - jy/pixel map
+    skymodel    - jy/pixel map, should have a restfreq if you want your velocities to come out right
     imsize      -
     pixel       -
     phasecenter - where to place the reference pixel
@@ -998,6 +998,39 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
         tb.open(outms+'/POINTING', nomodify=False)
         tb.removerows(range(tb.nrows()))
         tb.done()
+
+    if True:
+        #
+        # taken from tp2vis.py  (bug001_Fixed)
+        #
+        print("Correcting CASA header RESTFREQ inconsistencies")
+        # REST_FREQUENCY in /SOURCE
+        #    Having REST_FREQUENCY in header does not make sense (since
+        #    multiple lines, but CASA MS does have it. So, put it in.
+        h0       = imhead(skymodel,mode='list')
+
+        if 'restfreq' in h0.keys():
+            restfreq = h0['restfreq'][0]        # restfreq from image header
+            print("SET RESTFREQ:::",restfreq/1e9," GHz")
+            print("   Set restfreq= in (t)clean manually if this restfreq is incorrect")
+
+            tb.open(outms + '/SOURCE',nomodify=False)
+            rf = tb.getcol('REST_FREQUENCY')
+            rf = rf * 0 + restfreq
+            tb.putcol('REST_FREQUENCY',rf)
+            tb.close()
+
+            # REF_FREQUENCY in /SPECTRAL_WINDOW
+            #    Not clear what should be in this data column, but all ALMA data
+            #    seem to have REF_FREQUENCY = REST_FREQUENCY, so we follow.
+            tb.open(outms + '/SPECTRAL_WINDOW',nomodify=False)
+            rf = tb.getcol('REF_FREQUENCY')
+            rf = rf * 0 + restfreq
+            tb.putcol('REF_FREQUENCY',rf)
+            tb.close()
+        else:
+            print("No restfreq found in skymodel")
+        
 
     return outms
 
@@ -2018,7 +2051,7 @@ def qac_summary(tp, ms=None, source=None, line=False):
 
     #-end of qac_summary()
 
-def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
+def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None):
     """
     Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
     
@@ -2026,6 +2059,9 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     chan_rms:    list of 4 integers, which denote the low and high channel range where RMS should be measured
     pb:          primary beam. If given, it can do a final pb corrected version and use it for masking
     pbcut:       if PB is used, this is the cutoff above which mask is used
+    rms:         if given, overrides computed rms
+
+    Note the rms value is used in masking, but for mom0 2*rms and for mom1 5.5*rms
 
     @todo    add the mom2 by default as well
     
@@ -2040,23 +2076,31 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     chans1='%d~%d' % (chan_rms[0],chan_rms[1])
     chans2='%d~%d' % (chan_rms[2],chan_rms[3])
     chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2])
-    rms  = imstat(imcube,axes=[0,1])['rms']
-    print(rms)
-    rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
-    rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
-    print(rms1,rms2)
-    rms = 0.5*(rms1+rms2)
-    print("RMS = ",rms)
+    if rms == None:
+        rms  = imstat(imcube,axes=[0,1])['rms']
+        dmax = imstat(imcube,axes=[0,1])['max']
+        dmin = imstat(imcube,axes=[0,1])['min']
+        print(rms)
+        rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
+        rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
+        print(rms1,rms2)
+        rms = 0.5*(rms1+rms2)
+        print("RMS = %f" % rms)
+        print("MINMAX = %f %f" % (dmin.min(),dmax.max()))
+    else:
+        print("RMS = %f (assumed)" % rms)
     if pb==None:
         mask = None
     else:
         mask = lel(pb) + '> %g' % pbcut
-        print("Using mask=",mask)
+        print("Using mask=%s" % mask)
     mom0 = imcube + '.mom0'
     mom1 = imcube + '.mom1'
     os.system('rm -rf %s %s' % (mom0,mom1))
     immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0)
     immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
+
+    print("QAC_MOM: Written %s %s" % (mom0,mom1))
 
     #-end of qac_mom()
 
