@@ -1,5 +1,9 @@
-# carma - short spacing array for total power
 #
+# carma EDGE simulations
+#     Only D+E array with relatively short observations, so poor sampling in UV
+#     - get combined D+E maps
+#     - get moment maps
+#     - compare with inut
 
 test         = 'carma1'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
@@ -11,6 +15,7 @@ pixel_m      = 1
 
 # pick the sky imaging parameters (for tclean)
 imsize_s     = 256
+imsize_s     = 192
 pixel_s      = 1
 
 # grid size for mosaic
@@ -19,11 +24,15 @@ grid         = 30
 # pick a few niter values for tclean to check flux convergence 
 niter = [0,1000]
 
+# integration times
+times = [4, 1]
+
 # decide if you want the whole cube (chans=-1) or just a specific channel
 chans        = '-1' # must be a string. for a range of channels --> '24~30'
 
-# if you want multiscale cleaning, then True. if not, then False
-multiscale   = True
+# if you want multiscale clean, then True. if not, then False
+scales  = None
+scales  = [0,5,15]
 
 # -- do not change parameters below this ---
 import sys
@@ -40,12 +49,8 @@ if chans != '-1':
     # rewrite the model variable with our new model
     model = model_out
 
-if multiscale == True:
-    scales = [0,5,15]
-else:
-    scales = None
 
-ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
+ptg = test + '.ptg'     
 if type(niter) != type([]): niter = [niter]
 
 
@@ -60,27 +65,23 @@ vp.reset()
 vp.setpbairy(telescope='CARMA', dishdiam=8.0, blockagediam=0.0, maxrad='3.5deg', reffreq='1.0GHz', dopb=True)
 vp.saveastable('CARMA.vp')
 
-
-# create a single pointing mosaic
+# create the pointing mosaic file, a full grid, or single pointing
 if grid > 0:
     p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 else:    
     qac_ptg(phasecenter,ptg)
     p = [phasecenter]
 
-# create a MS based on a model and antenna configuration
-#vp.reset()
-#vp.loadfromtable('CARMA.vp')
-ms0 = qac_carma(test,model,imsize_m,pixel_m,cfg=0,ptg=ptg, phasecenter=phasecenter)
-#vp.reset()
-#vp.loadfromtable('CARMA.vp')
-ms1 = qac_carma(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter)
+# Create E and D array 
+ms0 = qac_carma(test,model,imsize_m,pixel_m,cfg=0,ptg=ptg, phasecenter=phasecenter,times=times)
+ms1 = qac_carma(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter,times=times)
 
 # clean this interferometric map a bit
 qac_log('CLEAN')
 qac_clean1(test+'/clean0', ms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
 qac_clean1(test+'/clean1', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
 
+qac_clean1(test+'/clean2', [ms0,ms1], imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
 
 
 # combine D and E
@@ -102,9 +103,19 @@ if False:
         os.system('mv %s/%s.analysis.png %s/feather_%s.analysis.png'% (test, test, test, idx))
 
 #
+qac_mom(test+'/clean0/dirtymap.image',    [0,11,48,59], test+'/clean0/dirtymap.pb')
+qac_mom(test+'/clean0/dirtymap_2.image',  [0,11,48,59], test+'/clean0/dirtymap.pb')
+qac_mom(test+'/clean1/dirtymap_2.image',  [0,11,48,59], test+'/clean1/dirtymap.pb')
+qac_mom(test+'/clean2/dirtymap_2.image',  [0,11,48,59], test+'/clean2/dirtymap.pb')
+qac_mom(test+'/carma1.carma.e.skymodel',[0,11,48,59])
+a1 = test+'/carma1.carma.e.skymodel.mom1'
+a2 = test+'/clean0/dirtymap.image.mom1'
+qac_plot_grid([a1,a2])
+
 
 qac_stats(test+'/clean0/dirtymap.image')
 qac_stats(test+'/clean1/dirtymap.image')
+
 
 qac_end()
 
