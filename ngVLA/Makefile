@@ -1,7 +1,7 @@
 #
 #
 
-TESTS = test1 test1a test2 test1-alma test1-SSA test5
+TESTS = test1 test1a test2 test1-alma test1-SSA test5 vla1 vla2
 
 help:	
 	@echo no help
@@ -31,3 +31,11 @@ test2:
 test5:
 	rm -rf test5
 	time casa --nogui -c test5.py > test5.log 2>&1
+
+vla1:
+	rm -rf vla1
+	time casa --nogui -c vla1.py > vla1.log 2>&1
+
+vla2:
+	rm -rf vla2
+	time casa --nogui -c vla2.py > vla2.log 2>&1
