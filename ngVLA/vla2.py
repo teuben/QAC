@@ -15,7 +15,7 @@
 #  Space:
 #           Uses about 1.4 GB
 
-test         = 'vla1'                               # name of directory within which everything will reside
+test         = 'vla2'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'   # where we want this model to be on the sky, at VLA
 
@@ -147,13 +147,13 @@ a6 = test+'/clean3/ssc_2.image'
 # niter=0    | niter=1000 | diff
 # niter=1000 | otf        | diff
 # feather_2  | otf        | diff
-qac_plot_grid([a1, a2, a2, a3, a4, a3],diff=10, plot=test+'/plot1.cmp.png')
+qac_plot_grid([a1, a2, a2, a3, a4, a3],diff=10, plot=test+'/plot1.cmp.png', labels=True)
 
 # plot 2:
 # niter=1000 | skymodel | diff
 # feather_2  | ssc_2    | diff
-qac_plot_grid([a2, a5, a4, a6], diff=10, plot=test+'/plot2.cmp.png')
-
+# feather_2  | skymodel | diff
+qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=test+'/plot2.cmp.png', labels=True)
 
 qac_log("DONE!")
 qac_end()
