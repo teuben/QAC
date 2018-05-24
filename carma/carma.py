@@ -3,8 +3,13 @@
 #     Only D+E array with relatively short observations, so poor sampling in UV
 #     - get combined D+E maps
 #     - get moment maps
-#     - compare with inut
-
+#     - compare with input
+#     - optionally prepare fits files for rotcur analysis
+#  Caveats:
+#     - heterogenous not right in simobserve()
+#     - dish of TP not quite right
+#     - number of pointings not quite right
+#     
 test         = 'carma1'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
@@ -30,8 +35,7 @@ grid         = 30
 # pick a few niter values for tclean to check flux convergence 
 niter = [0,4000]
 
-# integration times
-times  = [8, 0.5]
+# integration times for E and D arrays
 times0 = [1, 1]
 times1 = [4, 1]
 
@@ -88,16 +92,8 @@ ms1 = qac_carma(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecent
 qac_log('CLEAN')
 qac_clean1(test+'/clean0', ms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
 qac_clean1(test+'/clean1', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
-
 qac_clean1(test+'/clean2', [ms0,ms1], imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, restoringbeam='common', scales=scales,vptable='CARMA.vp')
 
-
-
-if False:
-    qac_log('ANALYZE')
-    for idx in range(len(niter)):
-        qac_analyze(test, 'feather', skymodel='%s/%s.SWcore.skymodel'%(test,test), niteridx=idx)
-        os.system('mv %s/%s.analysis.png %s/feather_%s.analysis.png'% (test, test, test, idx))
 
 # define model for the a mask
 d0 = test+'/carma1.carma.e.skymodel.mom0'
@@ -145,15 +141,10 @@ qac_mom(test+'/feather_2.image',    [0,11,48,59], d0, 0.0)
 
 d6 = test+'/feather_2.image.mom0'
 v6 = test+'/feather_2.image.mom1'
-
 qac_plot_grid([v0,v2,v0,v6],plot=test+'/velcmp2.png',diff=1)
 
 qac_plot(d0,plot=test+'/model-vel.png')
 qac_plot(v0,plot=test+'/model-den.png')
-
-if False:
-    exportfits(a0,a0+'.fits')
-    exportfits(b0,b0+'.fits')
 
 if True:    
     m0='carma1/carma1.carma.e.skymodel'
@@ -172,8 +163,6 @@ if True:
     qac_plot(m5,channel=ch,plot='carma1/m5.png')        
     qac_plot(m6,channel=ch,plot='carma1/m6.png')        
 
-
-if True:
     qac_plot(d0,plot='carma1/d0.png')    
     qac_plot(d1,plot='carma1/d1.png')    
     qac_plot(d2,plot='carma1/d2.png')    
@@ -197,6 +186,8 @@ if True:
 
 qac_stats(test+'/clean0/dirtymap.image')
 qac_stats(test+'/clean1/dirtymap.image')
+qac_stats(test+'/clean2/dirtymap.image')
+qac_stats(test+'/clean2/dirtymap_2.image')
 
 
 qac_end()
