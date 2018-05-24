@@ -2205,7 +2205,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         
     #-end of qac_plot()
 
-def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgrid=[], ygrid=[], plot=None):
+def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgrid=[], ygrid=[], plot=None,  labels=True):
     """
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
@@ -2224,6 +2224,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     xgrid   List of strings for the X panels in the grid
     ygrid   List of strings for the Y panels in the grid
     plot    if given, plotfile name
+    labels  if true, then print image names in plot. if false, then don't
 
     0,0 is top left in row,col notation
 
@@ -2304,13 +2305,21 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     # pl.title(title)     # @todo global title needs work
     # fig.tight_layout()   # @todo this didn't work
     i = 0
-    # @todo need less whitespace between boxes
-    pl.subplots_adjust(hspace=0.1)
+    j = 0
+    pl.subplots_adjust(left=0, bottom=0.05, right=1, top=0.9, wspace=0, hspace=0.2)
     for row in range(nrow):
         for col in range(ncol):
             f1 = fig.add_subplot(nrow,ncol,i+1)
             p1 = f1.imshow(d[row][col], origin='lower', vmin = dmin, vmax = dmax)
-            #f1.set_title("im %d" % i)     # makes plot too busy
+
+            # try out putting naming in the plots
+            if labels:
+                if i % 3 == 2:
+                    f1.set_title('diff')
+                else:
+                    f1.set_title(images[j][images[j].rfind('/')+1:])
+                    j += 1
+
             f1.set_xticklabels([])
             f1.set_yticklabels([])
             if col==0 and len(ygrid) > 0:
