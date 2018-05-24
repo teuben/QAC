@@ -15,5 +15,6 @@ help:
 .PHONY: $(TESTS)
 
 carma1:
-	@echo running carma.py ...
+	@echo running carma.py for carma1 ...
 	time $(CASA) --nogui -c carma.py > carma.log 2>&1
+	cp carma.py carma.log carma1
