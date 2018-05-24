@@ -2097,8 +2097,8 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None):
     mom0 = imcube + '.mom0'
     mom1 = imcube + '.mom1'
     os.system('rm -rf %s %s' % (mom0,mom1))
-    immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0)
-    immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
+    immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0, stretch=True)
+    immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1, stretch=True)
 
     print("QAC_MOM: Written %s %s" % (mom0,mom1))
 
