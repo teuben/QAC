@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 23-may-2018")
+    print("qac: version 25-may-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -92,6 +92,7 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
             Example: pixel = 0.5
         grid : float
             Separation of pointings in arcsecs (determined from beam size and sampling)
+            For grid<=0 just the phasecenter is returned.
             Example: grid=15.9
                 
     Optional Parameters
@@ -129,7 +130,15 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
                 coords = [x,y]
                 coordlist.append((coords))
         return coordlist
-    
+
+    #check the trivial case with no grid
+    if grid <= 0.0:
+        if outfile != None:
+            f= open(outfile,"w+")
+            f.write("%s\n" % phasecenter)
+            f.close()
+        return phasecenter
+        
     #check if images is list or single file or none
     if type(im) == type([]):
             im_list = im
@@ -1076,11 +1085,14 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
                      A list of J2000/RA/DEC strings can also be given.
     
     
-      _optional_keywords:
-      ===================
+      _optional_keywords where meaning has changed recently
+      =====================================================
       imsize:        if maps are made, this is mapsize (list of 2 is allowed if you need rectangular)
       pixel:         pixel size, in arcsec
       niter:         -1 if no maps needed, 0 if just fft, no cleaning cycles
+    
+      _optional_keywords:
+      ===================
     
       phasecenter    Defaults to mapcenter (note special format)
                      e.g. 'J2000 00h48m15.849s -73d05m0.158s'
