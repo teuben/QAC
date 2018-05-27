@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 25-may-2018")
+    print("qac: version 27-may-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -1068,7 +1068,7 @@ def qac_tpdish(name, size=None):
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print("QAC_DISH: %g %g -> %g %g" % (old_size, old_fwhm, size, old_fwhm/r))
 
-def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):    
+def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):    
            
     """
       Simple frontend to call tp2vis() and an optional tclean()
@@ -1077,7 +1077,7 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
       _required_keywords:
       ===================
       project:       identifying (one level deep directory) name within which all files are places
-      imagename:     casa image in RA-DEC-POL-FREQ order
+      imagename:     casa image in RA-DEC-POL-FREQ order (fits file is ok too)
       ptg            1) Filename with pointings (ptg format) to be used
                      2_ List of (string) pointings
                      If none specified, it will currently return, but there may be a
@@ -1085,15 +1085,10 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
                      A list of J2000/RA/DEC strings can also be given.
     
     
-      _optional_keywords where meaning has changed recently
-      =====================================================
-      imsize:        if maps are made, this is mapsize (list of 2 is allowed if you need rectangular)
-      pixel:         pixel size, in arcsec
-      niter:         -1 if no maps needed, 0 if just fft, no cleaning cycles
-    
       _optional_keywords:
       ===================
     
+      pixel:         pixel size, in arcsec, if to be overriden from the input map. Default: None
       phasecenter    Defaults to mapcenter (note special format)
                      e.g. 'J2000 00h48m15.849s -73d05m0.158s'
       rms            if set, this is the TP cube noise to be used to set the weights
@@ -1120,28 +1115,37 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
     qac_project(project)
 
-    # report phasecenter in a proper phasecenter format (tp2vis used to do that)
-    if True:
+    if pixel != None:
+        # make a new model
         h0=imhead(imagename,mode='list')
-        ra  = h0['crval1'] * 180.0 / math.pi
-        dec = h0['crval2'] * 180.0 / math.pi
-        ra_string  = const.sixty_string(const.hms(ra),hms=True)
-        dec_string = const.sixty_string(const.dms(dec),hms=False)
-        phasecenter0 = 'J2000 %s %s' % (ra_string, dec_string)
-        print("MAP REFERENCE: phasecenter = '%s'" % phasecenter0)
-        if phasecenter == None:
-            phasecenter == phasecenter0
+        old_pixel = h0['cdelt2']   # radians
+        print("Model has pixel=%g arcsec" % (old_pixel * apr))
+        print("Making new model with pixel=%g arcsec" % pixel)
+        imagename2 = project + '/skymodel.im'
+        imsubimage(imagename,imagename2)
+        imhead(imagename2,mode='put',hdkey='cdelt1',hdvalue='-%garcsec' % pixel)
+        imhead(imagename2,mode='put',hdkey='cdelt2',hdvalue='+%garcsec' % pixel)
+    else:
+        imagename2 = imagename
 
+    # report phasecenter in a proper phasecenter format
+    h0=imhead(imagename2,mode='list')
+    ra  = h0['crval1'] * 180.0 / math.pi
+    dec = h0['crval2'] * 180.0 / math.pi
+    ra_string  = const.sixty_string(const.hms(ra),hms=True)
+    dec_string = const.sixty_string(const.dms(dec),hms=False)
+    phasecenter0 = 'J2000 %s %s' % (ra_string, dec_string)
+    print("MAP REFERENCE: phasecenter = '%s'" % phasecenter0)
+    if phasecenter == None:
+        phasecenter == phasecenter0
+
+    outfile = project + '/tp.ms'
+    
     if ptg == None:
         print("No PTG specified, no auto-regioning yet")
         return None
 
-    # @todo   similar to qac_alma this should be able to override the mapsize and pixelsize
-    #         will need to make a shadow copy of the imagename
-    #
-
-    outfile = '%s/tp.ms' % project
-    tp2vis(imagename,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv)
+    tp2vis(imagename2,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv)
 
     vptable = outfile + '/TP2VISVP'    
     if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
@@ -1197,9 +1201,6 @@ def qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, ph
     return outfile
 
     #-end of qac_tp()
-
-
-# qac_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
 
 
 def qac_sd_vis(**kwargs):
