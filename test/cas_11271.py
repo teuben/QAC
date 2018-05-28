@@ -19,8 +19,8 @@ phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model t
 # natively this model is 4096 pixels at 0.05"
 # @todo qac_tp_vis handles this differently from simobserve()
 imsize_m     = 4096
-pixel_m      = 0.05
-pixel_m      = 0.02
+pixel_m      = 0.05    # would have given 45 fields
+pixel_m      = 0.02    # fewer fields for this test, just 7, to speed things up 
 
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
@@ -52,12 +52,17 @@ mosaic       = 1
 wfactor      = 0.01
 
 # the tp2vis/qac fix on POINTING (1 means no POINTING table)
+# this doesn't seem to make a difference anymore, but does have very subtle flux differences
 fix          = 1
-#fix          = 0
 
+# despite earlier progress, now True will crash in CASA 5.1
 # for simulation we need concat = False instead of the default True, tclean() will crash otherwise
-do_concat       = False
-#do_concat       = True
+do_concat       = False    # will crash casa in 512 
+do_concat       = True     # kinda of ok, try/except works
+
+
+# for 530:  False is all good ok, True will have a crash in tpms1 (PSF Slicer error:infer: endResult>=shape)
+# for 512:  False will cause crash with tpms1 (tpms0 is ok) in qac_clean(), True has the PSF issue in tpms1
 
 # -- do not change parameters below this ---
 import sys
