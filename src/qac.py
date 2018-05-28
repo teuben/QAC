@@ -1750,15 +1750,7 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="
     """
     qac_tag("feather")
     
-    # if the niteridx is 0, then the niter label will be an empty string
-    if niteridx == 0:
-        niter_label = ""
-    else:
-        # otherwise the niter label reflect the tclean naming convention
-        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
-        # to get the second iteration of tclean (niter=1000), niteridx = 1
-        niter_label = "_%s"%(niteridx + 1)
-
+    niter_label = QAC.label(niteridx)
 
     if highres == None:
         highres = "%s/%s%s.image" % (project,name,niter_label) 
@@ -1794,7 +1786,7 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
 
     project    typical  "sky3/clean2", somewhere where tclean has run
     skymodel   a skymodel
-    name       basename, typically feather, or dirtymap, or tpint.   Default is feather
+    name       basename, typically feather, or dirtymap, or (tp)int.   Default is feather
     label      only used with OTF beams
     niteridx   0,1,2,.... if a niter[] was used so it can be inherited in the basename
     do_flux    if True, do the comparison in flux flat (image.pbcor) space, else noise flat (.image)
@@ -1802,10 +1794,7 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
     """
     qac_tag("smooth")
     
-    if niteridx == 0:
-        niter_label = ""
-    else:
-        niter_label = "_%s"%(niteridx + 1)
+    niter_label = QAC.label(niteridx)        
 
     # feather image path/filename
     if do_flux:
@@ -1880,14 +1869,7 @@ def qac_analyze(project, imagename, skymodel=None, niteridx=0):
 
     ng_tag('analyze')
 
-    # if the niteridx is 0, then the niter label will be an empty string
-    if niteridx == 0:
-        niter_label = ""
-    else:
-        # otherwise the niter label reflect the tclean naming convention
-        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
-        # to get the second iteration of tclean (niter=1000), niteridx = 1
-        niter_label = "_%s"%(niteridx + 1)
+    niter_label = QAC.label(niteridx)        
 
     imagename = '%s%s.image' %(imagename,niter_label)
 
