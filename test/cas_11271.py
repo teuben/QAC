@@ -34,8 +34,6 @@ niter        = [0]
 # pick which ALMA configurations you want (0=7m ACA , 1,2,3...=12m ALMA)
 cfg          = [0,1]
 cfg          = [1]
-#cfg          = [0]
-#cfg          = []
 
 # integration times
 times        = [2, 1]     # 2 hrs in 1 min integrations
@@ -75,19 +73,13 @@ qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
-if grid > 0:
-    # create a mosaic of pointings for 12m, that's overkill for the 7m
-    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
-else:
-    # create a single pointing 
-    qac_ptg(phasecenter,ptg)
-    p = [phasecenter]
+p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
 qac_project(test)    
 
 qac_log("TP2VIS:")
-tpms0 = qac_tp_vis(test+'/tp0',model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,fix=0)
-tpms1 = qac_tp_vis(test+'/tp1',model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,fix=1)
+tpms0 = qac_tp_vis(test+'/tp0',model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,fix=0)
+tpms1 = qac_tp_vis(test+'/tp1',model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,fix=1)
 
 qac_log("TP2VISWT:")
 tp2viswt(tpms0,wfactor,'multiply')
@@ -107,10 +99,8 @@ for idx in range(len(niter)):
     im3 = test+'/clean1/dirtymap%s.image'       % QAC.label(idx)
     im4 = test+'/clean1/dirtymap%s.image.pbcor' % QAC.label(idx)
     qac_plot(im2,mode=1)      # casa based plot w/ colorbar
-    qac_stats(im1)            # noise flat
     qac_stats(im2)            # noise flat
     qac_plot(im4,mode=1)      # casa based plot w/ colorbar
-    qac_stats(im3)            # noise flat
     qac_stats(im4)            # noise flat
 
 if len(cfg) > 0:
