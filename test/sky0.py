@@ -13,7 +13,6 @@ phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model t
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
-# @todo qac_tp_vis handles this differently from simobserve()
 imsize_m     = 4096
 pixel_m      = 0.05
 
@@ -36,9 +35,8 @@ times        = [2, 1]     # 2 hrs in 1 min integrations
 # single pointing?  Set grid to a positive arcsec grid spacing if the field needs to be covered
 #                  ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
-grid         = 0
 
-#
+# mosaic mode?
 mosaic       = 1
 mosaic       = 0
 
@@ -59,17 +57,10 @@ qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
-if grid > 0:
-    # create a mosaic of pointings for 12m, that's overkill for the 7m
-    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
-else:
-    # create a single pointing 
-    qac_ptg(phasecenter,ptg)
-    p = [phasecenter]
-
+p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
 qac_log("TP2VIS:")
-tpms = qac_tp_vis(test,model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,fix=0)
+tpms = qac_tp_vis(test,model,ptg,phasecenter=phasecenter,deconv=False,fix=0)
 
 qac_log("CLEAN1:")
 tp2viswt(tpms,wfactor,'multiply')
