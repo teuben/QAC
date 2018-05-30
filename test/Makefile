@@ -43,11 +43,22 @@ sky1:
 	cp sky1.py sky1.log sky1
 	tail -20 sky1.log
 
+#  sky2 is the generic TP2VIS-only mapping testsuite
 sky2:
 	@echo running sky2.py ...
 	time $(CASA) --nogui -c sky2.py > sky2.log 2>&1
 	cp sky2.py sky2.log sky2.ptg sky2
 	tail -20 sky2.log
+
+#  all the sky2 based simulations
+SKY2_ALL = sky2_1 sky2_2 sky2_3 sky2_4  \
+	   sky2_1a sky2_1b sky2_1c sky2_1d sky2_1e sky2_1f \
+	   sky2_2a sky2_2b sky2_2c sky2_2d sky2_2e sky2_2f
+
+sky2_all: $(SKY2_ALL)
+
+sky2_all_clean:
+	rm -rf $(SKY2_ALL)
 
 # flux as function of pixel size
 sky2_1:
@@ -93,8 +104,67 @@ sky2_2c:
 	cp sky2.py sky2_2c.log sky2_2c.ptg sky2_2c
 	tail -20 sky2_2c.log
 
+# bigger gridding steps to see the beam problem
+sky2_2d:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_2d"' pixel_m=0.1 pixel_s=1.6 grid=60 > sky2_2d.log 2>&1
+	cp sky2.py sky2_2d.log sky2_2d.ptg sky2_2d
+	tail -20 sky2_2d.log
 
-# expose the mosaicing flux bug in CASA 5.1 (April 2018) - gridder='standard'  is not affected
+sky2_2e:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_2e"' pixel_m=0.1 pixel_s=1.6 grid=120 > sky2_2e.log 2>&1
+	cp sky2.py sky2_2e.log sky2_2e.ptg sky2_2e
+	tail -20 sky2_2e.log
+
+sky2_2f:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_2f"' pixel_m=0.1 pixel_s=1.6 grid=180 > sky2_2f.log 2>&1
+	cp sky2.py sky2_2f.log sky2_2f.ptg sky2_2f
+	tail -20 sky2_2f.log
+
+
+# dscale range
+sky2_1a:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_1a"' pixel_m=0.05 pixel_s=0.8 dscale=2 > sky2_1a.log 2>&1
+	cp sky2.py sky2_1a.log sky2_1a.ptg sky2_1a
+	tail -20 sky2_1a.log
+
+sky2_1b:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_1b"' pixel_m=0.05 pixel_s=0.8 dscale=4 > sky2_1b.log 2>&1
+	cp sky2.py sky2_1b.log sky2_1b.ptg sky2_1b
+	tail -20 sky2_1b.log
+
+sky2_1c:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_1c"' pixel_m=0.05 pixel_s=0.8 dscale=8 > sky2_1c.log 2>&1
+	cp sky2.py sky2_1c.log sky2_1c.ptg sky2_1c
+	tail -20 sky2_1c.log
+
+# dish3 usage
+sky2_1d:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_1d"' pixel_m=0.05 pixel_s=0.8 dish=12 maxuv=12 dish3=12 > sky2_1d.log 2>&1
+	cp sky2.py sky2_1d.log sky2_1d.ptg sky2_1d
+	tail -20 sky2_1d.log
+
+sky2_1e:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_1e"' pixel_m=0.05 pixel_s=0.8 dish=24 maxuv=24 dish3=12 > sky2_1e.log 2>&1
+	cp sky2.py sky2_1e.log sky2_1e.ptg sky2_1e
+	tail -20 sky2_1e.log
+
+sky2_1f:
+	@echo running sky2.py ...
+	time $(CASA) --nogui -c sky2.py test='"sky2_1f"' pixel_m=0.05 pixel_s=0.8 dish=48 maxuv=48 dish3=12 > sky2_1f.log 2>&1
+	cp sky2.py sky2_1f.log sky2_1f.ptg sky2_1f
+	tail -20 sky2_1f.log
+
+
+
+# older version of cas_11271
 sky0:   sky0a sky0b
 	@echo vi1 results:
 	grep QAC_STATS sky0a.log
@@ -107,6 +177,7 @@ sky0a:
 sky0b:
 	$(CASA)       --nogui -c sky0.py test='"sky0b"' > sky0b.log 2>&1
 
+# expose the mosaicing flux bug in CASA 5.1 (April 2018) - gridder='standard'  is not affected
 cas_11271: cas_11271a cas_11271b
 	@grep ^CASA cas_11271a.log
 	@echo vi1 results:
@@ -123,6 +194,7 @@ cas_11271b:
 	$(CASA)       --nogui -c cas_11271.py test='"cas_11271b"' > cas_11271b.log 2>&1
 	cp cas_11271.py cas_11271b
 
+#
 test1:
 	@echo running test1.py ...
 	rm -fr test1
