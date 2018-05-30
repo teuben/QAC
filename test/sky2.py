@@ -1,8 +1,7 @@
 # -*- python -*-
 #
-#  compare mapping with tp2vis data vs. OTF/smooth
+#  compare mapping of tp2vis data vs. OTF/smooth under various situations
 #
-#  this exposes a few problems
 #
 #  12m ALMA dish at 115.271GHz has PB ~ 54" (or 56" ???)
 #
@@ -27,6 +26,20 @@
 #    Seems the flux behaves pretty good. Below a certain threshold, flux is pretty constant.
 #  - is the beam properly sampled and described?
 #
+#
+#  Notes on beamsizes (ALMA technical handbook talks about HPBW and FWHM)
+#  ----------------------------------------------------------------------
+#  FWHM = 51.5305 * a / D12 / f100
+#  51.5305 = cms*apr/12e11
+#  a    is 1.22 (or something close to it, manual talks about 1.02 for ideal dish, and 1.13 for alma 12m dish)
+#  D12  is diameter in units of 12m
+#  f100 is freq in units of 100GHz  (so CO is at 1.152712)
+#
+#  tp2vis talks about 65.2 at 100 or 56.5 at 115.2 (or do we mean 115.2712???)
+#                     105  at 100 for 7m [this ratio doesn't vibe with scaling 12/7, that would predict 112")
+#
+#  If we believe the a=1.13 value, we would have 58.2", not 65.2
+#  Reversing, the 65.2 would mean a=1.265
 
 test         = 'sky2'                               # name of directory within which everything will reside
 model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
@@ -45,19 +58,20 @@ imsize_s     = 256
 pixel_s      = 0.8   # imsize_m/imsize_s * pixel_m
 
 # pick a few niter values for tclean to check flux convergence
-# although for pure TP2VIS we should not need much cleaning at all
+# although for pure TP2VIS we should not need much cleaning at all (haha)
 niter        = [0]
-#niter        = [0,1000,4000]
+niter        = [0,1000,4000]
 
 # grid spacing in arcsec (use 0 if you want just the phasecenter)
 #                  ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
 
-# these don't work with use_vp
+# these don't work with use_vp=True yet
 dish         = 12.0
 maxuv        = 10.0
 
-# scale up the dish size (and down the spacing) 
+# scale up the dish size (and down the spacing)
+# this is an alternative to changing the pixel size (pixel_m and pixel_s)
 dscale       = 1.0
 
 
@@ -83,17 +97,20 @@ tp2vis_version()
 p = qac_im_ptg(phasecenter, imsize_m, pixel_m, grid, rect=True, outfile=ptg)
 
 
+# tp2vis
 qac_log("TP2VIS:")
-if True:
-    qac_tpdish('ALMATP', dish)
-    qac_tpdish('VIRTUAL',dish)
+qac_tpdish('ALMATP', dish)
+qac_tpdish('VIRTUAL',dish)
 tpms = qac_tp_vis(test, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, deconv=False, fix=1)
 
+# cleaning
 qac_log("CLEAN1:")
 line = {}
 qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
 
+# analysis
 qac_log("PLOT and STATS:")
+qac_beam(test+'/clean0/dirtymap.image')
 for idx in range(len(niter)):
     im1 = test+'/clean0/dirtymap%s.image'       % QAC.label(idx)
     im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
