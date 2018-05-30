@@ -2208,7 +2208,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     images  list of images. Needs to fit in nrow x ncol, where nrow is computed from ncol
             order of images is row by row
     channel which channel, in case images are cubes
-            @todo   if channel is a list, these are the channels on one image
+            if channel is a list, these are the channels on one image
     box     [xmin,ymin,xmax,ymax]   defaults to whole image
     minmax  [dmin,dmax]  defaults to minmax of all images
     ncol    number of columns to be used. rows follow from #images
@@ -2232,7 +2232,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
     @todo   we need a colorbar (or nrows's) somewhere on the right?
 
-    @todo   allow for a single image, to set a list of channels
     """
     qac_tag("plot_grid")
     #
@@ -2251,7 +2250,15 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
         if len(d1.shape) == 2:
             d3 = np.flipud(np.rot90(d1.reshape((nx,ny))))            
         else:
-            d2 = d1[:,:,channel]
+            # check if user put in a list or array of channels to display
+            # if it is a list or numpy array, then add up channels and put into d2 (does adding up make sense?)
+            if (type(channel) == type([])) or (type(channel) == type(np.array([]))):
+                d2 = d1[:,:,channel[0]]
+                for c in channel[1:]:
+                    d2 = d2 + d1[:,:,c]
+            else:
+                d2 = d1[:,:,channel]
+            
             d3 = np.flipud(np.rot90(d2.reshape((nx,ny))))            
         if box != None:
             data = d3[box[1]:box[3],box[0]:box[2]]
