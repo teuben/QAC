@@ -1111,8 +1111,7 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
     # assert input files
     QAC.assertf(imagename)
     
-    # clean up old project
-    # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+    # clean up any existing old project
     qac_project(project)
 
     if pixel != None:
@@ -2618,7 +2617,11 @@ class QAC(object):
         """ ensure a file or directory exists, else report and and fail
         """
         if filename == None: return
-        assert os.path.exists(filename),  "QAC.assertf: %s does not exist" % filename
+        if type(filename) == type([]):
+            for f in filename:
+                assert os.path.exists(f),  "QAC.assertf: %s does not exist" % f
+        else:
+            assert os.path.exists(filename),  "QAC.assertf: %s does not exist" % filename
         return
     
     @staticmethod
