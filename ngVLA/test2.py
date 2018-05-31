@@ -14,6 +14,8 @@ chans       channels of input model to use  '-1'            '-1' uses all channe
 cfg         ngVLA ant config for INT        1               0=SBA, 1=core 94 ant, 2=plains 168 ant, 3=full 214 ant, 4=full ngVLA + VLBI + GBO
 mosiac      toggle mosiac imaging           False           True gives automatic mosiac pointings as determined by simobserve
 scales      multiscale cleaning values      [0,5,15]        for no multiscale cleaning set scales = None
+dish        TP dish diameters in meters     [18, 45]        
+
 
 qac_feather and qac_analyze requires restoringbeam='common' for tclean
 
@@ -60,7 +62,8 @@ cfg          = 1
 times        = [1, 1]   # 1 hr in 1 min integrations
 
 # tp dish sizes
-dish         = [6, 12, 18, 24, 30, 36, 45]
+# dish         = [6, 12, 18, 24, 30, 36, 45]
+dish         = [18, 45]
 
 # # change this if you want mosiac (True) or not (False)
 # mosiac       = False
@@ -96,8 +99,6 @@ import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
 
-
-
 # rename model variable if single channel (or range) has been chosen so we don't overwrite models 
 if chans != '-1':
     model_out = '%sa.image'%model[:model.rfind('.fits')]
@@ -122,7 +123,13 @@ ms1[cfg] = qac_vla(test,model,imsize_m,pixel_m,cfg=cfg,ptg=ptg, phasecenter=phas
 
 # clean this interferometric map a bit
 qac_log('CLEAN')
-qac_clean1(test+'/clean1', ms1[cfg], imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales, restoringbeam='common')
+
+if (chans == '-1') or ('~' in chans):
+    restoringbeam = 'common'
+else:
+    restoringbeam = None
+
+qac_clean1(test+'/clean1', ms1[cfg], imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales, restoringbeam=restoringbeam)
 
 # grab name of start/input model
 startmodel = ms1[cfg].replace('.ms','.skymodel')
@@ -142,18 +149,20 @@ for d in dish:
 qac_log('SMOOTH')
 qac_smooth(test+'/clean1', startmodel, name='dirtymap')
 
-# qac_log('ANALYZE')
-# os.system('mv %s/clean1/dirtymap*image %s'%(test, test))
-# os.system('mv %s/clean1/feather*image %s'%(test, test))
-# for idx in range(len(niter)):
-#     qac_analyze(test, 'dirtymap', niteridx=idx)
-#     os.system('mv %s/%s.analysis.png %s/dirtymap_%s.analysis.png'% (test, test, test, idx))
-#     qac_analyze(test, 'feather18', niteridx=idx)
-#     os.system('mv %s/%s.analysis.png %s/feather18_%s.analysis.png'% (test, test, test, idx))
-#     qac_analyze(test, 'feather45', niteridx=idx)
-#     os.system('mv %s/%s.analysis.png %s/feather45_%s.analysis.png'% (test, test, test, idx))
-# os.system('mv %s/dirtymap* %s/clean1'%(test, test))
-# os.system('mv %s/feather* %s/clean1'%(test, test))
+
+if True:
+    qac_log('ANALYZE')
+    os.system('mv %s/clean1/dirtymap_*image %s'%(test, test))
+    os.system('mv %s/clean1/feather*_*image %s'%(test, test))
+    # set the niter index to the last iteration
+    idx = range(len(niter))[-1]
+    qac_analyze(test, 'dirtymap', niteridx=idx)
+    os.system('mv %s/%s.analysis.png %s/dirtymap_%s.analysis.png'% (test, test, test, idx+1))
+    for d in dish:
+        qac_analyze(test, 'feather%s'%d, niteridx=idx)
+        os.system('mv %s/%s.analysis.png %s/feather%s_%s.analysis.png'% (test, test, test, d, idx+1))
+    os.system('mv %s/dirtymap* %s/clean1'%(test, test))
+    os.system('mv %s/feather* %s/clean1'%(test, test))
 
 qac_end()
 
@@ -169,36 +178,47 @@ for d in dish:
     qac_stats(test+'/clean1/feather%s_2.image'%d)
     qac_stats(test+'/clean1/feather%s_2.image.pbcor'%d)
 
-# can't do this yet because qac_plot_grid doesn't understand channels
 
-# qac_log('Grid Plots')
-# d1 = test+'/clean1/dirtymap.image'
-# d2 = test+'/clean1/dirtymap_2.image'
-# otf = [test+'/clean1/otf%s.image'%d for d in dish]
-# fth = [test+'/clean1/feather%s_2.image'%d for d in dish]
-# sky = test+'/clean1/skymodel.smooth.image'
+if True:    
+    qac_log('Grid Plots')
 
-# qac_plot_grid([d1, d2, d2, sky], diff=1, plot=test+'/plot1.cmp.png', labels=True)
-# grid_list = [[d2, o] for o in otf]
-# qac_plot_grid([item for sublist in grid_list for item in sublist], diff=1, plot=test+'/plot2.cmp.png', labels=True)
-# grid_list = [[f, sky] for f in fth]
-# qac_plot_grid([item for sublist in grid_list for item in sublist], diff=1, plot=test+'/plot3.cmp.png', labels=True)
+    if chans == '-1':
+        # full channels (assuming 60 channels.. not sure how to go about changing this)
+        channel = np.arange(0,60,1)
+    elif '~' in chans:
+        # use the specifed range of channels
+        channel = np.arange(int(chans[:chans.rfind('~')]), int(chans[chans.rfind('~')+1:])+1, 1)
+    else:
+        # use the single specified channel
+        channel = int(chans)
+
+    d1 = test+'/clean1/dirtymap.image'
+    d2 = test+'/clean1/dirtymap_2.image'
+    otf = [test+'/clean1/otf%s.image'%d for d in dish]
+    fth = [test+'/clean1/feather%s_2.image'%d for d in dish]
+    sky = test+'/clean1/skymodel.smooth.image'
+    
+    qac_plot_grid([d1, d2, d2, sky], diff=10, plot=test+'/plot1.cmp.png', labels=True, channel=channel)
+    grid_list = [[d2, o] for o in otf]
+    qac_plot_grid([item for sublist in grid_list for item in sublist], diff=10, plot=test+'/plot2.cmp.png', labels=True, channel=channel)
+    grid_list = [[f, sky] for f in fth]
+    qac_plot_grid([item for sublist in grid_list for item in sublist], diff=10, plot=test+'/plot3.cmp.png', labels=True, channel=channel)
 
 
-
-# # plot of flux vs niter
-# clean_dir = test+'/clean1/'
-# niter_label = [QAC.label(i) for i in np.arange(0, len(niter), 1)]
-# flux_dm = np.array([ imstat(clean_dir+'dirtymap%s.image'%(n))['flux'][0] for n in niter_label])
-# flux_18 = np.array([ imstat(clean_dir+'feather18%s.image'%(n))['flux'][0] for n in niter_label])
-# flux_45 = np.array([ imstat(clean_dir+'feather45%s.image'%(n))['flux'][0] for n in niter_label])
-
-# plt.figure()
-# plt.plot(niter, flux_dm, 'k^-', label='dirtymap')
-# plt.plot(niter, flux_18, 'm^-', label='feather 18m')
-# plt.plot(niter, flux_45, 'c^-', label='feather 45m')
-# plt.xlabel('niter', size=18)
-# plt.ylabel('Flux (Jy/beam)', size=18)
-# plt.title(test, size=18)
-# plt.legend(loc='best')
-# plt.savefig(clean_dir+'flux_vs_niter.png')
+if False:
+    # plot of flux vs niter
+    clean_dir = test+'/clean1/'
+    niter_label = [QAC.label(i) for i in np.arange(0, len(niter), 1)]
+    flux_dm = np.array([ imstat(clean_dir+'dirtymap%s.image'%(n))['flux'][0] for n in niter_label])
+    flux_18 = np.array([ imstat(clean_dir+'feather18%s.image'%(n))['flux'][0] for n in niter_label])
+    flux_45 = np.array([ imstat(clean_dir+'feather45%s.image'%(n))['flux'][0] for n in niter_label])
+    
+    plt.figure()
+    plt.plot(niter, flux_dm, 'k^-', label='dirtymap')
+    plt.plot(niter, flux_18, 'm^-', label='feather 18m')
+    plt.plot(niter, flux_45, 'c^-', label='feather 45m')
+    plt.xlabel('niter', size=18)
+    plt.ylabel('Flux (Jy/beam)', size=18)
+    plt.title(test, size=18)
+    plt.legend(loc='best')
+    plt.savefig(clean_dir+'flux_vs_niter.png')  
