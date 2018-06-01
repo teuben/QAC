@@ -2379,35 +2379,68 @@ def qac_psd(image, plot='qac_psd.png'):
     
     see also: radio_astro_tools et al. (sd2018)
     """
+    from scipy.optimize import curve_fit
 
-    tb.open(image)
-    d1 = tb.getcol("map").squeeze()
-    if len(d1.shape) != 2:
-        print("Shape not supported for %s: %s" % (image,d1.shape))
-        return
-    nx = d1.shape[0]
-    ny = d1.shape[1]
-    tb.close()
-    d2 = np.flipud(np.rot90(d1.reshape((nx,ny))))
-    data = d2.squeeze()
-    #
-    f1 = np.fft.fft2(data)
-    f2 = np.fft.fftshift(f1)
-    p2 = np.abs(f2)**2
-    p1 = radialProfile.azimuthalAverage(p2)    # now in util
-    #p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
-    r1 = np.arange(1.0,len(p1)+1)
-    
+    # fit power law to get spectral index alpha
+    # need to fit in linear space because scipy.optimize.curve_fit can't handle the power law
+    def power_law(x, C, a):
+        return C * x**-a
+    def linear_power_law(lx, lC, a):
+        return -a * lx + lC
+
+    # check if input image is a list or array. if not, then make it one
+    if (type(image) != type([])) and (type(image) != type(np.array([]))):
+        image = [image]
+
+    # initialize the figure
     pl.figure()
-    pl.loglog(r1,p1)
-    pl.xlabel('Spatial Frequency')
-    pl.ylabel('Power Spectrum')
-    pl.xlabel('Channel')
-    pl.title('%s' % (image))
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    colors = colors[:len(image)]
+
+    # loop through all images in the input list
+    for im,clr in zip(image, colors):
+        print im
+        tb.open(im)
+        d1 = tb.getcol('map').squeeze()
+        if len(d1.shape) != 2:
+            print("Shape not supported for %s: %s" % (im,d1.shape))
+            return
+        nx = d1.shape[0]
+        ny = d1.shape[1]
+        tb.close()
+        d2 = np.flipud(np.rot90(d1.reshape((nx,ny))))
+        data = d2.squeeze()
+
+        f1 = np.fft.fft2(data)
+        f2 = np.fft.fftshift(f1)
+        p2 = np.abs(f2)**2
+        p1 = radialProfile.azimuthalAverage(p2)    # now in util
+        #p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
+        r1 = np.arange(1.0,len(p1)+1)
+        
+        lx = np.log(r1)
+        ly = np.log(p1)
+
+        log_fit_params, lpcov = curve_fit(linear_power_law, lx, ly)
+        xfit = np.arange(1, 3000, 1)
+
+        if im.rfind('/') != -1:
+            imname = im[im.rfind('/')+1:]
+        else:
+            imname = im
+
+        print('%s: \nSpectral Index alpha = %s \n'% (imname, log_fit_params[1]))
+
+        pl.loglog(r1,p1, '%s.'%clr, markersize=3)
+        pl.loglog(xfit, power_law(xfit, np.exp(log_fit_params[0]), log_fit_params[1]), '%s-'%clr, label=r'%s $\alpha =$ %1.1f'% (imname, log_fit_params[1]))
+
+    pl.xlabel('Spatial Frequency', size=18)
+    pl.ylabel('Power Spectrum', size=18)
+    pl.xlabel('Channel', size=18)
+    pl.legend(loc='best', frameon=False)
+    pl.title('Power Spectrum Density', size=18)
     pl.savefig(plot)
     pl.show()
-    
-    return p1
     
         
 def qac_combine(project, TPdata, INTdata, **kwargs):
