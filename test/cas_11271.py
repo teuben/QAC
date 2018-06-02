@@ -11,7 +11,7 @@
 #
 
 
-test         = 'cas_11271'                          # name of directory within which everything will reside
+pdir         = 'cas_11271'                          # name of directory within which everything will reside
 model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model to be on the sky
 
@@ -70,21 +70,21 @@ for arg in qac_argv(sys.argv):
     exec(arg)
 
 # derived parameters
-ptg = test + '.ptg'              # pointing mosaic for the ptg
+ptg = pdir + '.ptg'              # pointing mosaic for the ptg
 
 # report, add Dtime
-qac_begin(test,False)
+qac_begin(pdir,False)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
 p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
-qac_project(test)    
+qac_project(pdir)    
 
 qac_log("TP2VIS:")
-tpms0 = qac_tp_vis(test+'/tp0',model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,fix=0)
-tpms1 = qac_tp_vis(test+'/tp1',model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,fix=1)
+tpms0 = qac_tp_vis(pdir+'/tp0',model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,fix=0)
+tpms1 = qac_tp_vis(pdir+'/tp1',model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,fix=1)
 
 qac_log("TP2VISWT:")
 tp2viswt(tpms0,wfactor,'multiply')
@@ -94,15 +94,15 @@ qac_log("CLEAN1:")
 line = {}
 if mosaic == 0:
     line['gridder']     =  'standard'      # 'standard' or 'mosaic' (default)
-qac_clean1(test+'/clean0', tpms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
-qac_clean1(test+'/clean1', tpms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
+qac_clean1(pdir+'/clean0', tpms0, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
+qac_clean1(pdir+'/clean1', tpms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
 
 qac_log("PLOT and STATS:")
 for idx in range(len(niter)):
-    im1 = test+'/clean0/dirtymap%s.image'       % QAC.label(idx)
-    im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
-    im3 = test+'/clean1/dirtymap%s.image'       % QAC.label(idx)
-    im4 = test+'/clean1/dirtymap%s.image.pbcor' % QAC.label(idx)
+    im1 = pdir+'/clean0/dirtymap%s.image'       % QAC.label(idx)
+    im2 = pdir+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
+    im3 = pdir+'/clean1/dirtymap%s.image'       % QAC.label(idx)
+    im4 = pdir+'/clean1/dirtymap%s.image.pbcor' % QAC.label(idx)
     qac_plot(im2,mode=1)      # casa based plot w/ colorbar
     qac_stats(im2)            # noise flat
     qac_plot(im4,mode=1)      # casa based plot w/ colorbar
@@ -113,34 +113,34 @@ if len(cfg) > 0:
     qac_log("ALMA 7m/12m")
     ms1={}
     for c in cfg:
-        ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=5,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times, fix=fix)
+        ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=5,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times, fix=fix)
     intms = ms1.values()
 
-    tp2vispl(intms+[tpms0],outfig=test+'/tp2vispl.png')
+    tp2vispl(intms+[tpms0],outfig=pdir+'/tp2vispl.png')
 
     # JD clean for tp2vis
     qac_log("CLEAN with TP2VIS")
     try:
-        qac_clean(test+'/clean3',tpms0,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=do_concat,**line)
+        qac_clean(pdir+'/clean3',tpms0,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=do_concat,**line)
     except:
         print("QAC_CLEAN clean3 failed")
     try:
-        qac_clean(test+'/clean4',tpms1,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=do_concat,**line)
+        qac_clean(pdir+'/clean4',tpms1,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=do_concat,**line)
     except:
         print("QAC_CLEAN clean4 failed")        
     for idx in range(len(niter)):
-        im1 = test+'/clean3/int%s.image'         % QAC.label(idx)
-        im2 = test+'/clean3/int%s.image.pbcor'   % QAC.label(idx)
-        im3 = test+'/clean3/tpint%s.image'       % QAC.label(idx)
-        im4 = test+'/clean3/tpint%s.image.pbcor' % QAC.label(idx)
+        im1 = pdir+'/clean3/int%s.image'         % QAC.label(idx)
+        im2 = pdir+'/clean3/int%s.image.pbcor'   % QAC.label(idx)
+        im3 = pdir+'/clean3/tpint%s.image'       % QAC.label(idx)
+        im4 = pdir+'/clean3/tpint%s.image.pbcor' % QAC.label(idx)
         qac_plot(im2,mode=1)      # casa based plot w/ colorbar
         qac_plot(im4,mode=1)      # casa based plot w/ colorbar
         qac_stats(im2)            # noise flat
         qac_stats(im4)            # noise flat
-        im5 = test+'/clean4/int%s.image'         % QAC.label(idx)
-        im6 = test+'/clean4/int%s.image.pbcor'   % QAC.label(idx)
-        im7 = test+'/clean4/tpint%s.image'       % QAC.label(idx)
-        im8 = test+'/clean4/tpint%s.image.pbcor' % QAC.label(idx)
+        im5 = pdir+'/clean4/int%s.image'         % QAC.label(idx)
+        im6 = pdir+'/clean4/int%s.image.pbcor'   % QAC.label(idx)
+        im7 = pdir+'/clean4/tpint%s.image'       % QAC.label(idx)
+        im8 = pdir+'/clean4/tpint%s.image.pbcor' % QAC.label(idx)
         qac_plot(im6,mode=1)      # casa based plot w/ colorbar
         qac_plot(im8,mode=1)      # casa based plot w/ colorbar
         qac_stats(im6)            # noise flat

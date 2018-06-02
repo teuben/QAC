@@ -3,7 +3,7 @@
 #  compare mapping of tp2vis data vs. OTF/smooth under various situations
 #
 #
-#  12m ALMA dish at 115.271GHz has PB ~ 54" (or 56" ???)
+#  12m TP-ALMA dish at 115.271GHz has PB ~ 56.5" (Tsujoshi, private comm.)
 #
 #  for grid=0 you get 1 pointing, and tclean reports a 39.5" beam (will get rounder if you use more UV points)
 #  for grid=30 you get this "average beam", about 58-60" which does not get rounder with more points
@@ -35,13 +35,14 @@
 #  D12  is diameter in units of 12m
 #  f100 is freq in units of 100GHz  (so CO is at 1.152712)
 #
-#  tp2vis talks about 65.2 at 100 or 56.5 at 115.2 (or do we mean 115.2712???)
+#  tp2vis talks about 65.2 at 100 or 56.5 at 115.2 (we do mean 115.2712)
 #                     105  at 100 for 7m [this ratio doesn't vibe with scaling 12/7, that would predict 112")
 #
 #  If we believe the a=1.13 value, we would have 58.2", not 65.2
-#  Reversing, the 65.2 would mean a=1.265
+#  Reversing, the 65.2 would mean a=1.265, which is clearly too high.
+#  If we set a=1.13 and use 56.5 this implies D12 = 51.5305 * 1.13 / 56.5 / 1.152712 = 0.894 -> D=10.7m
 
-test         = 'sky2'                               # name of directory within which everything will reside
+pdir         = 'sky2'                               # name of directory within which everything will reside
 model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model to be on the sky
 
@@ -81,14 +82,14 @@ for arg in qac_argv(sys.argv):
     exec(arg)
 
 # derived parameters
-ptg   = test + '.ptg'              # pointing mosaic file
+ptg   = pdir + '.ptg'              # pointing mosaic file
 grid  = grid / dscale              # re-scaling the dish/grid
 dish  = dish * dscale              # instead of the pixel
 maxuv = maxuv * dscale
 
 
 # report, add Dtime
-qac_begin(test,False)
+qac_begin(pdir,False)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
@@ -101,23 +102,37 @@ p = qac_im_ptg(phasecenter, imsize_m, pixel_m, grid, rect=True, outfile=ptg)
 qac_log("TP2VIS:")
 qac_tpdish('ALMATP', dish)
 qac_tpdish('VIRTUAL',dish)
-tpms = qac_tp_vis(test, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, deconv=False, fix=1)
+tpms = qac_tp_vis(pdir, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, deconv=False, fix=1)
 
 # cleaning
 qac_log("CLEAN1:")
 line = {}
-qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
+qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
 
 # analysis
 qac_log("PLOT and STATS:")
-qac_beam(test+'/clean0/dirtymap.image')
+qac_beam(pdir+'/clean0/dirtymap.image')
 for idx in range(len(niter)):
-    im1 = test+'/clean0/dirtymap%s.image'       % QAC.label(idx)
-    im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
+    im1 = pdir+'/clean0/dirtymap%s.image'       % QAC.label(idx)
+    im2 = pdir+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
     qac_plot(im1,mode=1)      # casa based plot w/ colorbar
     qac_stats(im2)            # noise flat
-qac_plot(model,mode=1,plot=test+'/'+model+'.png')
+qac_plot(model,mode=1,plot=pdir+'/'+model+'.png')
 qac_stats(model)
+
+qac_log("IMSMOOTH")
+im2 = pdir+'/clean0/dirtymap.image.pbcor'
+beam0 = imhead(im2)['restoringbeam']
+imsmooth(pdir+'/skymodel.im', outfile=pdir+'/clean0/skymodel.smooth',beam=beam0,overwrite=True)
+qac_plot(pdir+'/clean0/skymodel.smooth',mode=1)
+i1 = pdir+'/clean0/dirtymap.image.png'
+i2 = pdir+'/clean0/dirtymap_2.image.png'
+i3 = pdir+'/clean0/dirtymap_3.image.png'
+i4 = pdir+'/clean0/skymodel.smooth.png'
+i0 = pdir+'/clean0/montage1.png'
+cmd  = "montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s" % (pdir,i1,i2,i3,i4,i0)
+os.system(cmd)
+
 
 # qac_smooth('sky2/clean0','sky2/skymodel.im/')
 #  ->   "sky2/clean0/skymodel.smooth.image"-"sky2/clean0/dirtymap.image.pbcor"
