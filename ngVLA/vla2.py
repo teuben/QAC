@@ -155,6 +155,9 @@ qac_plot_grid([a1, a2, a2, a3, a4, a3],diff=10, plot=test+'/plot1.cmp.png', labe
 # feather_2  | skymodel | diff
 qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=test+'/plot2.cmp.png', labels=True)
 
+qac_log("POWER SPECTRUM DENSITY")
+qac_psd([startmodel, test+'/clean3/dirtymap_2.image',test+'/clean3/feather_2.image'], plot=test+'/'+test+'.psd.png')
+
 qac_log("DONE!")
 qac_end()
 
