@@ -137,7 +137,7 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
             f= open(outfile,"w+")
             f.write("%s\n" % phasecenter)
             f.close()
-        return phasecenter
+        return [phasecenter]
         
     #check if images is list or single file or none
     if type(im) == type([]):
