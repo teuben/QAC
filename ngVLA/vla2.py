@@ -1,6 +1,6 @@
 # -*- python -*-
 #
-#  Play with the skymodel 
+#  Play with the skymodel and various ngVLA configurations
 #     - one or full pointing set
 #     - options for feather, ssc
 #
@@ -31,10 +31,10 @@ pixel_m      = 0.05
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
 # pick the pixel_s based on the largest array configuration (see below) choosen
-imsize_s     = 512
-pixel_s      = 0.4
+imsize_s     = 1024
+pixel_s      = 0.2
 
-# pick a few niter values for tclean to check flux convergence 
+# pick a few niter values for tclean to check flux convergence ; need at least two to get feather/ssc
 #niter        = [0,500,1000,2000]
 #niter        = [0,100]
 #niter        = [0,100,1000]
@@ -46,14 +46,14 @@ niter        = [0,1000]
 cfg          = [0,1]
 
 # integration times
-times        = [1, 1]     # 1 hrs in 1 min integrations
+times        = [2, 1]     # hrs observing and mins integrations
 
 # grid spacing for mosaic pointings  (18m -> 15"   6m -> 50" but 6m is controlled with gfactor)
 grid         = 15
 grid         = 20
 
 # tp dish size (18, 45, 100m are the interesting choices to play with)
-dish         = 18
+dish         = 45
 
 # scaling factors 
 wfactor      = 0.01   # (only needed for tp2vis)
@@ -81,12 +81,19 @@ tp2vis_version()
 
 # create a mosaic of pointings for the TP 'dish'
 p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
-print "Using %d pointings for grid=%g on fieldsize %g" % (len(p), grid, imsize_m*pixel_m)
-
+print "Using %d pointings for 18m and grid=%g on fieldsize %g" % (len(p), grid, imsize_m*pixel_m)
 
 grid0 = grid * gfactor
 p0 = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid0,rect=True,outfile=ptg0)
-print "Using %d pointings for grid0=%g on fieldsize %g" % (len(p0), grid0, imsize_m*pixel_m)
+print "Using %d pointings for  6m and grid0=%g on fieldsize %g" % (len(p0), grid0, imsize_m*pixel_m)
+
+#
+if True:
+    # test alternative setting of times so each pointing gets one cycle, and the SBA gets more time
+    times  = [len(p)/60.0, 1.0/gfactor]
+    times0 = [len(p)/60.0, 1.0]
+else:
+    times0 = times
 
 # vpmanager for SSA dishes
 # to get create custom voltage pattern table for SSA (from brian mason memo 43)
@@ -103,8 +110,10 @@ ms1={}
 for c in cfg:
     if c == 0:
         # could consider multiplying times by gfactor^2
-        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times)
+        print "qac_vla times=",times0
+        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0)
     else:
+        print "qac_vla times=",times
         ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times)
 # startmodel for later
 startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
@@ -117,6 +126,9 @@ tp2vispl(intms, outfig=pdir+'/tp2vispl.png')
 
 qac_log("CLEAN")
 qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
+
+qac_log("BEAM")
+qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.psf.png')
 
 qac_log("OTF")
 # create an OTF TP map using a given dish size
@@ -131,7 +143,12 @@ for idx in range(len(niter)):
     qac_ssc    (pdir+'/clean3',             niteridx=idx, name="dirtymap")
     qac_smooth (pdir+'/clean3', startmodel, niteridx=idx, name="dirtymap")
     qac_plot   (pdir+'/clean3/dirtymap%s.image.pbcor' % QAC.label(idx))
+    qac_plot   (pdir+'/clean3/feather%s.image.pbcor' % QAC.label(idx))
+    qac_plot   (pdir+'/clean3/ssc%s.image' % QAC.label(idx))
+    
 qac_plot(pdir+'/clean3/skymodel.smooth.image')
+qac_plot(pdir+'/clean3/dirtymap.pb')
+qac_plot(pdir+'/clean3/otf.image.pbcor')
 
 # the real flux
 qac_log("REGRESSION")
