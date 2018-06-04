@@ -42,16 +42,21 @@ vla2:
 	cp vla2.log vla2.py vla2.ptg vla2
 	tail -10 vla2.log
 
-VLA2_ALL = vla2_0 vla2_1
+VLA2_ALL = vla2_0 vla2_1 vla2_01
 
 vla2_all:	$(VLA2_ALL)
 
 vla2_0:
-	time casa --nogui -c vla2.py pdir='"vla2_0"' cfg='[0]' > vla2_0.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_0"' cfg='[0]' grid=0 > vla2_0.log 2>&1
 	cp vla2_0.log vla2.py vla2_0.ptg vla2_0
 	tail -10 vla2_0.log
 
 vla2_1:
-	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' > vla2_1.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 > vla2_1.log 2>&1
 	cp vla2_1.log vla2.py vla2_1.ptg vla2_1
 	tail -10 vla2_1.log
+
+vla2_01:
+	time casa --nogui -c vla2.py pdir='"vla2_01"' cfg='[0,1]' grid=0 > vla2_01.log 2>&1
+	cp vla2_01.log vla2.py vla2_01.ptg vla2_01
+	tail -10 vla2_01.log
