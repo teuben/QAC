@@ -39,3 +39,19 @@ vla1:
 vla2:
 	rm -rf vla2
 	time casa --nogui -c vla2.py > vla2.log 2>&1
+	cp vla2.log vla2.py vla2.ptg vla2
+	tail -10 vla2.log
+
+VLA2_ALL = vla2_0 vla2_1
+
+vla2_all:	$(VLA2_ALL)
+
+vla2_0:
+	time casa --nogui -c vla2.py pdir='"vla2_0"' cfg='[0]' > vla2_0.log 2>&1
+	cp vla2_0.log vla2.py vla2_0.ptg vla2_0
+	tail -10 vla2_0.log
+
+vla2_1:
+	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' > vla2_1.log 2>&1
+	cp vla2_1.log vla2.py vla2_1.ptg vla2_1
+	tail -10 vla2_1.log
