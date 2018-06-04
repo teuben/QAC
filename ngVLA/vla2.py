@@ -40,17 +40,17 @@ pixel_s      = 0.2
 #niter        = [0,100,1000]
 #niter        = [0]
 niter        = [0,500,1000,2000,4000]
-niter        = [0,1000]
+#niter        = [0,1000]
 
 # pick which ngVLA configurations you want (0=SSA, 1=core 2=plains 3=all 4=all+GB+VLBA)
 cfg          = [0,1]
 
-# integration times
+# integration times (see also below for alternative equal time per pointing observations)
 times        = [2, 1]     # hrs observing and mins integrations
 
 # grid spacing for mosaic pointings  (18m -> 15"   6m -> 50" but 6m is controlled with gfactor)
 grid         = 15
-grid         = 20
+#grid         = 20
 
 # tp dish size (18, 45, 100m are the interesting choices to play with)
 dish         = 45
