@@ -4,18 +4,21 @@
 #     - one or full pointing set
 #     - options for feather, ssc
 #
-#  Reminder: at 115 GHz we have:
-#      12m PB is 50" (FWHM)   [FWHM" ~ 600/DishDiam]
-#       7m PB is 85"
+#  Reminder: at 115 GHz we have: [FWHM" ~ 600/DishDiam]
+#
+#      18m PB is ~33"
+#       6m PB is ~100"
+#      25m PB is ~25"
+#      50m PB is ~12"
 #
 #  Timing:
-#           30' on T530
+#           ..
 #  Memory:
-#           1.7GB +  3.0
+#           ..
 #  Space:
-#           Uses about 1.4 GB
+#           ..
 
-test         = 'vla2'                               # name of directory within which everything will reside
+pdir         = 'vla2'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'   # where we want this model to be on the sky, at VLA
 
@@ -28,36 +31,35 @@ pixel_m      = 0.05
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
 # pick the pixel_s based on the largest array configuration (see below) choosen
-imsize_s     = 256
-pixel_s      = 0.8
-
-# number of TP cycles
-nvgrp        = 4
+imsize_s     = 512
+pixel_s      = 0.4
 
 # pick a few niter values for tclean to check flux convergence 
-# niter        = [0,500,1000,2000]
+#niter        = [0,500,1000,2000]
 #niter        = [0,100]
 #niter        = [0,100,1000]
+#niter        = [0]
+niter        = [0,500,1000,2000,4000]
 niter        = [0,1000]
-# niter        = [0,1000,4000]
-# niter        = [0]
 
-# pick which ngVLA configurations you want (0=SSA, 1=core 2=
-cfg          = [0]
+# pick which ngVLA configurations you want (0=SSA, 1=core 2=plains 3=all 4=all+GB+VLBA)
+cfg          = [0,1]
 
 # integration times
 times        = [1, 1]     # 1 hrs in 1 min integrations
 
-# single pointing?  Set grid to a positive arcsec grid spacing if the field needs to be covered
-#                   ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
-grid         =  0        # this can be pointings good for small dish nyquist
+# grid spacing for mosaic pointings  (18m -> 15"   6m -> 50" but 6m is controlled with gfactor)
+grid         = 15
+grid         = 20
 
-# tp dish size
-dish         = 12
+# tp dish size (18, 45, 100m are the interesting choices to play with)
+dish         = 18
 
-# scaling factors
-wfactor      = 0.01
+# scaling factors 
+wfactor      = 0.01   # (only needed for tp2vis)
 afactor      = 1      # not implemented yet
+gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
+pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
 
 # -- do not change parameters below this ---
 import sys
@@ -65,98 +67,117 @@ for arg in qac_argv(sys.argv):
     exec(arg)
 
 # derived parameters
-ptg = test + '.ptg'              # pointing mosaic for the ptg
+ptg  = pdir + '.ptg'              # pointing mosaic for the ptg
+ptg0 = pdir + '.0.ptg'            # pointing mosaic for the ptg
 
-# imsize_m =  imsize_m / 2       # test w/ smaller portion of grid ?
+pixel_m = pixel_m * pfactor
+pixel_s = pixel_s * pfactor
 
 # report, add Dtime
-qac_begin(test,False)
+qac_begin(pdir,False)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
-if grid > 0:
-    # create a mosaic of pointings for 12m, that's overkill for the 7m
-    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
-else:
-    # create a single pointing 
-    qac_ptg(phasecenter,ptg)
-    p = [phasecenter]
+# create a mosaic of pointings for the TP 'dish'
+p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
+print "Using %d pointings for grid=%g on fieldsize %g" % (len(p), grid, imsize_m*pixel_m)
 
-qac_project(test)
+
+grid0 = grid * gfactor
+p0 = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid0,rect=True,outfile=ptg0)
+print "Using %d pointings for grid0=%g on fieldsize %g" % (len(p0), grid0, imsize_m*pixel_m)
+
+# vpmanager for SSA dishes
+# to get create custom voltage pattern table for SSA (from brian mason memo 43)
+# really only have to do this once because the table can then be loaded
+#vp.reset()
+#vp.setpbairy(telescope='NGVLA', dishdiam=6.0, blockagediam=0.0, maxrad='3.5deg', reffreq='1.0GHz', dopb=True)
+#vp.setpbairy(telescope='NGVLA', dishdiam=18.0, blockagediam=0.0, maxrad='3.5deg', reffreq='1.0GHz', dopb=True)
+#vp.saveastable('sba.tab')
+
+qac_project(pdir)
 # create an MS based on a model and antenna configuration for VLA
 qac_log("ngVLA")
 ms1={}
 for c in cfg:
-    ms1[c] = qac_vla(test,model,imsize_m,pixel_m,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+    if c == 0:
+        # could consider multiplying times by gfactor^2
+        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times)
+    else:
+        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times)
 # startmodel for later
 startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 
 # find out which MS we got for the INT, or use intms = ms1.values()
 intms = ms1.values()
 
+# tp2vispl - doesn't plot in multiple colors yet
+tp2vispl(intms, outfig=pdir+'/tp2vispl.png')
 
 qac_log("CLEAN")
-qac_clean1(test+'/clean3', intms, imsize_s, pixel_s,phasecenter=phasecenter, niter=niter)
+qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
 
 qac_log("OTF")
-# create an OTF TP map using a [12m] dish
-qac_tp_otf(test+'/clean3', startmodel, dish, template=test+'/clean3/dirtymap.image')
+# create an OTF TP map using a given dish size
+qac_tp_otf(pdir+'/clean3', startmodel, dish, template=pdir+'/clean3/dirtymap.image')
 
 
 #@todo check naming - int vs dirtymap
 qac_log("FEATHER")
 # combine TP + INT using feather and ssc, for all niter's
 for idx in range(len(niter)):
-    qac_feather(test+'/clean3',             niteridx=idx, name="dirtymap")
-    qac_ssc    (test+'/clean3',             niteridx=idx, name="dirtymap")
-    qac_smooth (test+'/clean3', startmodel, niteridx=idx, name="dirtymap")
-
+    qac_feather(pdir+'/clean3',             niteridx=idx, name="dirtymap")
+    qac_ssc    (pdir+'/clean3',             niteridx=idx, name="dirtymap")
+    qac_smooth (pdir+'/clean3', startmodel, niteridx=idx, name="dirtymap")
+    qac_plot   (pdir+'/clean3/dirtymap%s.image.pbcor' % QAC.label(idx))
+qac_plot(pdir+'/clean3/skymodel.smooth.image')
 
 # the real flux
 qac_log("REGRESSION")
+
 qac_stats(model)
 qac_log("Niter = 0 Cleaning")
-qac_stats(test+'/clean3/dirtymap.image')
-qac_stats(test+'/clean3/dirtymap.image.pbcor')
-qac_stats(test+'/clean3/skymodel.smooth.image')
-qac_stats(test+'/clean3/otf.image')
-qac_stats(test+'/clean3/otf.image.pbcor')
-qac_stats(test+'/clean3/ssc.image')
-qac_stats(test+'/clean3/feather.image')
+qac_stats(pdir+'/clean3/dirtymap.image')
+qac_stats(pdir+'/clean3/dirtymap.image.pbcor')
+qac_stats(pdir+'/clean3/skymodel.smooth.image')
+qac_stats(pdir+'/clean3/otf.image')
+qac_stats(pdir+'/clean3/otf.image.pbcor')
+qac_stats(pdir+'/clean3/ssc.image')
+qac_stats(pdir+'/clean3/feather.image')
 
 qac_log("Niter = 1000 Cleaning")
-qac_stats(test+'/clean3/dirtymap_2.image')
-qac_stats(test+'/clean3/dirtymap_2.image.pbcor')
-qac_stats(test+'/clean3/skymodel_2.smooth.image')
-qac_stats(test+'/clean3/otf.image')
-qac_stats(test+'/clean3/otf.image.pbcor')
-qac_stats(test+'/clean3/ssc_2.image')
-qac_stats(test+'/clean3/feather_2.image')
+qac_stats(pdir+'/clean3/dirtymap_2.image')
+qac_stats(pdir+'/clean3/dirtymap_2.image.pbcor')
+qac_stats(pdir+'/clean3/skymodel_2.smooth.image')
+qac_stats(pdir+'/clean3/otf.image')
+qac_stats(pdir+'/clean3/otf.image.pbcor')
+qac_stats(pdir+'/clean3/ssc_2.image')
+qac_stats(pdir+'/clean3/feather_2.image')
 
 
 qac_log("PLOT_GRID plots 1 and 2")
-a1 = test+'/clean3/dirtymap.image'
-a2 = test+'/clean3/dirtymap_2.image'
-a3 = test+'/clean3/otf.image'
-a4 = test+'/clean3/feather_2.image'
-a5 = test+'/clean3/skymodel.smooth.image'
-a6 = test+'/clean3/ssc_2.image'
+a1 = pdir+'/clean3/dirtymap.image'
+a2 = pdir+'/clean3/dirtymap_2.image'
+a3 = pdir+'/clean3/otf.image'
+a4 = pdir+'/clean3/feather_2.image'
+a5 = pdir+'/clean3/skymodel.smooth.image'
+a6 = pdir+'/clean3/ssc_2.image'
 
 # plot 1:
 # niter=0    | niter=1000 | diff
 # niter=1000 | otf        | diff
 # feather_2  | otf        | diff
-qac_plot_grid([a1, a2, a2, a3, a4, a3],diff=10, plot=test+'/plot1.cmp.png', labels=True)
+qac_plot_grid([a1, a2, a2, a3, a4, a3],diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
 
 # plot 2:
 # niter=1000 | skymodel | diff
 # feather_2  | ssc_2    | diff
 # feather_2  | skymodel | diff
-qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=test+'/plot2.cmp.png', labels=True)
+qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
 
 qac_log("POWER SPECTRUM DENSITY")
-qac_psd([startmodel, test+'/clean3/dirtymap_2.image',test+'/clean3/feather_2.image'], plot=test+'/'+test+'.psd.png')
+qac_psd([startmodel, pdir+'/clean3/dirtymap_2.image',pdir+'/clean3/feather_2.image'], plot=pdir+'/'+pdir+'.psd.png')
 
 qac_log("DONE!")
 qac_end()
