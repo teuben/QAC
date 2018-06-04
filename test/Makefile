@@ -43,14 +43,14 @@ sky1:
 	cp sky1.py sky1.log sky1
 	tail -20 sky1.log
 
-#  sky2 is the generic TP2VIS-only mapping testsuite
+#  sky2 is the generic TP2VIS-only mapping testsuite, the "sky2_all" runs a variety of tests
 sky2:
 	@echo running sky2.py ...
 	time $(CASA) --nogui -c sky2.py > sky2.log 2>&1
 	cp sky2.py sky2.log sky2.ptg sky2
 	tail -20 sky2.log
 
-#  all the sky2 based simulations
+#  all the sky2 based simulations, I'm not adding these to the earlier TESTS=
 SKY2_ALL = sky2_1 sky2_2 sky2_3 sky2_4 sky2_5 \
 	   sky2_1a sky2_1b sky2_1c sky2_1d sky2_1e sky2_1f \
 	   sky2_2a sky2_2b sky2_2c sky2_2d sky2_2e sky2_2f
@@ -60,90 +60,93 @@ sky2_all: $(SKY2_ALL)
 sky2_all_clean:
 	rm -rf $(SKY2_ALL)
 
+sky2_all_tar:
+	tar cf sky2_all.tar $(SKY2_ALL)
+
 # flux as function of pixel size
 sky2_1:
-	@echo running sky2.py ...
+	# 200" sky, 50" beam
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_1"' pixel_m=0.05 pixel_s=0.8  > sky2_1.log 2>&1
 	cp sky2.py sky2_1.log sky2_1.ptg sky2_1
 	tail -20 sky2_1.log
 
 sky2_2:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2"' pixel_m=0.1 pixel_s=1.6  > sky2_2.log 2>&1
 	cp sky2.py sky2_2.log sky2_2.ptg sky2_2
 	tail -20 sky2_2.log
 
 sky2_3:
-	@echo running sky2.py ...
+	# 800" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_3"' pixel_m=0.2 pixel_s=3.2  > sky2_3.log 2>&1
 	cp sky2.py sky2_3.log sky2_3.ptg sky2_3
 	tail -20 sky2_3.log
 
 sky2_4:
-	@echo running sky2.py ...
+	# 1600" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_4"' pixel_m=0.4 imsize_s=512 pixel_s=3.2  > sky2_4.log 2>&1
 	cp sky2.py sky2_4.log sky2_4.ptg sky2_4
 	tail -20 sky2_4.log
 
 sky2_5:
-	@echo running sky2.py ...
+	# 1600" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_5"' pixel_m=0.4 pixel_s=6.4  > sky2_5.log 2>&1
 	cp sky2.py sky2_5.log sky2_5.ptg sky2_5
 	tail -20 sky2_5.log
-#
 
+# the flux loss in sky2_1,2,3,4/5 is due to large pixel size? Here in 20,30,40 we keep the pixel size (pixel_s) the same
 sky2_20:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_20"' pixel_m=0.1 imsize_s=512 > sky2_20.log 2>&1
 	cp sky2.py sky2_20.log sky2_20.ptg sky2_20
 	tail -20 sky2_20.log
 
 sky2_30:
-	@echo running sky2.py ...
+	# 800" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_30"' pixel_m=0.2 imsize_s=1024  > sky2_30.log 2>&1
 	cp sky2.py sky2_30.log sky2_30.ptg sky2_30
 	tail -20 sky2_30.log
 
 sky2_40:
-	@echo running sky2.py ...
+	# 1600" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_40"' pixel_m=0.4 imsize_s=2048  > sky2_40.log 2>&1
 	cp sky2.py sky2_40.log sky2_40.ptg sky2_40
 	tail -20 sky2_40.log
 
 # flux as function of small gridding step
 sky2_2a:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2a"' pixel_m=0.1 pixel_s=1.6 grid=25 > sky2_2a.log 2>&1
 	cp sky2.py sky2_2a.log sky2_2a.ptg sky2_2a
 	tail -20 sky2_2a.log
 
 sky2_2b:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2b"' pixel_m=0.1 pixel_s=1.6 grid=20 > sky2_2b.log 2>&1
 	cp sky2.py sky2_2b.log sky2_2b.ptg sky2_2b
 	tail -20 sky2_2b.log
 
 sky2_2c:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2c"' pixel_m=0.1 pixel_s=1.6 grid=15 > sky2_2c.log 2>&1
 	cp sky2.py sky2_2c.log sky2_2c.ptg sky2_2c
 	tail -20 sky2_2c.log
 
 # bigger gridding steps to see the beam problem
 sky2_2d:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2d"' pixel_m=0.1 pixel_s=1.6 grid=60 > sky2_2d.log 2>&1
 	cp sky2.py sky2_2d.log sky2_2d.ptg sky2_2d
 	tail -20 sky2_2d.log
 
 sky2_2e:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2e"' pixel_m=0.1 pixel_s=1.6 grid=120 > sky2_2e.log 2>&1
 	cp sky2.py sky2_2e.log sky2_2e.ptg sky2_2e
 	tail -20 sky2_2e.log
 
 sky2_2f:
-	@echo running sky2.py ...
+	# 400" sky
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_2f"' pixel_m=0.1 pixel_s=1.6 grid=180 > sky2_2f.log 2>&1
 	cp sky2.py sky2_2f.log sky2_2f.ptg sky2_2f
 	tail -20 sky2_2f.log
@@ -151,43 +154,58 @@ sky2_2f:
 
 # dscale range
 sky2_1a:
-	@echo running sky2.py ...
+	# 200" sky, 30" beam
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_1a"' pixel_m=0.05 pixel_s=0.8 dscale=2 > sky2_1a.log 2>&1
 	cp sky2.py sky2_1a.log sky2_1a.ptg sky2_1a
 	tail -20 sky2_1a.log
 
 sky2_1b:
-	@echo running sky2.py ...
+	# 200" sky, 15" beam
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_1b"' pixel_m=0.05 pixel_s=0.8 dscale=4 > sky2_1b.log 2>&1
 	cp sky2.py sky2_1b.log sky2_1b.ptg sky2_1b
 	tail -20 sky2_1b.log
 
 sky2_1c:
-	@echo running sky2.py ...
+	# 200" sky, 8" beam
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_1c"' pixel_m=0.05 pixel_s=0.8 dscale=8 > sky2_1c.log 2>&1
 	cp sky2.py sky2_1c.log sky2_1c.ptg sky2_1c
 	tail -20 sky2_1c.log
 
 # bigger gridding step and the dish3 usage
 sky2_1d:
-	@echo running sky2.py ...
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_1d"' pixel_m=0.05 pixel_s=0.8 dish=12 maxuv=12 dish3=12 > sky2_1d.log 2>&1
+	# 200" sky, 60" beam
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_1d"' dish=12 maxuv=12 dish3=12 > sky2_1d.log 2>&1
 	cp sky2.py sky2_1d.log sky2_1d.ptg sky2_1d
 	tail -20 sky2_1d.log
 
 sky2_1e:
-	@echo running sky2.py ...
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_1e"' pixel_m=0.05 pixel_s=0.8 dish=24 maxuv=24 dish3=12 > sky2_1e.log 2>&1
+	# 200" sky, 30" beam
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_1e"' dish=24 maxuv=24 dish3=12 > sky2_1e.log 2>&1
 	cp sky2.py sky2_1e.log sky2_1e.ptg sky2_1e
 	tail -20 sky2_1e.log
 
 sky2_1f:
-	@echo running sky2.py ...
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_1f"' pixel_m=0.05 pixel_s=0.8 dish=48 maxuv=48 dish3=12 > sky2_1f.log 2>&1
+	# 200" sky, 15" beam
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_1f"' dish=48 maxuv=48 dish3=12 > sky2_1f.log 2>&1
 	cp sky2.py sky2_1f.log sky2_1f.ptg sky2_1f
 	tail -20 sky2_1f.log
 
-# proper dish3 with the same resolution?
+# varying dish, fixed dish3 with the same resolution?
+sky2_1g:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_1g"' dish=48 dish3=12 maxuv=10 > sky2_1g.log 2>&1
+	cp sky2.py sky2_1g.log sky2_1g.ptg sky2_1g
+	tail -20 sky2_1g.log
+
+sky2_1h:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_1h"' dish=48 dish3=24 maxuv=20 > sky2_1h.log 2>&1
+	cp sky2.py sky2_1h.log sky2_1h.ptg sky2_1h
+	tail -20 sky2_1h.log
+
+sky2_1i:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_1i"' dish=48 dish3=48 maxuv=40 > sky2_1i.log 2>&1
+	cp sky2.py sky2_1i.log sky2_1i.ptg sky2_1i
+	tail -20 sky2_1i.log
+
 
 
 # older version of cas_11271
