@@ -47,6 +47,9 @@ VLA2_ALL = vla2_0  vla2_1  vla2_01 \
 
 vla2_all:	$(VLA2_ALL)
 
+vla2_all_clean:
+	rm -rf 	$(VLA2_ALL)
+
 # single pointing tests
 vla2_0:
 	time casa --nogui -c vla2.py pdir='"vla2_0"' cfg='[0]' grid=0 > vla2_0.log 2>&1
