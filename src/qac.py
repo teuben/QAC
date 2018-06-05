@@ -2372,21 +2372,25 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
 
     #-end of qac_flux()
 
-def qac_psd(image, plot='qac_psd.png'):
+def qac_psd(image, plot='qac_psd.png', fit=False, pixel_s=None):
     """ compute the PSD of a map
 
-    image:     casa image (fits file not allowed here)
+    image:      casa image (fits file not allowed here)
+    plot:       name for the figure
+    fit:        choose if fit the power spectrum or not
+    pixel_s:    pixel size in order to scale spatial frequency. not used currenlty
     
     see also: radio_astro_tools et al. (sd2018)
     """
-    from scipy.optimize import curve_fit
+    if fit:
+        from scipy.optimize import curve_fit
 
-    # fit power law to get spectral index alpha
-    # need to fit in linear space because scipy.optimize.curve_fit can't handle the power law
-    def power_law(x, C, a):
-        return C * x**-a
-    def linear_power_law(lx, lC, a):
-        return -a * lx + lC
+        # fit power law to get spectral index alpha
+        # need to fit in linear space because scipy.optimize.curve_fit can't handle the power law
+        def power_law(x, C, a):
+            return C * x**-a
+        def linear_power_law(lx, lC, a):
+            return -a * lx + lC
 
     # check if input image is a list or array. if not, then make it one
     if (type(image) != type([])) and (type(image) != type(np.array([]))):
@@ -2399,7 +2403,6 @@ def qac_psd(image, plot='qac_psd.png'):
 
     # loop through all images in the input list
     for im,clr in zip(image, colors):
-        print im
         tb.open(im)
         d1 = tb.getcol('map').squeeze()
         if len(d1.shape) != 2:
@@ -2417,26 +2420,26 @@ def qac_psd(image, plot='qac_psd.png'):
         p1 = radialProfile.azimuthalAverage(p2)    # now in util
         #p1 = azimuthalAverage(p2)     # if in contrib/radialProfile.py
         r1 = np.arange(1.0,len(p1)+1)
+        # r1 = r1/pixel_s
         
-        lx = np.log(r1)
-        ly = np.log(p1)
-
-        log_fit_params, lpcov = curve_fit(linear_power_law, lx, ly)
-        xfit = np.arange(1, 3000, 1)
-
         if im.rfind('/') != -1:
             imname = im[im.rfind('/')+1:]
         else:
             imname = im
 
-        print('%s: \nSpectral Index alpha = %s \n'% (imname, log_fit_params[1]))
+        if fit:
+            lx = np.log(r1)
+            ly = np.log(p1)
 
-        pl.loglog(r1,p1, '%s.'%clr, markersize=3)
-        pl.loglog(xfit, power_law(xfit, np.exp(log_fit_params[0]), log_fit_params[1]), '%s-'%clr, label=r'%s $\alpha =$ %1.1f'% (imname, log_fit_params[1]))
+            log_fit_params, lpcov = curve_fit(linear_power_law, lx, ly)
+            xfit = np.arange(1, 14470, 1)
+            print('%s: \nSpectral Index alpha = %s \n'% (imname, log_fit_params[1]))
+            pl.loglog(xfit, power_law(xfit, np.exp(log_fit_params[0]), log_fit_params[1]), '%s-'%clr)
+
+        pl.loglog(r1,p1, '%s.'%clr, markersize=8, label='%s'% (imname))
 
     pl.xlabel('Spatial Frequency', size=18)
     pl.ylabel('Power Spectrum', size=18)
-    pl.xlabel('Channel', size=18)
     pl.legend(loc='best', frameon=False)
     pl.title('Power Spectrum Density', size=18)
     pl.savefig(plot)
