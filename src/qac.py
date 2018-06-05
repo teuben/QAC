@@ -1228,7 +1228,7 @@ def qac_sd_vis(**kwargs):
         
 def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name="dirtymap"):
     """
-    helper function to create on the fly total power map
+    helper function to create on-the-fly total power map
     
     dish:       dish diameter in meters - no default
     freq:       frequency in GHz, if you want to override the image header value 
@@ -1263,9 +1263,9 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
         freq = freq * 1.0e9
 
     # calculate beam size in arcsecs
-    # @todo check if alma uses 1.22*lam/D or just 1.0*lam/D
-    beam = cms / (freq * dish) * apr
-    print("TP_OTF: %g %g %g" % (dish, freq/1e9, beam))
+    # 1.13 is the ALMA nominal value for their dishes (values range from 1.02 to 1.22)
+    beam = 1.13 * cms / (freq * dish) * apr
+    print("TP_OTF: %g %g %g %s" % (dish, freq/1e9, beam, out_image))
 
     # convolve skymodel with beam. assumes circular beam
     imsmooth(imagename=skymodel,
@@ -1290,7 +1290,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
     immath(imagename=[out_pbcor, '%s.pb'%template[:-6]],
            expr='IM0*IM1',
            outfile=out_image)
-    # qac_math(out_image, '%s.pb'%template[:-6]], '*', out_pbcor);
+    # qac_math(out_image, '%s.pb'%template[:-6]], '*', out_pbcor)
 
     # remove the temporary OTF image that was created
     os.system('rm -fr %s'%out_tmp)
@@ -1768,7 +1768,7 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="
     feather(feather1,highres,lowres)                           # it will happily overwrite
     os.system('rm -rf %s' % feather2)                          # immath does not overwrite
     immath([feather1,pb],'evalexpr',feather2,'IM0/IM1')
-    # ng_math(feather2, feather1, "/", pb)
+    # qac_math(feather2, feather1, "/", pb)
 
     if True:
         qac_stats(highres)
@@ -2316,7 +2316,7 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
             # try out putting naming in the plots
             if labels:
                 if i % 3 == 2:
-                    f1.set_title('diff')
+                    f1.set_title('diff*%g' % diff)
                 else:
                     f1.set_title(images[j][images[j].rfind('/')+1:])
                     j += 1
@@ -2666,6 +2666,11 @@ class QAC(object):
     
     @staticmethod
     def label(idx):
+        """ helper function to create indexed filenames that tclean() produces, e.g.
+            dirtymap.image, dirtyname_2.image, dirtymap_3.image
+            are:
+            "dirtymap%s.image" % QAC.label(idx)    where idx=[0,1,2]
+        """
         if idx==0:
             lab = ""
         else:
