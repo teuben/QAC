@@ -42,8 +42,9 @@ vla2:
 	cp vla2.log vla2.py vla2.ptg vla2
 	tail -10 vla2.log
 
-VLA2_ALL = vla2_0  vla2_1  vla2_01 \
-	   vla2_0g vla2_1g vla2_01g
+VLA2_ALL = vla2_0     vla2_1     vla2_01 \
+	   vla2_0g_45 vla2_1g_45 vla2_01g_45 \
+	   vla2_0g_18 vla2_1g_18 vla2_01g_18
 
 vla2_all:	$(VLA2_ALL)
 
@@ -66,18 +67,35 @@ vla2_01:
 	cp vla2_01.log vla2.py vla2_01.ptg vla2_01
 	tail -10 vla2_01.log
 
-# same, for default filled grid
-vla2_0g:
-	time casa --nogui -c vla2.py pdir='"vla2_0g"' cfg='[0]' > vla2_0g.log 2>&1
-	cp vla2_0g.log vla2.py vla2_0g.ptg vla2_0g
-	tail -10 vla2_0g.log
+# same, for default filled grid, with TP=45m
+vla2_0g_45:
+	time casa --nogui -c vla2.py pdir='"vla2_0g_45"' cfg='[0]' dish=45 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_0g.ptg vla2_0g_45
+	tail -10 vla2.log
 
-vla2_1g:
-	time casa --nogui -c vla2.py pdir='"vla2_1g"' cfg='[1]' > vla2_1g.log 2>&1
-	cp vla2_1g.log vla2.py vla2_1g.ptg vla2_1g
-	tail -10 vla2_1g.log
+vla2_1g_45:
+	time casa --nogui -c vla2.py pdir='"vla2_1g_45"' cfg='[1]' dish=45 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_1g.ptg vla2_1g_45
+	tail -10 vla2.log
 
-vla2_01g:
-	time casa --nogui -c vla2.py pdir='"vla2_01g"' cfg='[0,1]' > vla2_01g.log 2>&1
-	cp vla2_01g.log vla2.py vla2_01g.ptg vla2_01g
-	tail -10 vla2_01g.log
+vla2_01g_45:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45"' cfg='[0,1]' dish=45 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g.ptg vla2_01g_45
+	tail -10 vla2.log
+
+# same, for default filled grid, with TP=18m
+vla2_0g_18:
+	time casa --nogui -c vla2.py pdir='"vla2_0g_18"' cfg='[0]' dish=18 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_0g.ptg vla2_0g_18
+	tail -10 vla2.log
+
+vla2_1g_18:
+	time casa --nogui -c vla2.py pdir='"vla2_1g_18"' cfg='[1]' dish=18 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_1g.ptg vla2_1g_18
+	tail -10 vla2.log
+
+vla2_01g_18:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_18"' cfg='[0,1]' dish=18 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g.ptg vla2_01g_18
+	tail -10 vla2.log
+
