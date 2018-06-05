@@ -14,7 +14,7 @@ def azimuthalAverage(image, center=None):
     y, x = np.indices(image.shape)
 
     if not center:
-        center = np.array([(x.max()-x.min())/2.0, (x.max()-x.min())/2.0])
+        center = np.array([len(x)/2.0, len(y)/2.0])
 
     r = np.hypot(x - center[0], y - center[1])
 
