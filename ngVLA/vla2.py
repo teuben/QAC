@@ -205,9 +205,11 @@ except:
 # feather_2  | ssc_2    | diff
 # feather_2  | skymodel | diff
 
-
 qac_log("POWER SPECTRUM DENSITY")
-qac_psd([startmodel, a2, a4, a5], plot=pdir+'/'+pdir+'.psd.png')
+try:
+    qac_psd([startmodel, a2, a4, a5], plot=pdir+'/'+pdir+'.psd.png')
+except:
+    print "qac_psf failed"
 
 qac_log("DONE!")
 qac_end()
