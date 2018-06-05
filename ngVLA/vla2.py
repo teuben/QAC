@@ -56,7 +56,7 @@ grid         = 15
 dish         = 45
 
 # scaling factors 
-wfactor      = 0.01   # (only needed for tp2vis)
+wfactor      = 0.01   # weight mult for cfg=0 (@todo)
 afactor      = 1      # not implemented yet
 gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
@@ -72,6 +72,9 @@ ptg0 = pdir + '.0.ptg'            # pointing mosaic for the ptg
 
 pixel_m = pixel_m * pfactor
 pixel_s = pixel_s * pfactor
+
+dishlabel = str(dish)             #  can also be ""
+
 
 # report, add Dtime
 qac_begin(pdir,False)
@@ -112,6 +115,8 @@ for c in cfg:
         # could consider multiplying times by gfactor^2
         print "qac_vla times=",times0
         ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0)
+        # scale down the 6m data based on inspection of tp2vispl()
+        tp2viswt(ms1[c],mode='mult',value=wfactor)
     else:
         print "qac_vla times=",times
         ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times)
@@ -132,101 +137,77 @@ qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.psf.png')
 
 qac_log("OTF")
 # create an OTF TP map using a given dish size
-qac_tp_otf(pdir+'/clean3', startmodel, dish, template=pdir+'/clean3/dirtymap.image')
+otf = qac_tp_otf(pdir+'/clean3', startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
 
 
 #@todo check naming - int vs dirtymap
 qac_log("FEATHER")
-# combine TP + INT using feather and ssc, for all niter's
+# combine TP + INT using feather and ssc, for all niter's (even though the first one is not valid)
 for idx in range(len(niter)):
-    qac_feather(pdir+'/clean3',             niteridx=idx, name="dirtymap")
-    qac_ssc    (pdir+'/clean3',             niteridx=idx, name="dirtymap")
-    qac_smooth (pdir+'/clean3', startmodel, niteridx=idx, name="dirtymap")
-    qac_plot   (pdir+'/clean3/dirtymap%s.image.pbcor' % QAC.label(idx))
-    qac_plot   (pdir+'/clean3/feather%s.image.pbcor' % QAC.label(idx))
-    qac_plot   (pdir+'/clean3/ssc%s.image' % QAC.label(idx))
+    qac_feather(pdir+'/clean3',             niteridx=idx, label=dishlabel, name="dirtymap")
+    qac_ssc    (pdir+'/clean3',             niteridx=idx, label=dishlabel, name="dirtymap")
+    qac_plot   (pdir+'/clean3/dirtymap%s.image.pbcor'  %            QAC.label(idx))
+    qac_plot   (pdir+'/clean3/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx)))
+    qac_plot   (pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx)))
+qac_smooth (pdir+'/clean3', startmodel, name="dirtymap")
     
 qac_plot(pdir+'/clean3/skymodel.smooth.image')
 qac_plot(pdir+'/clean3/dirtymap.pb')
-qac_plot(pdir+'/clean3/otf.image.pbcor')
+qac_plot(otf + '.pbcor')
 
-# the real flux
+# check the fluxes
 qac_log("REGRESSION")
 
-qac_stats(model)
-qac_log("Niter = 0 Cleaning")
-qac_stats(pdir+'/clean3/dirtymap.image')
-qac_stats(pdir+'/clean3/dirtymap.image.pbcor')
+for idx in range(len(niter)):
+    qac_stats(pdir+'/clean3/dirtymap%s.image'         %            QAC.label(idx))    
+    qac_stats(pdir+'/clean3/dirtymap%s.image.pbcor'   %            QAC.label(idx))
+    qac_stats(pdir+'/clean3/ssc%s%s.image'            % (dishlabel,QAC.label(idx)))
+    qac_stats(pdir+'/clean3/feather%s%s.image'        % (dishlabel,QAC.label(idx)))
 qac_stats(pdir+'/clean3/skymodel.smooth.image')
-qac_stats(pdir+'/clean3/otf.image')
-qac_stats(pdir+'/clean3/otf.image.pbcor')
-qac_stats(pdir+'/clean3/ssc.image')
-qac_stats(pdir+'/clean3/feather.image')
+qac_stats(otf + '.pbcor')
+qac_stats(model)
 
-qac_log("Niter = 1000 Cleaning")
-qac_stats(pdir+'/clean3/dirtymap_2.image')
-qac_stats(pdir+'/clean3/dirtymap_2.image.pbcor')
-qac_stats(pdir+'/clean3/skymodel_2.smooth.image')
-qac_stats(pdir+'/clean3/otf.image')
-qac_stats(pdir+'/clean3/otf.image.pbcor')
-qac_stats(pdir+'/clean3/ssc_2.image')
-qac_stats(pdir+'/clean3/feather_2.image')
+# a bunch of plots
+idx0 = len(niter)-1    # index of last niter[] for plotting
 
+qac_log("MONTAGE1")
+
+i1 = pdir+'/clean3/dirtymap%s.image.pbcor.png'   %            QAC.label(idx0)
+i2 = otf + '.pbcor.png'
+i3 = pdir+'/clean3/feather%s%s.image.pbcor.png'  % (dishlabel,QAC.label(idx0))
+i4 = pdir+'/clean3/skymodel.smooth.image.png'
+i0 = pdir+'/clean3/montage1.png'
+cmd  = "montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s" % (pdir,i1,i2,i3,i4,i0)
+os.system(cmd)
 
 qac_log("PLOT_GRID plots 1 and 2")
-a1 = pdir+'/clean3/dirtymap.image'
-a2 = pdir+'/clean3/dirtymap_2.image'
-a3 = pdir+'/clean3/otf.image'
-a4 = pdir+'/clean3/feather_2.image'
-a5 = pdir+'/clean3/skymodel.smooth.image'
-a6 = pdir+'/clean3/ssc_2.image'
 
-# plot 1:
+a1 = pdir+'/clean3/dirtymap.image'
+a2 = pdir+'/clean3/dirtymap%s.image'        %            QAC.label(idx0)
+a3 = otf
+a4 = pdir+'/clean3/feather%s%s.image'       % (dishlabel,QAC.label(idx0))
+a5 = pdir+'/clean3/skymodel.smooth.image'
+a6 = pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx0))
+
+try:
+    qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
+    qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
+except:
+    print "qac_plot_grid failed"
+
+# plot1:
 # niter=0    | niter=1000 | diff
 # niter=1000 | otf        | diff
 # feather_2  | otf        | diff
-qac_plot_grid([a1, a2, a2, a3, a4, a3],diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
-
-# plot 2:
+    
+# plot2:
 # niter=1000 | skymodel | diff
 # feather_2  | ssc_2    | diff
 # feather_2  | skymodel | diff
-qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
+
 
 qac_log("POWER SPECTRUM DENSITY")
-qac_psd([startmodel, pdir+'/clean3/dirtymap_2.image',pdir+'/clean3/feather_2.image'], plot=pdir+'/'+pdir+'.psd.png')
+qac_psd([startmodel, a2, a4, a5], plot=pdir+'/'+pdir+'.psd.png')
 
 qac_log("DONE!")
 qac_end()
-
-"""
-How to compare PDS plot?
-
-p1 = qac_pds()
-p2 = qac_pds()
-r1 = np.arange(1,len(p1)+1)
-
-plt.figure()
-plt.loglog(r1,p1)
-plt.loglog(r1,p2)
-plt.show()
-plt.savefig('cmp12.png')
-
-p1=qac_psd('skymodel1.im')
-r1=np.arange(1,len(p1)+1)
-
-p2=qac_psd('skymodel2s.im')
-imsmooth('skymodel2.im','gaussian','10arcsec','10arcsec',pa='0deg',outfile='skymodel2ss.im',overwrite=True)
-p3=qac_psd('skymodel2ss.im')
-imsmooth('skymodel2.im','gaussian','0.1arcsec','0.1arcsec',pa='0deg',outfile='skymodel2sss.im',overwrite=True)
-p4=qac_psd('skymodel2sss.im')
-
-plt.figure()
-plt.loglog(r1,p1)
-plt.loglog(r1,p2)
-plt.loglog(r1,p3)
-plt.loglog(r1,p4)
-
-
-
-"""
