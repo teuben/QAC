@@ -42,7 +42,7 @@ pixel_s      = 0.2
 niter        = [0,500,1000,2000,4000]
 #niter        = [0,1000]
 
-# pick which ngVLA configurations you want (0=SSA, 1=core 2=plains 3=all 4=all+GB+VLBA)
+# pick which ngVLA configurations you want (0=SBA, 1=core 2=plains 3=all 4=all+GB+VLBA)
 cfg          = [0,1]
 
 # integration times (see also below for alternative equal time per pointing observations)
@@ -60,6 +60,9 @@ wfactor      = 0.01   # weight mult for cfg=0 (@todo)
 afactor      = 1      # not implemented yet
 gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
+
+# clean maps (set to 0 if you just want the ms file(s)
+clean        = 1
 
 # -- do not change parameters below this ---
 import sys
@@ -93,34 +96,34 @@ print "Using %d pointings for  6m and grid0=%g on fieldsize %g" % (len(p0), grid
 #
 if True:
     # test alternative setting of times so each pointing gets one cycle, and the SBA gets more time
-    times  = [len(p)/60.0, 1.0/gfactor]
-    times0 = [len(p)/60.0, 1.0]
+    times  = [len(p)/60.0, 0.25]
+    times0 = [len(p0)/60.0, 0.25]
+    print "TIMES: ",times0,times
 else:
     times0 = times
 
-# vpmanager for SSA dishes
-# to get create custom voltage pattern table for SSA (from brian mason memo 43)
+# vpmanager for SBA dishes
+# to get create custom voltage pattern table for SBA (from brian mason memo 43)
 # really only have to do this once because the table can then be loaded
 #vp.reset()
 #vp.setpbairy(telescope='NGVLA', dishdiam=6.0, blockagediam=0.0, maxrad='3.5deg', reffreq='1.0GHz', dopb=True)
 #vp.setpbairy(telescope='NGVLA', dishdiam=18.0, blockagediam=0.0, maxrad='3.5deg', reffreq='1.0GHz', dopb=True)
 #vp.saveastable('sba.tab')
 
+# start with a clean project
 qac_project(pdir)
-# create an MS based on a model and antenna configuration for VLA
+
+# create an MS based on a model and for each ngVLA antenna configuration 
 qac_log("ngVLA")
 ms1={}
 for c in cfg:
     if c == 0:
-        # could consider multiplying times by gfactor^2
-        print "qac_vla times=",times0
         ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0)
-        # scale down the 6m data based on inspection of tp2vispl()
-        tp2viswt(ms1[c],mode='mult',value=wfactor)
+        # scale down the 6m data based on inspection of tp2vispl() ???
+        # tp2viswt(ms1[c],mode='mult',value=wfactor)
     else:
-        print "qac_vla times=",times
         ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times)
-# startmodel for later
+# save a startmodel name for later
 startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 
 # find out which MS we got for the INT, or use intms = ms1.values()
@@ -128,6 +131,12 @@ intms = ms1.values()
 
 # tp2vispl - doesn't plot in multiple colors yet
 tp2vispl(intms, outfig=pdir+'/tp2vispl.png')
+
+if clean == 0:
+    qac_log("DONE!")
+    qac_end()
+    sys.exit(0)
+    
 
 qac_log("CLEAN")
 qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
@@ -139,10 +148,8 @@ qac_log("OTF")
 # create an OTF TP map using a given dish size
 otf = qac_tp_otf(pdir+'/clean3', startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
 
-
-#@todo check naming - int vs dirtymap
 qac_log("FEATHER")
-# combine TP + INT using feather and ssc, for all niter's (even though the first one is not valid)
+# combine using feather and ssc, for all niter's (even though the first one is not valid)
 for idx in range(len(niter)):
     qac_feather(pdir+'/clean3',             niteridx=idx, label=dishlabel, name="dirtymap")
     qac_ssc    (pdir+'/clean3',             niteridx=idx, label=dishlabel, name="dirtymap")
@@ -167,7 +174,7 @@ qac_stats(pdir+'/clean3/skymodel.smooth.image')
 qac_stats(otf + '.pbcor')
 qac_stats(model)
 
-# a bunch of plots
+# make a bunch of plots
 idx0 = len(niter)-1    # index of last niter[] for plotting
 
 qac_log("MONTAGE1")
