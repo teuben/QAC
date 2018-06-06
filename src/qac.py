@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 27-may-2018")
+    print("qac: version 5-jun-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -809,7 +809,7 @@ def qac_flag1(ms1, ms2):
     
     #-end of qac_flag1()
 
-def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, niter=-1, ptg = None, times=[1/3.0, 1], fix=0):
+def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg = None, times=[1/3.0, 1], fix=0):
     """
 
     NOTE: each cfg will append its data to any existing data for that same cfg
@@ -828,6 +828,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     
     """
     qac_tag("vla")
+    print("QAC_VLA: cfg=%d  times=%s" % (cfg, str(times)))
 
     cfg_name = ['ngvla-sba-revB', 'ngvla-core-revB', 'ngvla-plains-revB', 'ngvla-revB', 'ngvla-gb-vlba-revB'] 
 
@@ -836,20 +837,35 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, n
     print("@todo %s " % cfg_file)
 
     if cfg == 0:
+        visweightscale = (6.0/18.0)**2
+    else:
+        visweightscale = 1.0
+    
+
+    if cfg == 0:
         vp.reset()
         #vp.setpbgauss(telescope='NGVLA',halfwidth='130arcsec',maxrad='3.5deg',reffreq='100.0GHz',dopb=True)
         vp.setpbairy(telescope='NGVLA',dishdiam=6.0,blockagediam=0.0,maxrad='3.5deg',reffreq='1.0GHz',dopb=True)
 
-    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, niter=niter, ptg = ptg, times=times)
+    outms = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg_file, ptg = ptg, times=times)
 
     if cfg == 0:
         vptable = '%s/QAC.vp' % outms
         vp.saveastable(vptable)
         print("QAC_VLA: added vptable=%s" % vptable)
-    
+
+    if visweightscale != 1.0:
+        print "We need to set lower weights since the 6m dishes are smaller than 18m.",visweightscale
+        ms2 = outms + '.tmp'
+        os.system('mv %s %s' % (outms,ms2))
+        concat(ms2, outms, visweightscale=visweightscale)
+        os.system('rm -rf %s' % ms2)
+            
     return outms
+
+    #-end of qac_vla()
     
-def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None, times=None, fix=0):
+def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, ptg = None, times=None, fix=0):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
@@ -891,7 +907,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     print("CFG: " + cfg)
 
-    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg, times=times)
+    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, ptg = ptg, times=times)
     
     if visweightscale != 1.0:
         print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
@@ -904,7 +920,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
 
     #-end of qac_alma()
 
-def qac_carma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=0, niter=-1, ptg = None, times=None, fix=0):
+def qac_carma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=0, ptg = None, times=None, fix=0):
     """
     helper function to create an MS from a skymodel for a given CARMA configuration
 
@@ -927,14 +943,14 @@ def qac_carma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=0,
     cfg = 'carma.%s' % cfg_name[cfg]
     print("CFG: " + cfg)
 
-    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, niter=niter, ptg = ptg, times=times)
+    ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, ptg = ptg, times=times)
     
 
     return ms1
 
     #-end of qac_carma()
     
-def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None, times=None, fix=0):
+def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, ptg = None, times=None, fix=0):
     """
     generic interferometer; called by qac_vla() and qac_alma()
 
