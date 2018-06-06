@@ -1368,6 +1368,8 @@ def qac_noise(noise, *args, **kwargs):
     clean_params = kwargs
     # force niter to zero
     clean_params['niter'] = [0]
+    # force weighting to natural
+    clean_params['weighting'] = 'natural'
 
     # run tclean on the noisy zero ms
     qac_clean1(*args,**clean_params)
