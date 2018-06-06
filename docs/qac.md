@@ -1,7 +1,7 @@
 # QAC
 
-The qac_ routines help you writing short python scripts that
-orchestrate various array combination simulations and to some degree
+The qac_ routines help you writing shorter python scripts that
+orchestrate various array combination simulations and, to some degree,
 real data as well.
 
 In general you would do all the work
@@ -115,7 +115,7 @@ user will remember to orchestrate them inside each where needed, e.g.
     qac_clean1("test1/clean2", mslist, ...)
 
 
-### qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, niter, ptg)
+### qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, ptg, noise)
 
 This is usually how you start a simulation, from a skymodel you create a measurement set reprenting a configuration.
 Since the ngVLA can have multiple configurations, you would need call this routine multiple times, e.g.
@@ -126,10 +126,16 @@ Since the ngVLA can have multiple configurations, you would need call this routi
 Setting different  weights based on dish sizes will need to be implemented. See also qac_alma(). See also
 [**simobserve()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_simobserve/about)
 
-### qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, niter, ptg)
+### qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
 
 Just for kicks, we have way to create ALMA observations from diffent cycle's and cfg's. We automatically add
 a visweightscale to the WEIGHT column to properly account for the dish size if you do a combination tclean.
+
+### qac_noise(noise, *args, **kwargs)
+
+In the case where you want to empirically set the noise to a certain level, this routine will help you determine
+the proper scaling factor for the sm.setnoise() function in simulation tool. So far
+this is only used in qac_vla()
 
 ### qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, **line)
 
@@ -154,9 +160,9 @@ task.
 
 See Mangum et al.'s (2007) paper : https://www.aanda.org/articles/aa/pdf/2007/41/aa7811-07.pdf
 
-### qac_tp_vis(project, imagename, ptg, imsize, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix, deconv, **line)
+### qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix, deconv, **line)
 
-TP2VIS method. Not covering here yet.
+TP2VIS method. Not covering here yet. Like qac_alma(), you can reset the pixel size here.
 
 
 ### qac_feather(project, highres, lowres, label, niteridx)
@@ -183,6 +189,9 @@ and then combines MS/IM things into a map.
 ### qac_beam
 
 ### qac_tpdish
+
+This will depend on fixing the vpmanager interface to tp2vis, but this is where you define a new dish size
+to override the default ALMA 12m model
 
 ### qac_phasecenter
 
