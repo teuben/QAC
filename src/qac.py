@@ -1348,13 +1348,21 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
 
 def qac_noise(noise, *args, **kwargs):
     """
-    routine to calculate the simplenoise scaling factor given the expected thermal noise
+    Calculate the simplenoise scaling factor given an expected thermal noise.
+    See Carilli et al. (2017) for a writeup of the procedure.
 
+    parameters
+    ----------
     noise:           expected thermal noise for the final naturally weighted image (see http://ngvla.nrao.edu/page/refdesign)
+                     Units should be Jy/beam
     *args:           args[0] = project, args[1] = ms --> ms should be noisy zero flux ms
     **kwargs:        keywords for calling qac_clean1()
 
-    sn_scale_factor: simplenoise scale factor to give expected thermal noise for a certain observation
+    returns:
+    --------
+    sn_scale_factor: simplenoise scale factor to give expected thermal noise for a certain observation.
+                     See e.g. qac_vla() how this is used and applied.
+    
     """
     # copy kwargs dictionary
     clean_params = kwargs
@@ -1371,6 +1379,8 @@ def qac_noise(noise, *args, **kwargs):
     sn_scale_factor = noise / imstat('%s/zero_dirtymap.image'%(args[0]))['rms'][0]
 
     return sn_scale_factor
+
+    #-end of qac_noise()
 
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
