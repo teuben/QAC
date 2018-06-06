@@ -809,7 +809,7 @@ def qac_flag1(ms1, ms2):
     
     #-end of qac_flag1()
 
-def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg = None, times=[1/3.0, 1], fix=0):
+def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg = None, times=[1/3.0, 1], fix=0, noise=0):
     """
 
     NOTE: each cfg will append its data to any existing data for that same cfg
@@ -824,7 +824,8 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
 
     times      For ngvla we need shorter times, so 1200s and 60s should be fast enough for #vis
     fix        fix=1    removing pointing table
-    
+    noise      add this as simplenoise (in Jy) to the MS
+
     
     """
     qac_tag("vla")
@@ -841,7 +842,6 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
     else:
         visweightscale = 1.0
     
-
     if cfg == 0:
         vp.reset()
         #vp.setpbgauss(telescope='NGVLA',halfwidth='130arcsec',maxrad='3.5deg',reffreq='100.0GHz',dopb=True)
@@ -855,11 +855,41 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
         print("QAC_VLA: added vptable=%s" % vptable)
 
     if visweightscale != 1.0:
-        print "We need to set lower weights since the 6m dishes are smaller than 18m.",visweightscale
+        print("We need to set lower weights since the 6m dishes are smaller than 18m: %g" % visweightscale)
         ms2 = outms + '.tmp'
         os.system('mv %s %s' % (outms,ms2))
         concat(ms2, outms, visweightscale=visweightscale)
         os.system('rm -rf %s' % ms2)
+
+    # bootstrap noise calculator (will require another call to qac_noise() to computer the correct value
+    if noise < 0.0:
+        simplenoise = '1Jy'
+        print("QAC_ALMA: bootstrapping with simplenoise='1Jy'")
+        # zero out the data
+        tb.open(outms,nomodify=False)
+        for d in ['DATA', 'CORRECTED_DATA']:
+            data = tb.getcol(d)
+            data = data * 0.0
+            tb.putcol(d,data)
+        tb.close()
+        # add the noise
+        sm.openfromms(outms)
+        sm.setnoise(mode='simplenoise',simplenoise=simplenoise)
+        sm.corrupt()
+        sm.done()
+        # rename the .ms to .noise.ms
+        outms2 = outms.replace('.ms','.noise.ms')
+        os.system('mv %s %s' % (outms,outms2))
+        outms = outms2
+        
+    # add noise from the simulator (recipe from carilli et al.2017)
+    if noise > 0.0:
+        simplenoise = '%gJy' % noise
+        print("QAC_ALMA: adding simplenoise=%s" % simplenoise)
+        sm.openfromms(outms)
+        sm.setnoise(mode='simplenoise',simplenoise=simplenoise)
+        sm.corrupt()
+        sm.done()
             
     return outms
 
@@ -915,6 +945,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
         os.system('mv %s %s' % (ms1,ms2))
         concat(ms2, ms1, visweightscale=visweightscale)
         os.system('rm -rf %s' % ms2)
+
 
     return ms1
 
@@ -1313,7 +1344,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
 
     return out_image
 
-    #-end of qac_tp_otf()    
+    #-end of qac_tp_otf()
 
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
