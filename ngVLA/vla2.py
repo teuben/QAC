@@ -64,6 +64,9 @@ gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain 
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
 tfactor      = 1.0    # extra time factor to apply to SBA
 
+# multi-scale? - Use [0] or None if you don't want it
+scales       = [0,5,15]
+
 # simplenoise level
 noise        = 0.0
 
@@ -138,6 +141,12 @@ for c in cfg:
             tp2viswt(ms1[c],mode='mult',value=wfactor)
     else:
         ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times, noise=-noise)
+        # bootstrap setting noise
+        if noise > 0:
+            sn0 = qac_noise(noise,pdir+'/clean3_noise', ms1[c], imsize_s, pixel_s, phasecenter=phasecenter)
+            print("QAC_NOISE: %g" % sn0)
+            ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times, noise=sn0)            
+        
 # save a startmodel name for later
 startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 
