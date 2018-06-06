@@ -33,6 +33,8 @@ pixel_m      = 0.05
 # pick the pixel_s based on the largest array configuration (see below) choosen
 imsize_s     = 1024
 pixel_s      = 0.2
+imsize_s     = 2048
+pixel_s      = 0.1
 
 # pick a few niter values for tclean to check flux convergence ; need at least two to get feather/ssc
 #niter        = [0,500,1000,2000]
@@ -60,6 +62,10 @@ wfactor      = 0.01   # weight mult for cfg=0 (@todo)
 afactor      = 1      # not implemented yet
 gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
+tfactor      = 1.0    # extra time factor to apply to SBA
+
+# simplenoise level
+noise        = 0.0
 
 # clean maps (set to 0 if you just want the ms file(s)
 clean        = 1
@@ -73,10 +79,12 @@ for arg in qac_argv(sys.argv):
 ptg  = pdir + '.ptg'              # pointing mosaic for the ptg
 ptg0 = pdir + '.0.ptg'            # pointing mosaic for the ptg
 
-pixel_m = pixel_m * pfactor
-pixel_s = pixel_s * pfactor
+pixel_m = pixel_m * pfactor       # simple rescale model map
+pixel_s = pixel_s * pfactor       #
 
 dishlabel = str(dish)             #  can also be ""
+
+if niter==0:   niter=[0]          # be nice to allow this, but below it does need to be a list
 
 
 # report, add Dtime
@@ -96,8 +104,8 @@ print "Using %d pointings for  6m and grid0=%g on fieldsize %g" % (len(p0), grid
 #
 if True:
     # test alternative setting of times so each pointing gets one cycle, and the SBA gets more time
-    times  = [len(p)/60.0, 0.25]
-    times0 = [len(p0)/60.0, 0.25]
+    times  = [len(p)/60.0,  0.25]
+    times0 = [tfactor*len(p0)/60.0, 0.25]
     print "TIMES: ",times0,times
 else:
     times0 = times
@@ -113,16 +121,23 @@ else:
 # start with a clean project
 qac_project(pdir)
 
-# create an MS based on a model and for each ngVLA antenna configuration 
+# create an MS based on a model and for each ngVLA antenna configuration
+# the emperical procedure using the noise= keyword and using qac_noise() is courtesy Carilli et al. (2017)
 qac_log("ngVLA")
 ms1={}
 for c in cfg:
     if c == 0:
-        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0)
-        # scale down the 6m data based on inspection of tp2vispl() ???
-        # tp2viswt(ms1[c],mode='mult',value=wfactor)
+        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0, noise=-noise)
+        # bootstrap setting noise
+        if noise > 0:
+            sn0 = qac_noise(noise,pdir+'/clean3_noise', ms1[c], imsize_s, pixel_s, phasecenter=phasecenter)
+            print("QAC_NOISE: %g" % sn0)
+            ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0, noise=sn0)            
+        if False:
+            # scale down the 6m data based on inspection of tp2vispl() ???
+            tp2viswt(ms1[c],mode='mult',value=wfactor)
     else:
-        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times)
+        ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg,  phasecenter=phasecenter, times=times, noise=-noise)
 # save a startmodel name for later
 startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 
@@ -133,10 +148,12 @@ intms = ms1.values()
 tp2vispl(intms, outfig=pdir+'/tp2vispl.png')
 
 if clean == 0:
-    qac_log("DONE!")
+    qac_log("DONE! (no cleaning requested)")
     qac_end()
     sys.exit(0)
     
+
+# @todo  use **args e.g. args['gridder'] = 'standard' if only one pointing in one config
 
 qac_log("CLEAN")
 qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
@@ -144,9 +161,20 @@ qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, ni
 qac_log("BEAM")
 qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.psf.png')
 
-qac_log("OTF")
+qac_log("OTF, SMOOTH and plots")
 # create an OTF TP map using a given dish size
 otf = qac_tp_otf(pdir+'/clean3', startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
+
+qac_smooth (pdir+'/clean3', startmodel, name="dirtymap")
+qac_plot(pdir+'/clean3/skymodel.smooth.image')
+qac_plot(pdir+'/clean3/dirtymap.psf')
+qac_plot(pdir+'/clean3/dirtymap.pb')
+qac_plot(otf + '.pbcor')
+
+if len(niter) == 1:
+    qac_log("DONE! (no niters set, only dirty map)")
+    qac_end()
+    sys.exit(0)
 
 qac_log("FEATHER")
 # combine using feather and ssc, for all niter's (even though the first one is not valid)
@@ -156,11 +184,6 @@ for idx in range(len(niter)):
     qac_plot   (pdir+'/clean3/dirtymap%s.image.pbcor'  %            QAC.label(idx))
     qac_plot   (pdir+'/clean3/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx)))
     qac_plot   (pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx)))
-qac_smooth (pdir+'/clean3', startmodel, name="dirtymap")
-    
-qac_plot(pdir+'/clean3/skymodel.smooth.image')
-qac_plot(pdir+'/clean3/dirtymap.pb')
-qac_plot(otf + '.pbcor')
 
 # check the fluxes
 qac_log("REGRESSION")
