@@ -165,7 +165,7 @@ if clean == 0:
 # @todo  use **args e.g. args['gridder'] = 'standard' if only one pointing in one config
 
 qac_log("CLEAN")
-qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
+qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales)
 
 qac_log("BEAM")
 qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.psf.png')
