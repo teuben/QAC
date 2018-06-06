@@ -99,3 +99,6 @@ vla2_01g_18:
 	cp vla2.log vla2.py vla2_01g.ptg vla2_01g_18
 	tail -10 vla2.log
 
+# simple noise test on cfg=0
+noise:
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=1000000 pdir="'vla2_noise'" niter='[0,1000]'
