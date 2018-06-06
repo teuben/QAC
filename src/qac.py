@@ -1346,6 +1346,32 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
 
     #-end of qac_tp_otf()
 
+def qac_noise(noise, *args, **kwargs):
+    """
+    routine to calculate the simplenoise scaling factor given the expected thermal noise
+
+    noise:           expected thermal noise for the final naturally weighted image (see http://ngvla.nrao.edu/page/refdesign)
+    *args:           args[0] = project, args[1] = ms --> ms should be noisy zero flux ms
+    **kwargs:        keywords for calling qac_clean1()
+
+    sn_scale_factor: simplenoise scale factor to give expected thermal noise for a certain observation
+    """
+    # copy kwargs dictionary
+    clean_params = kwargs
+    # force niter to zero
+    clean_params['niter'] = [0]
+
+    # run tclean on the noisy zero ms
+    qac_clean1(*args,**clean_params)
+    # rename the output from qac_clean1 so that the image is saved if the user saves it for other iterations
+    os.system('mv %s/dirtymap.image %s/zero_dirtymap.image'%(args[0], args[0]))
+    # remove the other output since it is not needed
+    os.system('rm -fr %s/dirtymap.*'%(args[0]))
+    # calculate scale factor
+    sn_scale_factor = noise / imstat('%s/zero_dirtymap.image'%(args[0]))['rms'][0]
+
+    return sn_scale_factor
+
 def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
