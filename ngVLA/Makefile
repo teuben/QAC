@@ -101,4 +101,4 @@ vla2_01g_18:
 
 # simple noise test on cfg=0
 noise:
-	time casa --nogui -c vla2.py 'cfg=[0]' noise=1000000 pdir="'vla2_noise'" niter='[0,1000]'
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=1000000 pdir="'vla2_noise'" niter='[0,1000]' > vla2_noise.log 2>&1
