@@ -53,19 +53,19 @@ vla2_all_clean:
 
 # single pointing tests
 vla2_0:
-	time casa --nogui -c vla2.py pdir='"vla2_0"' cfg='[0]' grid=0 > vla2_0.log 2>&1
-	cp vla2_0.log vla2.py vla2_0.ptg vla2_0
-	tail -10 vla2_0.log
+	time casa --nogui -c vla2.py pdir='"vla2_0"' cfg='[0]' grid=0 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_0.ptg vla2_0
+	tail -10 vla2.log
 
 vla2_1:
-	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 > vla2_1.log 2>&1
-	cp vla2_1.log vla2.py vla2_1.ptg vla2_1
-	tail -10 vla2_1.log
+	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_1.ptg vla2_1
+	tail -10 vla2.log
 
 vla2_01:
-	time casa --nogui -c vla2.py pdir='"vla2_01"' cfg='[0,1]' grid=0 > vla2_01.log 2>&1
-	cp vla2_01.log vla2.py vla2_01.ptg vla2_01
-	tail -10 vla2_01.log
+	time casa --nogui -c vla2.py pdir='"vla2_01"' cfg='[0,1]' grid=0 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01.ptg vla2_01
+	tail -10 vla2.log
 
 # same, for default filled grid, with TP=45m
 vla2_0g_45:
