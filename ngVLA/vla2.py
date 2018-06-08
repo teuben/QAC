@@ -252,5 +252,19 @@ try:
 except:
     print "qac_psf failed"
 
+if True:
+    qac_log('FIDELITY')
+    # compare last niter of dirtymap and last feather to the skymodel
+    # this requires them to be in the same directly because simanalyze can't handle it otherwise
+    os.system('mv %s/clean3/dirtymap_*image %s'%(pdir, pdir))
+    os.system('mv %s/clean3/feather*_*image %s'%(pdir, pdir))
+    qac_analyze(pdir, 'dirtymap', niteridx=idx0)
+    os.system('mv %s/%s.analysis.png %s/dirtymap_%s.analysis.png'% (pdir, pdir, pdir, QAC.label(idx0)))
+    qac_analyze(pdir, 'feather%s'%dish, niteridx=idx0)
+    os.system('mv %s/%s.analysis.png %s/feather%s_%s.analysis.png'% (pdir, pdir, pdir, dish, QAC.label(idx0)))
+    # move the images back
+    os.system('mv %s/dirtymap* %s/clean3'%(pdir, pdir))
+    os.system('mv %s/feather* %s/clean3'%(pdir, pdir))
+
 qac_log("DONE!")
 qac_end()
