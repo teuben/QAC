@@ -1,6 +1,6 @@
 #! /bin/csh -f
 #
-#   Example casa install
+#   Example casa install, just a frontend to https://casa.nrao.edu/casa_obtaining.shtml
 #
 #   By default this will install the latest released casa under the QAC/casa directory.
 #   Adding CASAROOT/bin and CASAROOT/lib/casa/bin is the responsibility of the user.
@@ -28,9 +28,12 @@ if ($uname == Linux)  set uname = linux
 set o1 =  https://casa.nrao.edu/download/distro/osx/release/10.12/casa-release-5.1.2-4-10.12.dmg.md5
 set o2 =  https://casa.nrao.edu/download/distro/osx/prerelease/10.13/casa-prerelease-5.3.0-89-10.13.dmg
 
-set l1 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.2-4.el7.tar.gz
-set l2 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.1-5.el7.tar.gz
+set L1 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.2-4.el7.tar.gz
+set L2 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.1-5.el7.tar.gz
+set L3 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.3.0-143.el7.tar.gz
+
 set l3 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.3.0-89.el7.tar.gz
+set l4 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.4.0-9.el7.tar.gz
 
 if ($uname == osx) then
    echo Sorry, I cannot help you yet dave
@@ -41,9 +44,10 @@ if ($uname == osx) then
    exit 0
 else
    echo Running on linux, good. Some common versions you might use
-   echo $l1
-   echo $l2
-   echo $l3
+   echo $L1
+   echo $L2
+   echo $L3
+   echo $l4
 endif
 
 set pre = https://casa.nrao.edu/download/distro/$uname/prerelease/el7/
@@ -54,10 +58,11 @@ set rel = https://casa.nrao.edu/download/distro/$uname/release/el7/
 if ($#argv > 0) then
    set url = $1
 else
-   set url = $l1
+   set url = $L3
 endif
 
 echo Using $url
+sleep 5
 
 #  no changes below here
 
