@@ -1938,6 +1938,51 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
 
     #-end of qac_smooth()
 
+def qac_fidelity(project, model, image, diffname='difference.image'):
+    """
+    function for calculating the fidelity between two input images (e.g. fidelity between input skymodel and the simulated observation of that skymodel)
+    
+    alma memo 398 gives the mathematical definition of fidelity:
+    fidelity(i,j) = abs( Model(i,j) ) / max( abs(Difference(i,j) ), 0.7 * rms(Difference) )
+
+    project:        project directory
+
+
+    """
+    # @todo fix naming of the output of fidelity and absdiff images (i.e. currenlty outputs dirtymap.image.fidelity - just want dirtymap.fidelity)
+    # @todo output a single png of model, image, diff, fidelity (or some combination of that) - option for displaying difference or not
+    # @todo computer histogram of difference + have option for output of a png of this or not
+    # @todo calculate a scalar fidelity (see task_simanalyze.py line 802)
+
+    # put project directory name into image names for simplifying the code
+    model = project + '/' + model
+    image = project + '/' + image
+    diffname = project + '/' + diffname
+
+    # create the difference map (Model - Image)
+    diff_ia = ia.imagecalc(diffname, "'%s' - '%s'"%(model, image), overwrite=True)
+    # set Jy/beam units
+    diff_ia.setbrightnessunit("Jy/beam")
+    # grab statistics on the diffence mpa
+    diffstats = diff_ia.statistics(robust=True, verbose=False, list=False)
+    # close and delete the difference map image tool
+    diff_ia.close()    
+    del diff_ia
+    # get the max difference or rms, not sure which is best
+    maxdiff = diffstats['medabsdevmed']  # this is what taks_simanalyze uses rather than rms for some reason? change to 'rms' if you want rms
+    # maxdiff = diffstats['rms']
+    # name for the absolute value of the difference map
+    absdiff = '%s.absdiff'%(image)
+    # calculate the denomenator of the fidelity equation
+    calc_ia = ia.imagecalc(absdiff, "max(abs('%s'), %f)"%(diffname, maxdiff/np.sqrt(2.0)), overwrite=True)
+    calc_ia.close()
+
+    # name the fidelity image
+    fidelityim = image + '.fidelity'
+    # numerator / denomenator for the fidelity image
+    calc_ia = ia.imagecalc(fidelityim, "abs('%s') / '%s'"%(model, absdiff), overwrite=True)
+    calc_ia.close()
+
 def qac_analyze(project, imagename, skymodel=None, niteridx=0):
     """
     helper function for using simanalyze without it running clean
@@ -2408,6 +2453,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
             f1.set_xticklabels([])
             f1.set_yticklabels([])
+            # individual color bars 
+            # fig.colorbar(p1)
             if col==0 and len(ygrid) > 0:
                 f1.set_ylabel(ygrid[row])
             if row==nrow-1 and len(xgrid) > 0:    # @todo should auto-create "diff" if diff != 0
@@ -2415,6 +2462,14 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
             i = i + 1
     if plot != None:
         pl.savefig(plot)
+
+    # one single color bar - hard to position correctly...
+    # f = fig.add_subplot(1,1,1)
+    # f.set_position([0, 0.05, 1.15, 0.8])
+    # f.set_visible(False)
+    # p = f.imshow(np.zeros((10,10)), origin='lower', vmin=dmin, vmax=dmax)
+    # fig.colorbar(p)
+
     pl.show()
 
     #-end of qac_plot_grid()
@@ -2467,6 +2522,10 @@ def qac_psd(image, plot='qac_psd.png', fit=False, pixel_s=None):
     
     see also: radio_astro_tools et al. (sd2018)
     """
+    # @todo make legend smaller and in fixed position
+    # @todo correction for jy/pix to jy/beam for the input skymodel (implement here or in vla2.py?)
+    # @todo figure out units for spatial frequency 
+    
     if fit:
         from scipy.optimize import curve_fit
 
