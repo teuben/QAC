@@ -3,8 +3,9 @@
 #  Play with the skymodel and various ngVLA configurations
 #     - one or full pointing set
 #     - options for feather, ssc
+#     - options for dish size of TP
 #
-#  Reminder: at 115 GHz we have: [FWHM" ~ 600/DishDiam]
+#  Reminders: at 115 GHz we have: [PB FWHM" ~ 600/DishDiam]
 #
 #      18m PB is ~33"
 #       6m PB is ~100"
@@ -42,7 +43,7 @@ pixel_s      = 0.1
 #niter        = [0,100,1000]
 #niter        = [0]
 niter        = [0,500,1000,2000,4000]
-#niter        = [0,1000]
+niter        = [0,1000]
 
 # pick which ngVLA configurations you want (0=SBA, 1=core 2=plains 3=all 4=all+GB+VLBA)
 cfg          = [0,1]
@@ -62,10 +63,10 @@ wfactor      = 0.01   # weight mult for cfg=0 (@todo)
 afactor      = 1      # not implemented yet
 gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
-tfactor      = 1.0    # extra time factor to apply to SBA
+tfactor      = 2.0    # extra time factor to apply to SBA
 
 # multi-scale? - Use [0] or None if you don't want it
-scales       = [0,5,15]
+scales       = [0, 5, 15]
 
 # simplenoise level
 noise        = 0.0
@@ -111,6 +112,7 @@ if True:
     times0 = [tfactor*len(p0)/60.0, 0.25]
     print "TIMES: ",times0,times
 else:
+    # all the same
     times0 = times
 
 # vpmanager for SBA dishes
