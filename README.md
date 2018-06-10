@@ -36,22 +36,6 @@ finer scale structure.
 
 ![example-smc2](figures/example-smc2.png)
 
-## Example Workflows
-
-In addition to TP2VIS' standard 
-[M100 example](https://github.com/tp2vis/distribute/blob/master/example1.md)
-we have several workflows, some of which also served as regressions tests during the TP2VIS development. We keep those
-here for reference, although most need to be updated for QAC and need updated graphics. (soon, i promise)
-
-* [workflow1:](workflows/workflow1.md) ALMA **cloud197** (LMC)  [our standard regression test]
-* [workflow2:](workflows/workflow2.md) ALMA **SWBarN** (SMC)  [private data]
-* [workflow3:](workflows/workflow3.md) Combining VLA with GBT [under development]
-* [workflow4:](workflows/workflow4.md) Synthetic SkyModel Simulations (see also [MAP4SIM](map4sim.md) how to create models) 
-* [workflow5:](workflows/workflow5.md) ALMA **Lupus 3 MMS** [private data]
-* [workflow6:](workflows/workflow6.md) ALMA **M100** science verification (this should follow [example1](example1.md)) [example demo, including regression]
-
-Example public datasets for some of these workflows can be found in http://admit.astro.umd.edu/~teuben/TP2VIS (currently 4 and 6). For
-other workflows, contact us if the PI has released the data.
 
 ### Benchmarks
 
