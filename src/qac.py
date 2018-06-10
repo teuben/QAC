@@ -68,7 +68,7 @@ def qac_tmp(prefix, tmpdir='.'):
 
     #-end of qac_tmp()
 
-def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None):
+def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, outfile=None):
     """
     Generate hex-grid of pointing centers that covers a specified area. 
     Can optionally output in file or as list. Can check for overlap with input image areas
@@ -104,7 +104,7 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
         rect : boolean
             Indicates if only pointings within specified rectangular area will be reported
             Example: rect=False
-            Default: False
+            Default: True
         outfile : str
             If present, used as name of output file 
             Example: outfile="FinalGBT.ptg"
@@ -117,6 +117,9 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None
     
     
     -- Arnab Dhabal - Feb 14, 2018
+
+    @todo  there are two ways to make a hex grid , point up or point at the side.
+           this routine cannot switch and puts the point at th side.
     
     """
     def hex(nring,grid):
