@@ -43,7 +43,7 @@ pixel_s      = 0.1
 #niter        = [0,100,1000]
 #niter        = [0]
 niter        = [0,500,1000,2000,4000]
-niter        = [0,1000]
+#niter        = [0,1000]
 
 # pick which ngVLA configurations you want (0=SBA, 1=core 2=plains 3=all 4=all+GB+VLBA)
 cfg          = [0,1]
@@ -66,7 +66,7 @@ pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
 tfactor      = 2.0    # extra time factor to apply to SBA
 
 # multi-scale? - Use [0] or None if you don't want it
-scales       = [0, 5, 15]
+scales       = [0, 10, 30]
 
 # simplenoise level
 noise        = 0.0
