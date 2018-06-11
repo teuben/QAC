@@ -1932,7 +1932,7 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
                expr='IM0*IM2-IM1',
                outfile=out_resid)
         
-    # ng_math(out_resid, out_smoo, '-', feather)
+    # qac_math(out_resid, out_smoo, '-', feather)
 
     # remove the temporary image that was created
     os.system('rm -fr %s'%out_tmp)
@@ -1999,7 +1999,7 @@ def qac_analyze(project, imagename, skymodel=None, niteridx=0):
     @todo get this going with it running clean to see how it compares to our manual cleaning (qac_clean1)
     """
 
-    ng_tag('analyze')
+    qac_tag('analyze')
 
     niter_label = QAC.label(niteridx)        
 
