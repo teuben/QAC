@@ -1,6 +1,7 @@
 tp2vis:     this may or may not be an old version of tp2vis that we
             distribute just in case the formal one on
 	    https://github.com/tp2vis/distribute is not available.
-	    Do not use this unless you know what you are doing!
+	    Do not use this unless you know what you are doing and/or
+	    have spoken to the developers.
 
 test_ssc:   Faridina's method  (now in: src/ssc.py as qac_ssc())
