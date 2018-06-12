@@ -253,8 +253,8 @@ except:
     print "qac_psf failed"
 
 qac_log("FIDELITY")
-qac_fidelity(pdir, 'clean3/skymodel.smooth.image','clean3/dirtymap%s.image'% QAC.label(idx0), figure_mode=5)
-qac_fidelity(pdir, 'clean3/skymodel.smooth.image','clean3/feather%s%s.image'% (dishlabel,QAC.label(idx0)), figure_mode=5)
+qac_fidelity(pdir+'/clean3/skymodel.smooth.image',pdir+'/clean3/dirtymap%s.image'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
+qac_fidelity(pdir+'/clean3/skymodel.smooth.image',pdir+'/clean3/feather%s%s.image'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
 
 qac_log("DONE!")
 qac_end()
