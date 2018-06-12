@@ -107,3 +107,27 @@ vla2_noise0:
 
 vla2_noise1:
 	time casa --nogui -c vla2.py 'cfg=[1]' noise=1000000 pdir="'vla2_noise1'" niter='[0,1000]' > vla2_noise1.log 2>&1
+
+#
+vla2_0g_18_noise:
+	time casa --nogui -c vla2.py pdir='"vla2_0g_18_noise"' cfg='[0]' dish=18 noise=150 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_0g_18_noise.ptg vla2_0g_18_noise
+	tail -10 vla2.log
+
+#
+vla2_noise:
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=0  pdir="'vla2_noise_0'" niter='[0,1000]' > vla2_noise_0.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=25 pdir="'vla2_noise_a'" niter='[0,1000]' > vla2_noise_a.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=50 pdir="'vla2_noise_b'" niter='[0,1000]' > vla2_noise_b.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=75 pdir="'vla2_noise_c'" niter='[0,1000]' > vla2_noise_c.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=100 pdir="'vla2_noise_d'" niter='[0,1000]' > vla2_noise_d.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=125 pdir="'vla2_noise_e'" niter='[0,1000]' > vla2_noise_e.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=150 pdir="'vla2_noise_f'" niter='[0,1000]' > vla2_noise_f.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=175 pdir="'vla2_noise_g'" niter='[0,1000]' > vla2_noise_g.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=200 pdir="'vla2_noise_h'" niter='[0,1000]' > vla2_noise_h.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=225 pdir="'vla2_noise_i'" niter='[0,1000]' > vla2_noise_i.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=250 pdir="'vla2_noise_j'" niter='[0,1000]' > vla2_noise_j.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=500 pdir="'vla2_noise_k'" niter='[0,1000]' > vla2_noise_k.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=1000 pdir="'vla2_noise_l'" niter='[0,1000]' > vla2_noise_l.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=10000 pdir="'vla2_noise_m'" niter='[0,1000]' > vla2_noise_m.log 2>&1
+	time casa --nogui -c vla2.py 'cfg=[0]' noise=100000 pdir="'vla2_noise_n'" niter='[0,1000]' > vla2_noise_n.log 2>&1
