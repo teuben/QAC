@@ -1941,30 +1941,29 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
 
     #-end of qac_smooth()
 
-def qac_fidelity(project, model, image, figure_mode=1, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None):
+def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False):
     """
     function for calculating the fidelity between two input images (e.g. fidelity between input skymodel and the simulated observation of that skymodel)
     
     alma memo 398 gives the mathematical definition of fidelity:
     fidelity(i,j) = abs( Model(i,j) ) / max( abs(Difference(i,j) ), 0.7 * rms(Difference) )
 
-    project:        project directory
     model:          input skymodel for the simulated observation. can really be any image you want to compare
     image:          simulated observation image to compare with skymodel. can really be any image you want to compare to the 'skymodel'
-    figure_mode:    1,2,3,4, or 5; decide which figure(s) to output; 1:|fidelity|, 2:|model,image,fidelity|, 3:|difference,fidelity|, 4:|difference,histogram,fidelity|, 5:|model, image \n difference, fidelity|
+    figure_mode:    1,2,3,4, or 5; decide which figure(s) to output; can also give a list or array of 1 to 5
+                    1:|fidelity|
+                    2:|model,image,fidelity|
+                    3:|difference,fidelity|
+                    4:|difference,histogram,fidelity|
+                    5:|     model, image   | 
+                      |difference, fidelity|
 
     diffim:         string; name of the created difference map. defaults to None which outputs 'image.diff'
     absdiffim:      string; name of the created absolute value difference map. defaults to None which outputs 'image.absdiff'
     fidelityim:     string; name of the created fidelity map. defaults to None which outputs 'image.fidelity'
     absmodelim:     string; name of the created absolute value of the input skymodel. defaults to None with outputs 'model.absolute'
-
+    interactive:    boolean; interactive plotting or not
     """
-    # @todo compute histogram of difference + have option for output of a png of this or not
-    # @todo allow for input of figure_mode to be an array so that it can loop through to make multiple figures
- 
-    # put project directory name into image names for simplifying the code
-    model = project + '/' + model
-    image = project + '/' + image
 
     # check if input images exist
     if not QAC.exists(model):
@@ -2042,6 +2041,7 @@ def qac_fidelity(project, model, image, figure_mode=1, diffim=None, absdiffim=No
     ny = d1.shape[1]
     fidel_data = np.flipud(np.rot90(d1.reshape((nx,ny))))
     fidel_min, fidel_max = fidel_data.min(), fidel_data.max()
+
     # grab model data
     tb.open(model)
     d1 = tb.getcol('map').squeeze()
@@ -2052,6 +2052,7 @@ def qac_fidelity(project, model, image, figure_mode=1, diffim=None, absdiffim=No
     mod_min, mod_max = mod_data.min(), mod_data.max()
     # get model beam size
     mod_bmin, mod_bmaj = imhead(model)['restoringbeam']['minor']['value'], imhead(model)['restoringbeam']['major']['value']
+
     # grab image data
     tb.open(image)
     d1 = tb.getcol('map').squeeze()
@@ -2062,6 +2063,7 @@ def qac_fidelity(project, model, image, figure_mode=1, diffim=None, absdiffim=No
     im_min, im_max = im_data.min(), im_data.max()
     # get image beam size
     im_bmin, im_bmaj = imhead(image)['restoringbeam']['minor']['value'], imhead(image)['restoringbeam']['major']['value']
+
     # grab difference data
     tb.open(diffim)
     d1 = tb.getcol('map').squeeze()
@@ -2071,105 +2073,104 @@ def qac_fidelity(project, model, image, figure_mode=1, diffim=None, absdiffim=No
     diff_data = np.flipud(np.rot90(d1.reshape((nx,ny))))
     diff_min, diff_max = diff_data.min(), diff_data.max()
 
+    if interactive:
+        pl.ion()
+    else:
+        pl.ioff()
+    
+    # create histogram of the difference map
+    hist, bins = np.histogram(diff_data, bins=20)
+    center = (bins[:-1] + bins[1:]) / 2
+    width = np.diff(bins)[0]
+    fig, ax = pl.subplots()
+    ax.bar(center, hist, width=width)
+    ax.set_title(diffim, size=15)
+    ax.set_xlabel('Value (Jy/beam)', size=15)
+    ax.set_ylabel('Number of Pixels', size=15)
+    fig.savefig(image.replace('.image', '.diff.hist.png'))
+
     # create figures
 
-    # just the fidelity image
-    if figure_mode == 1:
+    # first check if either image or model figures already exist
+    if QAC.exists(model + '.png') and QAC.exists(image + '.png'):
+        d = np.array([[diff_data, fidel_data], [diff_min, fidel_min], [diff_max, fidel_max]])
+        names = [diffim, fidelityim]
+    elif QAC.exists(model + '.png'):
+        d = np.array([[im_data, diff_data, fidel_data], [im_min, diff_min, fidel_min], [im_max, diff_max, fidel_max]])
+        names = [image, diffim, fidelityim]
+    elif QAC.exists(image + '.png'):
+        d = np.array([[mod_data, diff_data, fidel_data], [mod_min, diff_min, fidel_min], [mod_max, diff_max, fidel_max]])
+        names = [model, diffim, fidelityim]
+    else:
+        d = np.array([[mod_data, im_data, diff_data, fidel_data], [mod_min, im_min, diff_min, fidel_min], [mod_max, im_max, diff_max, fidel_max]])
+        names = [model, image, diffim, fidelityim]
+
+    for i in range(len(names)):
         fig = pl.figure()
         f1 = fig.add_subplot(1,1,1)
-        p1 = f1.imshow(fidel_data, origin='lower', vmin=fidel_min, vmax=fidel_max)
-
-        f1.set_title('%s'%fidelityim)
+        p1 = f1.imshow(d[0][i], origin='lower', vmin=d[1][i], vmax=d[2][i])
+        f1.set_title('%s'%names[i])
         f1.set_xticklabels([])
         f1.set_yticklabels([])
         fig.colorbar(p1)
+
+        # place text like beam size or rms for appropriate figures
         ax = pl.gca()
-        pl.text(0.05, 0.95, 'Scalar Fidelity=%1.3f'%scalarfidel, transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="medium",verticalalignment="top" )
-        pl.savefig('%s.fidelity%s.png'%(image,figure_mode))
-        pl.show()
+        if names[i] == model:
+            pl.text(0.05, 0.95, 'bmaj=%1.2f\nbmin=%1.2f'%(mod_bmaj, mod_bmin), transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="medium",verticalalignment="top" )
+        elif names[i] == image:
+            pl.text(0.05, 0.95, 'bmaj=%1.2f\nbmin=%1.2f'%(im_bmaj, im_bmin), transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="medium",verticalalignment="top" )
+        elif names[i] == diffim:
+            pl.text(0.05, 0.95, 'RMS=%1.2f'%diffstats['rms'][0],transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="medium",verticalalignment="top")
+        elif names[i] == fidelityim:
+            pl.text(0.05, 0.95, 'Scalar Fidelity=%1.3f'%scalarfidel, transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="medium",verticalalignment="top" )
 
-    # figure with model, image, and fidelity
-    elif figure_mode == 2:
-        d = np.array([[mod_data, im_data, fidel_data],[mod_min, im_min, fidel_min],[mod_max,im_max,fidel_max]])
-        names = [model, image, fidelityim]
-        fig = pl.figure(figsize=(10,3))
-        pl.subplots_adjust(wspace=0.5)
-        for i in range(3):
-            f1 = fig.add_subplot(1,3,i+1)
-            p1 = f1.imshow(d[0][i], origin='lower', vmin=d[1][i], vmax=d[2][i], cmap=pl.cm.jet)
-            f1.set_title('%s'%names[i])
-            f1.set_xticklabels([])
-            f1.set_yticklabels([])
-            fig.colorbar(p1, ax=f1, shrink=0.6)
+        pl.savefig(names[i] + '.png')
+        if interactive:
+            pl.show()
 
-            # put beam size on the plots for model and image
-            ax = pl.gca()
-            if i == 0:
-                pl.text(0.05, 0.95, 'bmaj=%1.2f\nbmin=%1.2f'%(mod_bmaj, mod_bmin), transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
-            elif i == 1:
-                pl.text(0.05, 0.95, 'bmaj=%1.2f\nbmin=%1.2f'%(im_bmaj, im_bmin), transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
-            elif i == 2:
-                pl.text(0.05, 0.95, 'Scalar Fidelity=%1.3f'%scalarfidel, transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
+    if type(figure_mode) == type(0):
+        figure_mode = [figure_mode]
 
-        pl.savefig('%s.fidelity%s.png'%(image,figure_mode))
-        pl.show()
+    project_name = image[:image.find('/')]
+    # loop through all the figure_modes given
+    for mode in figure_mode:
+        # use imagemagick montage to create the combined figures chosen by the figure_mode parameter
+        if mode == 2:
+            cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', fidelityim+'.png', image.replace('.image', '.fidelity%s.png'%mode))
+            try:
+                # call the montage command with subprocess so if an exception is thrown, python will catch it
+                subprocess.call(cmd.split())
+            except OSError as e:
+                print 'Montage failed: ', e
+                return
+        elif mode == 3:
+            cmd = 'montage -title %s %s %s -tile 2x1 -geometry +0+0 %s'% (project_name, diffim+'.png', fidelityim+'.png', image.replace('.image', '.fidelity%s.png'%mode))
+            try:
+                subprocess.call(cmd.split())
+            except OSError as e:
+                print 'Montage failed: ', e
+                return
+        elif mode == 4:
+            cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, diffim+'.png', diffim+'.hist.png', fidelityim+'.png',image.replace('.image', '.fidelity%s.png'%mode))
+            try:
+                subprocess.call(cmd.split())
+            except OSError as e:
+                print 'Montage failed: ', e
+                return
+        elif mode == 5:
+            cmd = 'montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', diffim+'.png', fidelityim+'.png',image.replace('.image', '.fidelity%s.png'%mode))
+            try:
+                subprocess.call(cmd.split())
+            except OSError as e:
+                print 'Montage failed: ', e
+                return
 
-    # figure with difference and fidelity
-    elif figure_mode == 3:
-        d = np.array([[diff_data, fidel_data], [diff_min, fidel_min], [diff_max, fidel_max]])
-        names = [diffim, fidelityim]
-        fig = pl.figure(figsize=(6,3))
-        pl.subplots_adjust(wspace=0.5)
-        for i in range(2):
-            f1 = fig.add_subplot(1,2,i+1)
-            p1 = f1.imshow(d[0][i], origin='lower', vmin=d[1][i], vmax=d[2][i], cmap=pl.cm.jet)
-            f1.set_title('%s'%names[i])
-            f1.set_xticklabels([])
-            f1.set_yticklabels([])
-            fig.colorbar(p1, ax=f1, shrink=0.6)
-
-            ax = pl.gca()
-            if i == 0:
-                pl.text(0.05, 0.95, 'RMS=%1.2f'%diffstats['rms'][0],transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
-            if i == 1:
-                pl.text(0.05, 0.95, 'Scalar Fidelity=%1.3f'%scalarfidel, transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
-
-        pl.savefig('%s.fidelity%s.png'%(image,figure_mode))
-        pl.show()
-
-    # figure with difference, histogram of diff, fidelity
-    # @todo write this one up with histogram
-    elif figure_mode == 4:
-        return
-
-    # figure with model, image, (next row) difference, fidelity -- similar to output of simanalyze
-    elif figure_mode == 5:
-        d = np.array([[mod_data, im_data, diff_data, fidel_data], [mod_min, im_min, diff_min, fidel_min], [mod_max, im_max, diff_max, fidel_max]])
-        names = [model, image, diffim, fidelityim]
-        fig = pl.figure(figsize=(6,6))
-        pl.subplots_adjust(wspace=0.6, hspace=0.3)
-        for i in range(4):
-            f1 = fig.add_subplot(2,2,i+1)
-            p1 = f1.imshow(d[0][i], origin='lower', vmin=d[1][i], vmax=d[2][i], cmap=pl.cm.jet)
-            f1.set_title('%s'%names[i])
-            f1.set_xticklabels([])
-            f1.set_yticklabels([])
-            fig.colorbar(p1, ax=f1, shrink=0.6)
-
-            ax = pl.gca()
-            if i == 0:
-                pl.text(0.05, 0.95, 'bmaj=%1.2f\nbmin=%1.2f'%(mod_bmaj, mod_bmin), transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
-            elif i == 1:
-                pl.text(0.05, 0.95, 'bmaj=%1.2f\nbmin=%1.2f'%(im_bmaj, im_bmin), transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
-            elif i == 2:
-                pl.text(0.05, 0.95, 'RMS=%1.2f'%diffstats['rms'][0],transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
-            elif i == 3:
-                pl.text(0.05, 0.95, 'Scalar Fidelity=%1.3f'%scalarfidel, transform = ax.transAxes, bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top" )
-        pl.savefig('%s.fidelity%s.png'%(image,figure_mode))
-        pl.show()
-    
+  
 def qac_analyze(project, imagename, skymodel=None, niteridx=0):
     """
+    Deprecated --> use qac_fidelity()
+
     helper function for using simanalyze without it running clean
 
     has a hard time with the skymodel and dirtymaps being in different directories

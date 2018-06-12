@@ -70,33 +70,33 @@ vla2_01:
 # same, for default filled grid, with TP=45m
 vla2_0g_45:
 	time casa --nogui -c vla2.py pdir='"vla2_0g_45"' cfg='[0]' dish=45 > vla2.log 2>&1
-	cp vla2.log vla2.py vla2_0g.ptg vla2_0g_45
+	cp vla2.log vla2.py vla2_0g_45.ptg vla2_0g_45
 	tail -10 vla2.log
 
 vla2_1g_45:
 	time casa --nogui -c vla2.py pdir='"vla2_1g_45"' cfg='[1]' dish=45 > vla2.log 2>&1
-	cp vla2.log vla2.py vla2_1g.ptg vla2_1g_45
+	cp vla2.log vla2.py vla2_1g_45.ptg vla2_1g_45
 	tail -10 vla2.log
 
 vla2_01g_45:
 	time casa --nogui -c vla2.py pdir='"vla2_01g_45"' cfg='[0,1]' dish=45 > vla2.log 2>&1
-	cp vla2.log vla2.py vla2_01g.ptg vla2_01g_45
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45
 	tail -10 vla2.log
 
 # same, for default filled grid, with TP=18m
 vla2_0g_18:
 	time casa --nogui -c vla2.py pdir='"vla2_0g_18"' cfg='[0]' dish=18 > vla2.log 2>&1
-	cp vla2.log vla2.py vla2_0g.ptg vla2_0g_18
+	cp vla2.log vla2.py vla2_0g_18.ptg vla2_0g_18
 	tail -10 vla2.log
 
 vla2_1g_18:
 	time casa --nogui -c vla2.py pdir='"vla2_1g_18"' cfg='[1]' dish=18 > vla2.log 2>&1
-	cp vla2.log vla2.py vla2_1g.ptg vla2_1g_18
+	cp vla2.log vla2.py vla2_1g_18.ptg vla2_1g_18
 	tail -10 vla2.log
 
 vla2_01g_18:
 	time casa --nogui -c vla2.py pdir='"vla2_01g_18"' cfg='[0,1]' dish=18 > vla2.log 2>&1
-	cp vla2.log vla2.py vla2_01g.ptg vla2_01g_18
+	cp vla2.log vla2.py vla2_01g_18.ptg vla2_01g_18
 	tail -10 vla2.log
 
 # simple noise test on cfg=0
