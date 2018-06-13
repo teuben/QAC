@@ -14,7 +14,7 @@ in the sky, matching more or less what we see in the galaxy.
 
 In CASA the command
 
-    imview('skymodel.fits')
+      imview('skymodel.fits')
 
 will show an image of this sky in a much detail as possible. Learn how to zoom into
 sections by left-mouse-button selecting a region. This region will show up as green, which
@@ -26,7 +26,7 @@ how it adjusts to the new viewport.
 
 The CASA command
 
-    imhead('skymodel.fits')
+      imhead('skymodel.fits')
 
 will report some header variable of this image. For example where in the sky it was looking, how
 large the pixels are, what units the measurements are in etc.etc. Look in the logger window, but can
@@ -46,11 +46,11 @@ pixel was that?  Did you find (3038,2245) ?
 A typical optical telescope on earth would probably have a resolution of 1-2 arcsec. So let's use a program
 in CASA to simulate the effects of the atmosphere and blurr the image to a resolution of 2 arcsec.
 
-    imsmooth('skymodel.fits','gauss',outfile='smooth2.im',major='2arcsec',minor='2arcsec',pa='0deg')
+       imsmooth('skymodel.fits','gauss',outfile='smooth2.im',major='2arcsec',minor='2arcsec',pa='0deg')
 
 and now look at this image
 
-    imview('smooth2.im')
+       imview('smooth2.im')
 
 Zoom in and out again, and find the largest pixel value. Is it at the same pixel as the original image?
 Also notice that in that image a white circle is drawn in the lower left corner. Any guess what that might
@@ -72,7 +72,7 @@ and see if you now can see if the peak in the two images is on the same pixel or
 In radio astronomy the smoothing beam is not always round. Play with the following image and see if you get a feeling
 what this means:
 
-    imsmooth('skymodel.fits','gauss',outfile='smooth4.im',major='4arcsec',minor='2arcsec',pa='30deg')
+       imsmooth('skymodel.fits','gauss',outfile='smooth4.im',major='4arcsec',minor='2arcsec',pa='30deg')
 
 Now load all three images, smooth4.im, smooth2.im and skymodel.fits in your viewer and cycle through them.
 
@@ -81,12 +81,12 @@ Now load all three images, smooth4.im, smooth2.im and skymodel.fits in your view
 
 The formula to compute the beam (resolution) is
 
-   theta = 1.13 lambda / D
+       theta = 1.13 lambda / D
 
 where *lambda* is the wavelength of the signal, and *D* the diameter of the dish. You can also write this in terms
 of the frequency, which if you look at the header of the image again, is 115 GHz.
 
-   theta = 1.13 c / (f D)
+       theta = 1.13 c / (f D)
 
 where *c* is the speed of light.
 
