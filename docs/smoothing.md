@@ -79,16 +79,15 @@ Now load all three images, smooth4.im, smooth2.im and skymodel.fits in your view
 
 ## Real beam
 
-The formula to compute the beam based on the
+The formula to compute the beam (resolution) is
 
-$$
-   \Theta = 1.13 {\lambda \over D}
-$$
-where $\lambda$ is the wavelength of the signal, and D the diameter of the dish. You can also write this in terms
+   theta = 1.13 lambda / D
+
+where *lambda* is the wavelength of the signal, and *D* the diameter of the dish. You can also write this in terms
 of the frequency, which if you look at the header of the image again, is 115 GHz.
-$$
-   \Theta = 1.13 {c \over {f D}}
-$$
+
+   theta = 1.13 c / (f D)
+
 where *c* is the speed of light.
 
 Compute what the beam should be for a 6m dish, for an 18m dish, and finally a 45m dish.
