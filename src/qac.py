@@ -709,7 +709,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
             pl.plot(size,ones)
         pl.savefig(plot)
         pl.show()
-    
+        print("QAC_BEAM: %s" % plot)    
     #-end of qac_beam()
     
     
@@ -2008,6 +2008,8 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     # get the max difference or rms, not sure which is best
     maxdiff = diffstats['medabsdevmed'][0]  # this is what taks_simanalyze uses rather than rms for some reason? change to 'rms' if you want rms
     # maxdiff = diffstats['rms']
+    print("diffstats: %g rms=%g" % (maxdiff, maxdiff*1.4826))
+    qac_stats(diffim)
 
     # calculate the denomenator of the fidelity equation
     calc_ia = ia.imagecalc(absdiffim, "max(abs('%s'), %f)"%(diffim, maxdiff/np.sqrt(2.0)), overwrite=True)
