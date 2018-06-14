@@ -25,7 +25,15 @@ Assuming we don't have CASA yet, we will install CASA using a script available i
 
       cd casa
       ./install_casa https://casa.nrao.edu/download/distro/linux/release/el6/casa-release-5.3.0-143.el6.tar.gz
+      echo $SHELL
+
+if you see the bash shell being reported, use
+      
       source casa_start.sh
+
+and if you see the csh or tcsh shell being reported, use
+
+      source casa_start.csh
 
 now we can ask what version of CASA we have
 
