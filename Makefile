@@ -65,7 +65,8 @@ install_casa:
 
 
 test:
-	casa --no-gui -c test0.py n=1
+	@echo Simple test, needs no data, test if your installation is good.
+	$(CASA) --no-gui -c test0.py n=1
 
 pjt:
 
