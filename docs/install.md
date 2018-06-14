@@ -1,7 +1,7 @@
 # Installation
 
 Here is another description of installing QAC with CASA, all self-contained.
-The more complicated one is [../INSTALL.md](here)
+The more complicated one is [here](../INSTALL.md)
 
 
 ## QAC
