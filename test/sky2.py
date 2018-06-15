@@ -67,13 +67,17 @@ niter        = [0,1000,4000]
 #                  ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
 
-# these don't work with use_vp=True yet
+# these don't work with use_vp=True yet, in meter
 dish         = 12.0
 maxuv        = 10.0
+minuv        = 0.0
 
 # scale up the dish size (and down the spacing)
 # this is an alternative to changing the pixel size (pixel_m and pixel_s)
 dscale       = 1.0
+
+# do clean?
+clean        = 1
 
 
 # -- do not change parameters below this ---
@@ -104,6 +108,22 @@ qac_tpdish('ALMATP', dish)
 qac_tpdish('VIRTUAL',dish)
 tpms = qac_tp_vis(pdir, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, deconv=False, fix=1)
 
+if minuv > 0.0:
+    print("Warning: flagging all data within uv-distance %g m" % minuv)
+    flagdata(vis=tpms,uvrange='0~%gm'%minuv)
+
+if clean == 0:
+    # print flux at (0,0), the first datapoint of the first pointing
+    # 
+    tb.open(tpms)
+    amp0 = tb.getcol('DATA')[0,0,0]
+    print("AMP(0,0) = %s" % str(amp0))
+    tb.close()
+    #
+    qac_log("DONE!")
+    qac_end()
+    sys.exit(0)
+
 # cleaning
 qac_log("CLEAN1:")
 line = {}
@@ -111,7 +131,7 @@ qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, nit
 
 # analysis
 qac_log("PLOT and STATS:")
-qac_beam(pdir+'/clean0/dirtymap.image')
+qac_beam(pdir+'/clean0/dirtymap.image', plot=pdir+'/clean0/dirtymap.beam.png')
 for idx in range(len(niter)):
     im1 = pdir+'/clean0/dirtymap%s.image'       % QAC.label(idx)
     im2 = pdir+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
@@ -119,6 +139,9 @@ for idx in range(len(niter)):
     qac_stats(im2)            # noise flat
 qac_plot(model,mode=1,plot=pdir+'/'+model+'.png')
 qac_stats(model)
+
+# ah, wrong grid
+# qac_smooth(pdir+'/clean0', startmodel, name="dirtymap")
 
 qac_log("IMSMOOTH")
 im2 = pdir+'/clean0/dirtymap.image.pbcor'
@@ -132,6 +155,9 @@ i4 = pdir+'/clean0/skymodel.smooth.png'
 i0 = pdir+'/clean0/montage1.png'
 cmd  = "montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s" % (pdir,i1,i2,i3,i4,i0)
 os.system(cmd)
+
+# not the right gridding
+# qac_fidelity(pdir+'/clean0/skymodel.smooth',pdir+'/clean0/dirtymap_3.image.png')
 
 
 # qac_smooth('sky2/clean0','sky2/skymodel.im/')
