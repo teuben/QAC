@@ -83,8 +83,8 @@ https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imview/about
 ## Installing it in your Unix shell
 
 This session made the **casa** command available to you in the terminal, but the next time you login, it will
-be gone.  To make this permanent add the following line to your .chsrc or .bashrc file, which ever appropriate
-to which shell you use:
+be gone.  To make this permanent add the following line to your ~/.cshrc or ~/.bashrc file, which ever the appropriate
+one to which shell you use:
 
    	 echo $SHELL
 
@@ -94,6 +94,6 @@ to which shell you use:
 	 # if (t)csh
 	 source /somewhere/QAC/casa/casa_start.csh
 
-where you will need to fill in the **/somewhere/** part.
+where you will of course need to fill in the **/somewhere/** part.
 	 
       
