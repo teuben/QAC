@@ -221,6 +221,22 @@ sky0a:
 sky0b:
 	$(CASA)       --nogui -c sky0.py test='"sky0b"' > sky0b.log 2>&1
 
+
+# this will show that Amp(uv=0,0) is indeed approaches the full flux, 113100.572
+sky2_000:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_000"' pixel_m=0.005 grid=0 clean=0 > sky2_000.log 2>&1
+	grep ^AMP sky2_000.log
+
+# sky2 with a hole in the UV distribution
+sky2_uvmin: sky2_uvmin1 sky2_uvmin2 sky2_uvmin4
+
+sky2_uvmin1:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1"' minuv=1 > sky2_uvmin1.log 2>&1
+sky2_uvmin2:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin2"' minuv=2 > sky2_uvmin2.log 2>&1
+sky2_uvmin4:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin4"' minuv=4 > sky2_uvmin4.log 2>&1
+
 # expose the mosaicing flux bug in CASA 5.1 (April 2018) - gridder='standard'  is not affected
 cas_11271: cas_11271a cas_11271b
 	@grep ^CASA cas_11271a.log
