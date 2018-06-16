@@ -108,13 +108,8 @@ qac_tpdish('ALMATP', dish)
 qac_tpdish('VIRTUAL',dish)
 tpms = qac_tp_vis(pdir, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, deconv=False, fix=1)
 
-if minuv > 0.0:
-    print("Warning: flagging all data within uv-distance %g m" % minuv)
-    flagdata(vis=tpms,uvrange='0~%gm'%minuv)
-
 if clean == 0:
     # print flux at (0,0), the first datapoint of the first pointing
-    # 
     tb.open(tpms)
     amp0 = tb.getcol('DATA')[0,0,0]
     print("AMP(0,0) = %s" % str(amp0))
@@ -124,10 +119,18 @@ if clean == 0:
     qac_end()
     sys.exit(0)
 
+if minuv > 0.0:
+    print("Warning: keeping only data above minuv = %g m" % minuv)
+    flagdata(vis=tpms,uvrange='0~%gm'%minuv)
+    tpms2 = tpms + '.copy'
+    mstransform(tpms,tpms2,datacolumn='DATA',keepflags=False)
+    os.system('rm -rf %s; mv %s %s' % (tpms,tpms2,tpms))
+
 # cleaning
 qac_log("CLEAN1:")
 line = {}
 qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
+tp2vispl(tpms,outfig=pdir+'/tp2vispl.png', uvzoom = dish*1.2)
 
 # analysis
 qac_log("PLOT and STATS:")
