@@ -62,7 +62,6 @@ else
 endif
 
 echo Using $url
-sleep 5
 
 #  no changes below here
 
@@ -73,6 +72,8 @@ set dir   = $targz:r:r
 if (-d $dir) then
     echo $dir already exists, not installing again
 else
+    echo $dir does not exist, downloading starts in 5 seconds....
+    sleep 5
     curl $url | tar zxf -
 endif
 
