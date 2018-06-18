@@ -228,14 +228,26 @@ sky2_000:
 	grep ^AMP sky2_000.log
 
 # sky2 with a hole in the UV distribution
-sky2_uvmin: sky2_uvmin1 sky2_uvmin2 sky2_uvmin4
+sky2_uvmin: sky2_uvmin1 sky2_uvmin2 sky2_uvmin4 sky2_uvmin6
 
 sky2_uvmin1:
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1"' minuv=1 > sky2_uvmin1.log 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1"'  minuv=1 > sky2_uvmin1.log  2>&1
+
+pjt:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1a"' minuv=1 > sky2_uvmin1a.log grid=25 >&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1b"' minuv=1 > sky2_uvmin1b.log grid=20 >&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1c"'  minuv=1 > sky2_uvmin1c.log niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1d"'  minuv=1 > sky2_uvmin1d.log grid=15 dish=24 maxuv=24 niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1e"'  minuv=2 > sky2_uvmin1e.log grid=15 dish=24 maxuv=24 niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1f"'  minuv=1 > sky2_uvmin1f.log grid=22 dish=18 maxuv=18 niter='range(0,5000,500)' 2>&1
+
 sky2_uvmin2:
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin2"' minuv=2 > sky2_uvmin2.log 2>&1
 sky2_uvmin4:
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin4"' minuv=4 > sky2_uvmin4.log 2>&1
+sky2_uvmin6:
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin6"'  minuv=6          > sky2_uvmin6.log 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin6a"' minuv=6 maxuv=10 > sky2_uvmin6a.log 2>&1
 
 # expose the mosaicing flux bug in CASA 5.1 (April 2018) - gridder='standard'  is not affected
 cas_11271: cas_11271a cas_11271b
