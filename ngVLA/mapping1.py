@@ -13,20 +13,21 @@
 
 pdir         = 'map1'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.0deg 40.0deg'             # where we want this model to be on the sky, at VLA
+phasecenter  = 'J2000 180.00000deg 40.00000deg'             # where we want this model to be on the sky, at VLA
+phasecenter  = 'J2000 12:00:00.00000 +040.00.00.000000'
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
-pixel_m      = 0.005
+pixel_m      = 0.01
 
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
 # pick the pixel_s based on the largest array configuration (see below) choosen
-imsize_s     = 1024
-pixel_s      = 0.02
+imsize_s     = 512
+pixel_s      = 0.08
 
-# pick a few niter values for tclean to check flux convergence ; need at least two to get feather/ssc
+# pick a few niter values for tclean to check flux convergence
 niter        = [0,1000,2000]
 
 # pick which ngVLA configurations you want (0=SBA, 1=core 2=plains 3=all 4=all+GB+VLBA)
