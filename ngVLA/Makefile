@@ -36,6 +36,7 @@ vla1:
 	rm -rf vla1
 	time casa --nogui -c vla1.py > vla1.log 2>&1
 
+# ---------------------------------------------------------------------------------------------
 vla2:
 	rm -rf vla2
 	time casa --nogui -c vla2.py > vla2.log 2>&1
@@ -131,3 +132,27 @@ vla2_noise:
 	time casa --nogui -c vla2.py 'cfg=[0]' noise=1000 pdir="'vla2_noise_l'" niter='[0,1000]' > vla2_noise_l.log 2>&1
 	time casa --nogui -c vla2.py 'cfg=[0]' noise=10000 pdir="'vla2_noise_m'" niter='[0,1000]' > vla2_noise_m.log 2>&1
 	time casa --nogui -c vla2.py 'cfg=[0]' noise=100000 pdir="'vla2_noise_n'" niter='[0,1000]' > vla2_noise_n.log 2>&1
+
+# test on wider array, but only map inner portion
+
+PLAINS = plains_0 plains_2 plains_02
+
+plains_all: $(PLAINS)
+
+plains_all_clean:
+	rm -rf $(PLAINS)
+
+plains_0:
+	time casa --nogui -c vla2.py 'cfg=[0]' pdir="'plains_0'" niter='[0,1000]' dish=45 \
+	     pixel_m=0.01 imsize_s=2048 pixel_s=0.02 \
+	     > plains_0.log 2>&1
+
+plains_2:
+	time casa --nogui -c vla2.py 'cfg=[2]' pdir="'plains_2'" niter='[0,1000]' dish=45 \
+	     pixel_m=0.01 imsize_s=2048 pixel_s=0.02 \
+	     > plains_2.log 2>&1
+
+plains_02:
+	time casa --nogui -c vla2.py 'cfg=[0,2]' pdir="'plains_02'" niter='[0,1000]' dish=45 \
+	     pixel_m=0.01 imsize_s=2048 pixel_s=0.02 \
+	     > plains_02.log 2>&1

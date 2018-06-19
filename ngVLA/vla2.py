@@ -46,10 +46,12 @@ niter        = [0,500,1000,2000,4000]
 #niter        = [0,1000]
 
 # pick which ngVLA configurations you want (0=SBA, 1=core 2=plains 3=all 4=all+GB+VLBA)
+#   [0,1,2] needs 0.02 pixels, since we don't have those, can only map inner portion
+#   pixel_m = 0.01 imsize_s=2048 pixel_s=0.02
 cfg          = [0,1]
 
 # integration times (see also below for alternative equal time per pointing observations)
-times        = [2, 1]     # hrs observing and mins integrations
+times        = [4, 1]     # hrs observing and mins integrations
 
 # grid spacing for mosaic pointings  (18m -> 15"   6m -> 50" but 6m is controlled with gfactor)
 grid         = 15
@@ -106,7 +108,7 @@ p0 = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid0,rect=True,outfile=ptg0)
 print "Using %d pointings for  6m and grid0=%g on fieldsize %g" % (len(p0), grid0, imsize_m*pixel_m)
 
 #
-if True:
+if False:
     # test alternative setting of times so each pointing gets one cycle, and the SBA gets more time
     times  = [len(p)/60.0,  0.25]
     times0 = [tfactor*len(p0)/60.0, 0.25]
@@ -170,7 +172,7 @@ qac_log("CLEAN")
 qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales)
 
 qac_log("BEAM")
-qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.psf.png')
+qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.beam.png')
 
 qac_log("OTF, SMOOTH and plots")
 # create an OTF TP map using a given dish size
@@ -230,9 +232,21 @@ a4 = pdir+'/clean3/feather%s%s.image'       % (dishlabel,QAC.label(idx0))
 a5 = pdir+'/clean3/skymodel.smooth.image'
 a6 = pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx0))
 
+b=range(len(niter))
+for idx in range(len(niter)):
+    b[idx] = pdir+'/clean3/dirtymap%s.image' %            QAC.label(idx)
+bg = []
+for idx in range(len(niter)-1):
+    bg.append(b[idx])
+    bg.append(b[idx+1])
+bg.append(b[0])
+bg.append(b[idx0])
+    
+
 try:
     qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
     qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
+    qac_plot_grid(bg,                       diff=10, plot=pdir+'/plot3.cmp.png', labels=True)    
 except:
     print "qac_plot_grid failed"
 

@@ -694,13 +694,13 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
         pl.figure()
         if normalized:
             pl.title("%s : Normalized cumulative flux" % im)
-            pl.xlabel("size/2 (arcsec)")
+            pl.xlabel("Radius (arcsec)")
             pl.ylabel("Flux")
             size = size * pix
             r1   = r1   * pix
         else:
             pl.title("%s : Cumulative sum" % im)
-            pl.xlabel("size/2 (pixels)")
+            pl.xlabel("Radius (pixels)")
             pl.ylabel("Sum")
         pl.plot(size,flux)
         pl.plot(size,zero)

@@ -5,3 +5,10 @@ tp2vis:     this may or may not be an old version of tp2vis that we
 	    have spoken to the developers.
 
 test_ssc:   Faridina's method  (now in: src/ssc.py as qac_ssc())
+
+
+casaviewer.desktop:     copy this file to your ~/.local/share/kservices5/ServiceMenus
+			for the Dolphin KDE tool to right-click open casaviewer
+
+			mkdir -p ~/.local/share/kservices5/ServiceMenus
+			cp casaviewer.desktop ~/.local/share/kservices5/ServiceMenus
