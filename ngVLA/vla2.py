@@ -232,9 +232,21 @@ a4 = pdir+'/clean3/feather%s%s.image'       % (dishlabel,QAC.label(idx0))
 a5 = pdir+'/clean3/skymodel.smooth.image'
 a6 = pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx0))
 
+b=range(len(niter))
+for idx in range(len(niter)):
+    b[idx] = pdir+'/clean3/dirtymap%s.image' %            QAC.label(idx)
+bg = []
+for idx in range(len(niter)-1):
+    bg.append(b[idx])
+    bg.append(b[idx+1])
+bg.append(b[0])
+bg.append(b[idx0])
+    
+
 try:
     qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
     qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
+    qac_plot_grid(bg,                       diff=10, plot=pdir+'/plot3.cmp.png', labels=True)    
 except:
     print "qac_plot_grid failed"
 
