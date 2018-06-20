@@ -13,19 +13,18 @@
 
 pdir         = 'map1'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.00000deg 40.00000deg'             # where we want this model to be on the sky, at VLA
-phasecenter  = 'J2000 12:00:00.00000 +040.00.00.000000'
+phasecenter  = 'J2000 180.000deg 40.000deg'         # where we want this model to be on the sky, at VLA
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
-pixel_m      = 0.01
+pixel_m      = 0.005
 
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
 # pick the pixel_s based on the largest array configuration (see below) choosen
 imsize_s     = 512
-pixel_s      = 0.08
+pixel_s      = 0.04
 
 # pick a few niter values for tclean to check flux convergence
 niter        = [0,1000,2000]
@@ -62,8 +61,8 @@ qac_log("REPORT")
 qac_version()
 
 # create a mosaic of pointings for the TP 'dish'
-p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
-print "Using %d pointings for 18m and grid=%g on fieldsize %g" % (len(p), grid, imsize_m*pixel_m)
+p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,outfile=ptg)
+print "Using %d pointings for 18m and grid=%g on fieldsize %g arcsec" % (len(p), grid, imsize_m*pixel_m)
 
 # start with a clean project
 qac_project(pdir)
@@ -100,6 +99,7 @@ qac_log("REGRESSION")
 for idx in range(len(niter)):
     qac_stats(pdir+'/clean3/dirtymap%s.image'         %            QAC.label(idx))    
     qac_stats(pdir+'/clean3/dirtymap%s.image.pbcor'   %            QAC.label(idx))
+    qac_plot (pdir+'/clean3/dirtymap%s.image'         %            QAC.label(idx))        
     qac_plot (pdir+'/clean3/dirtymap%s.image.pbcor'   %            QAC.label(idx))    
 qac_stats(pdir+'/clean3/skymodel.smooth.image')
 qac_stats(model)
@@ -109,6 +109,8 @@ idx0 = len(niter)-1    # index of last niter[] for plotting
 a0 = pdir+'/clean3/dirtymap.image'                  
 a1 = pdir+'/clean3/dirtymap%s.image'                  %            QAC.label(idx0)
 a2 = pdir+'/clean3/skymodel.smooth.image'
+
+qac_plot_grid([a0,a1,a0,a2,a1,a2],diff=10, plot=pdir+'/plot1.cmp.png', labels=True)  
 
 qac_log("POWER SPECTRUM DENSITY")
 try:
