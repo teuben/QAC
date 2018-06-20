@@ -13,7 +13,7 @@
 
 pdir         = 'map0'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.0deg 40.0deg'             # where we want this model to be on the sky, at VLA
+phasecenter  = 'J2000 180.000deg 40.000deg'         # where we want this model to be on the sky, at VLA
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
@@ -61,8 +61,8 @@ qac_log("REPORT")
 qac_version()
 
 # create a mosaic of pointings for the TP 'dish'
-p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
-print "Using %d pointings for 18m and grid=%g on fieldsize %g" % (len(p), grid, imsize_m*pixel_m)
+p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,outfile=ptg)
+print "Using %d pointings for 18m and grid=%g on fieldsize %g arcsec" % (len(p), grid, imsize_m*pixel_m)
 
 # start with a clean project
 qac_project(pdir)
