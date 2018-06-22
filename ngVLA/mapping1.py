@@ -76,11 +76,13 @@ ms1 = qac_vla(pdir,model,imsize_m,pixel_m,cfg=cfg,ptg=ptg, phasecenter=phasecent
 # save a startmodel name for later
 startmodel = ms1.replace('.ms','.skymodel')
 
-
-# @todo  use **args e.g. args['gridder'] = 'standard' if only one pointing in one config
-
 qac_log("CLEAN")
-qac_clean1(pdir+'/clean3', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales)
+if grid > 0:
+    # the default is mosaicing
+    qac_clean1(pdir+'/clean3', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales)
+else:
+    # but for single pointing we can use the standard gridder
+    qac_clean1(pdir+'/clean3', ms1, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales, gridder='standard')
 
 qac_log("BEAM")
 qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.beam.png')
