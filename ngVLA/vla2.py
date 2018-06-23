@@ -38,12 +38,11 @@ imsize_s     = 2048
 pixel_s      = 0.1
 
 # pick a few niter values for tclean to check flux convergence ; need at least two to get feather/ssc
-#niter        = [0,500,1000,2000]
 #niter        = [0,100]
-#niter        = [0,100,1000]
 #niter        = [0]
-niter        = [0,500,1000,2000,4000]
+niter        = [0,500,1000,2000,4000,8000]
 #niter        = [0,1000]
+#niter = range(0,5000,1000)
 
 # pick which ngVLA configurations you want (0=SBA, 1=core 2=plains 3=all 4=all+GB+VLBA)
 #   [0,1,2] needs 0.02 pixels, since we don't have those, can only map inner portion
@@ -55,7 +54,6 @@ times        = [4, 1]     # hrs observing and mins integrations
 
 # grid spacing for mosaic pointings  (18m -> 15"   6m -> 50" but 6m is controlled with gfactor)
 grid         = 15
-#grid         = 20
 
 # tp dish size (18, 45, 100m are the interesting choices to play with)
 dish         = 45
@@ -106,6 +104,11 @@ print "Using %d pointings for 18m and grid=%g on fieldsize %g" % (len(p), grid, 
 grid0 = grid * gfactor
 p0 = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid0,rect=True,outfile=ptg0)
 print "Using %d pointings for  6m and grid0=%g on fieldsize %g" % (len(p0), grid0, imsize_m*pixel_m)
+
+kwargs_clean1 = {}
+if grid <= 0 and len(cfg) == 1:
+    print("Single pointing single configuration: no mosaic gridder needed, using standard")
+    kwargs_clean1['gridder'] = 'standard'
 
 #
 if False:
@@ -169,19 +172,35 @@ if clean == 0:
 # @todo  use **args e.g. args['gridder'] = 'standard' if only one pointing in one config
 
 qac_log("CLEAN")
-qac_clean1(pdir+'/clean3', intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales)
+cdir = pdir + '/clean3'
+qac_clean1(cdir, intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales, **kwargs_clean1)
 
 qac_log("BEAM")
-qac_beam(pdir+'/clean3/dirtymap.psf', plot=pdir+'/clean3/dirtymap.beam.png')
+(bmaj,bmin) = qac_beam(cdir+'/dirtymap.psf', plot=pdir+'/clean3/dirtymap.beam.png')
+
+if True:
+    size_m = imsize_m * pixel_m
+    size_s = imsize_s * pixel_s
+    if size_m == size_s:
+        nbin = int(pixel_s/pixel_m)
+        sfac = 1.1331*bmaj*bmin/pixel_m/pixel_m
+        print("Model and Sky size match. Using nbin=%d sfac=%g to create a rebin image" % (nbin,sfac))
+        imrebin(startmodel,cdir+'/skymodel.tmp',[nbin,nbin,1,1])
+        immath(cdir+'/skymodel.tmp','evalexpr',cdir+'/skymodel.rebin.image','IM0*%g'%sfac)
+    else:
+        print("Model and Sky size do not match. %g != %g.  No rebinned skymodel" % (size_m,size_s))
+        
+
 
 qac_log("OTF, SMOOTH and plots")
 # create an OTF TP map using a given dish size
-otf = qac_tp_otf(pdir+'/clean3', startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
+otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
+smo = qac_smooth(cdir, startmodel, name="dirtymap")
 
-qac_smooth (pdir+'/clean3', startmodel, name="dirtymap")
-qac_plot(pdir+'/clean3/skymodel.smooth.image')
-qac_plot(pdir+'/clean3/dirtymap.psf')
-qac_plot(pdir+'/clean3/dirtymap.pb')
+#qac_plot(pdir+'/clean3/skymodel.smooth.image')
+qac_plot(smo)
+qac_plot(cdir+'/dirtymap.psf')
+qac_plot(cdir+'/dirtymap.pb')
 qac_plot(otf + '.pbcor')
 
 if len(niter) == 1:
@@ -192,21 +211,21 @@ if len(niter) == 1:
 qac_log("FEATHER")
 # combine using feather and ssc, for all niter's (even though the first one is not valid)
 for idx in range(len(niter)):
-    qac_feather(pdir+'/clean3',             niteridx=idx, label=dishlabel, name="dirtymap")
-    qac_ssc    (pdir+'/clean3',             niteridx=idx, label=dishlabel, name="dirtymap")
-    qac_plot   (pdir+'/clean3/dirtymap%s.image.pbcor'  %            QAC.label(idx))
-    qac_plot   (pdir+'/clean3/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx)))
-    qac_plot   (pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx)))
+    qac_feather(cdir,             niteridx=idx, label=dishlabel, name="dirtymap")
+    qac_ssc    (cdir,             niteridx=idx, label=dishlabel, name="dirtymap")
+    qac_plot   (cdir+'/dirtymap%s.image.pbcor'  %            QAC.label(idx))
+    qac_plot   (cdir+'/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx)))
+    qac_plot   (cdir+'/ssc%s%s.image'           % (dishlabel,QAC.label(idx)))
 
 # check the fluxes
 qac_log("REGRESSION")
 
 for idx in range(len(niter)):
-    qac_stats(pdir+'/clean3/dirtymap%s.image'         %            QAC.label(idx))    
-    qac_stats(pdir+'/clean3/dirtymap%s.image.pbcor'   %            QAC.label(idx))
-    qac_stats(pdir+'/clean3/ssc%s%s.image'            % (dishlabel,QAC.label(idx)))
-    qac_stats(pdir+'/clean3/feather%s%s.image'        % (dishlabel,QAC.label(idx)))
-qac_stats(pdir+'/clean3/skymodel.smooth.image')
+    qac_stats(cdir+'/dirtymap%s.image'         %            QAC.label(idx))    
+    qac_stats(cdir+'/dirtymap%s.image.pbcor'   %            QAC.label(idx))
+    qac_stats(cdir+'/ssc%s%s.image'            % (dishlabel,QAC.label(idx)))
+    qac_stats(cdir+'/feather%s%s.image'        % (dishlabel,QAC.label(idx)))
+qac_stats(smo)
 qac_stats(otf + '.pbcor')
 qac_stats(model)
 
@@ -215,38 +234,54 @@ idx0 = len(niter)-1    # index of last niter[] for plotting
 
 qac_log("MONTAGE1")
 
-i1 = pdir+'/clean3/dirtymap%s.image.pbcor.png'   %            QAC.label(idx0)
+i1 = cdir+'/dirtymap%s.image.pbcor.png'   %            QAC.label(idx0)
 i2 = otf + '.pbcor.png'
-i3 = pdir+'/clean3/feather%s%s.image.pbcor.png'  % (dishlabel,QAC.label(idx0))
-i4 = pdir+'/clean3/skymodel.smooth.image.png'
-i0 = pdir+'/clean3/montage1.png'
+i3 = cdir+'/feather%s%s.image.pbcor.png'  % (dishlabel,QAC.label(idx0))
+i4 = smo + '.png'
+i0 = cdir+'/montage1.png'
 cmd  = "montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s" % (pdir,i1,i2,i3,i4,i0)
 os.system(cmd)
 
 qac_log("PLOT_GRID plots 1 and 2")
 
-a1 = pdir+'/clean3/dirtymap.image'
-a2 = pdir+'/clean3/dirtymap%s.image'        %            QAC.label(idx0)
+a1 = cdir+'/dirtymap.image'
+a2 = cdir+'/dirtymap%s.image'        %            QAC.label(idx0)
 a3 = otf
-a4 = pdir+'/clean3/feather%s%s.image'       % (dishlabel,QAC.label(idx0))
-a5 = pdir+'/clean3/skymodel.smooth.image'
-a6 = pdir+'/clean3/ssc%s%s.image'           % (dishlabel,QAC.label(idx0))
+a4 = cdir+'/feather%s%s.image'       % (dishlabel,QAC.label(idx0))
+a5 = smo
+a6 = cdir+'/ssc%s%s.image'           % (dishlabel,QAC.label(idx0))
 
 b=range(len(niter))
+c=range(len(niter))
 for idx in range(len(niter)):
-    b[idx] = pdir+'/clean3/dirtymap%s.image' %            QAC.label(idx)
+    b[idx] = cdir+'/dirtymap%s.image'  %            QAC.label(idx)
+    c[idx] = cdir+'/feather%s%s.image' % (dishlabel,QAC.label(idx)) 
+    
 bg = []
 for idx in range(len(niter)-1):
     bg.append(b[idx])
     bg.append(b[idx+1])
 bg.append(b[0])
 bg.append(b[idx0])
-    
+
+cg = []
+for idx in range(len(niter)-1):
+    cg.append(c[idx])
+    cg.append(c[idx+1])
+cg.append(c[0])
+cg.append(c[idx0])
+
+dg = []
+for idx in range(len(niter)):
+    dg.append(b[idx])
+    dg.append(c[idx])
 
 try:
     qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
     qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
-    qac_plot_grid(bg,                       diff=10, plot=pdir+'/plot3.cmp.png', labels=True)    
+    qac_plot_grid(bg,                       diff=10, plot=pdir+'/plot3.cmp.png', labels=True)
+    qac_plot_grid(cg,                       diff=10, plot=pdir+'/plot4.cmp.png', labels=True)
+    qac_plot_grid(dg,                       diff=1,  plot=pdir+'/plot5.cmp.png', labels=True)    
 except:
     print "qac_plot_grid failed"
 
@@ -267,8 +302,9 @@ except:
     print "qac_psf failed"
 
 qac_log("FIDELITY")
-qac_fidelity(pdir+'/clean3/skymodel.smooth.image',pdir+'/clean3/dirtymap%s.image'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
-qac_fidelity(pdir+'/clean3/skymodel.smooth.image',pdir+'/clean3/feather%s%s.image'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
+
+qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
+qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
 
 qac_log("DONE!")
 qac_end()
