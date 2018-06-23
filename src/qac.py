@@ -617,6 +617,8 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
 def qac_beam(im, normalized=True, chan=-1, plot=None):
     """ show some properties of the PSF
 
+    Returns the BMAJ,BMIN (in arcsec)
+
     im:           image representing the beam (usually a .psf file)
     normalized:   if True, axes are arcsec and normalized flux
                   otherwise pixels
@@ -628,7 +630,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
     """
     if not QAC.iscasa(im):
         print("QAC_BEAM: missing %s " % im)
-        return
+        return None
 
     h0 = imhead(im)
     nx    = h0['shape'][0]
@@ -678,6 +680,9 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
             flux[i] = imstat(im,chans=chans,box=box)['sum'][0]/factor
         print("QAC_BEAM: Max/Last/PeakLoc %g %g %g" % (flux.max(),flux[-1],flux.argmax()*pix))
 
+    if plot == None:
+        return (bmaj,bmin)    # @todo bpa        
+
     tb.open(im)
     d1 = tb.getcol("map").squeeze()
     tb.close()
@@ -709,7 +714,10 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
             pl.plot(size,ones)
         pl.savefig(plot)
         pl.show()
-        print("QAC_BEAM: %s" % plot)    
+        print("QAC_BEAM: %s" % plot)
+
+    return (bmaj,bmin)    # @todo bpa
+        
     #-end of qac_beam()
     
     
@@ -1870,6 +1878,7 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
     """
     helper function to smooth skymodel using beam of feathered image
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
+    including a regridding since model and sky pixels are not always the same
 
     project    typical  "sky3/clean2", somewhere where tclean has run
     skymodel   a skymodel
@@ -1944,6 +1953,7 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
 def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False):
     """
     function for calculating the fidelity between two input images (e.g. fidelity between input skymodel and the simulated observation of that skymodel)
+    both model and image need to have a beam
     
     alma memo 398 gives the mathematical definition of fidelity:
     fidelity(i,j) = abs( Model(i,j) ) / max( abs(Difference(i,j) ), 0.7 * rms(Difference) )
@@ -1985,14 +1995,14 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     print('%s will be used as the image.'%image)
 
     # name the output files if user did not input names
-    if diffim == None:
-        diffim     = image.replace('.image', '.diff')
-    if absdiffim == None:
-        absdiffim  = image.replace('.image', '.absdiff')
+    if diffim     == None:
+        diffim     = image + '.diff'
+    if absdiffim  == None:
+        absdiffim  = image + '.absdiff'
     if fidelityim == None:
-        fidelityim = image.replace('.image', '.fidelity')
+        fidelityim = image + '.fidelity'
     if absmodelim == None:
-        absmodelim = model.replace('.image', '.absolute')
+        absmodelim = model + '.absolute'      # @todo isn't the model alway positive?
     
     # procedure for calculating fidelity as given in task_simanalyze line 777
 
@@ -2052,7 +2062,7 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     ny = d1.shape[1]
     mod_data = np.flipud(np.rot90(d1.reshape((nx,ny))))
     mod_min, mod_max = mod_data.min(), mod_data.max()
-    # get model beam size
+    # get model beam size    @todo use qac_beam
     mod_bmin, mod_bmaj = imhead(model)['restoringbeam']['minor']['value'], imhead(model)['restoringbeam']['major']['value']
 
     # grab image data
@@ -2089,7 +2099,7 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     ax.set_title(diffim, size=15)
     ax.set_xlabel('Value (Jy/beam)', size=15)
     ax.set_ylabel('Number of Pixels', size=15)
-    fig.savefig(image.replace('.image', '.diff.hist.png'))
+    fig.savefig(image + '.diff.hist.png')
 
     # create figures
 
@@ -2139,7 +2149,7 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     for mode in figure_mode:
         # use imagemagick montage to create the combined figures chosen by the figure_mode parameter
         if mode == 2:
-            cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', fidelityim+'.png', image.replace('.image', '.fidelity%s.png'%mode))
+            cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', fidelityim+'.png', image +  '.fidelity%s.png'%mode)
             try:
                 # call the montage command with subprocess so if an exception is thrown, python will catch it
                 subprocess.call(cmd.split())
@@ -2147,21 +2157,21 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
                 print 'Montage failed: ', e
                 return
         elif mode == 3:
-            cmd = 'montage -title %s %s %s -tile 2x1 -geometry +0+0 %s'% (project_name, diffim+'.png', fidelityim+'.png', image.replace('.image', '.fidelity%s.png'%mode))
+            cmd = 'montage -title %s %s %s -tile 2x1 -geometry +0+0 %s'% (project_name, diffim+'.png', fidelityim+'.png', image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
                 print 'Montage failed: ', e
                 return
         elif mode == 4:
-            cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, diffim+'.png', diffim+'.hist.png', fidelityim+'.png',image.replace('.image', '.fidelity%s.png'%mode))
+            cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, diffim+'.png', diffim+'.hist.png', fidelityim+'.png',image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
                 print 'Montage failed: ', e
                 return
         elif mode == 5:
-            cmd = 'montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', diffim+'.png', fidelityim+'.png',image.replace('.image', '.fidelity%s.png'%mode))
+            cmd = 'montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', diffim+'.png', fidelityim+'.png',image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
