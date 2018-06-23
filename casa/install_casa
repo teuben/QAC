@@ -28,6 +28,9 @@ if ($uname == Linux)  set uname = linux
 set o1 =  https://casa.nrao.edu/download/distro/osx/release/10.12/casa-release-5.1.2-4-10.12.dmg.md5
 set o2 =  https://casa.nrao.edu/download/distro/osx/prerelease/10.13/casa-prerelease-5.3.0-89-10.13.dmg
 
+set o1 =  https://casa.nrao.edu/download/distro/osx/release/10.12/casa-release-5.1.2-4-10.12.dmg.md5
+set o2 =  https://casa.nrao.edu/download/distro/osx/release/10.13/casa-release-5.3.0-143-10.13.dmg
+
 set L1 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.2-4.el7.tar.gz
 set L2 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.1-5.el7.tar.gz
 set L3 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.3.0-143.el7.tar.gz
@@ -41,6 +44,13 @@ if ($uname == osx) then
    echo $o1
    echo $o2
    echo And drag the app into /Applications
+   if (-d /Application/CASA.app) then
+       echo it seems you have CASA installed:
+       set bin1 = /Application/CASA.app/Contents/MacOS
+       $bin1/casa-config --version
+       echo "set path = ($bin1 "'$path); rehash'  >> casa_start.csh
+       echo "export PATH=${bin1}:"'$PATH'         >> casa_start.sh
+   endif
    exit 0
 else
    echo Running on linux, good. Some common versions you might use
