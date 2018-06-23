@@ -44,9 +44,9 @@ if ($uname == osx) then
    echo $o1
    echo $o2
    echo And drag the app into /Applications
-   if (-d /Application/CASA.app) then
+   if (-d /Applications/CASA.app) then
        echo it seems you have CASA installed:
-       set bin1 = /Application/CASA.app/Contents/MacOS
+       set bin1 = /Applications/CASA.app/Contents/MacOS
        $bin1/casa-config --version
        echo "set path = ($bin1 "'$path); rehash'  >> casa_start.csh
        echo "export PATH=${bin1}:"'$PATH'         >> casa_start.sh
