@@ -7,10 +7,11 @@
 #
 #  Reminders: at 115 GHz we have: [PB FWHM" ~ 600/DishDiam]
 #
-#      18m PB is ~33"
 #       6m PB is ~100"
+#      18m PB is ~33"
 #      25m PB is ~25"
-#      50m PB is ~12"
+#      45m PB is ~13"
+#     100m PB is ~6"
 #
 #  Timing:
 #           ..
@@ -24,18 +25,16 @@ model        = '../models/skymodel.fits'            # this has phasecenter with 
 phasecenter  = 'J2000 180.000000deg 40.000000deg'   # where we want this model to be on the sky, at VLA
 
 # pick the piece of the model to image, and at what pixel size
-# natively this model is 4096 pixels at 0.05"
-# @todo qac_tp_vis handles this differently from simobserve()
+# natively this model is 4096 pixels at 0.05" (or a 200" sky)
 imsize_m     = 4096
-pixel_m      = 0.05
+pixel_m      = 0.025
 
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
 # pick the pixel_s based on the largest array configuration (see below) choosen
-imsize_s     = 1024
-pixel_s      = 0.2
+# If pixel_s is negative, it will be computed based on imsize*pixel for both _m and _s being same
 imsize_s     = 2048
-pixel_s      = 0.1
+pixel_s      = -1
 
 # pick a few niter values for tclean to check flux convergence ; need at least two to get feather/ssc
 #niter        = [0,100]
@@ -59,11 +58,11 @@ grid         = 15
 dish         = 45
 
 # scaling factors 
-wfactor      = 0.01   # weight mult for cfg=0 (@todo)
+wfactor      = 1      # weight mult for cfg=0 (@todo)
 afactor      = 1      # not implemented yet
 gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
-tfactor      = 2.0    # extra time factor to apply to SBA
+tfactor      = 2.0    # extra time factor to apply to SBA (not used)
 
 # multi-scale? - Use [0] or None if you don't want it
 scales       = [0, 10, 30]
@@ -86,6 +85,9 @@ ptg0 = pdir + '.0.ptg'            # pointing mosaic for the ptg
 pixel_m = pixel_m * pfactor       # simple rescale model map
 pixel_s = pixel_s * pfactor       #
 
+if pixel_s < 0:                   # force the model and sky size the same
+    pixel_s = imsize_m * pixel_m / imsize_s
+
 dishlabel = str(dish)             #  can also be ""
 
 if niter==0:   niter=[0]          # be nice to allow this, but below it does need to be a list
@@ -98,11 +100,11 @@ qac_version()
 tp2vis_version()
 
 # create a mosaic of pointings for the TP 'dish'
-p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
+p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,outfile=ptg)
 print "Using %d pointings for 18m and grid=%g on fieldsize %g" % (len(p), grid, imsize_m*pixel_m)
 
 grid0 = grid * gfactor
-p0 = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid0,rect=True,outfile=ptg0)
+p0 = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid0,outfile=ptg0)
 print "Using %d pointings for  6m and grid0=%g on fieldsize %g" % (len(p0), grid0, imsize_m*pixel_m)
 
 kwargs_clean1 = {}
@@ -132,7 +134,8 @@ else:
 qac_project(pdir)
 
 # create an MS based on a model and for each ngVLA antenna configuration
-# the emperical procedure using the noise= keyword and using qac_noise() is courtesy Carilli et al. (2017)
+# the emperical procedure using the noise= keyword and using qac_noise()
+# is courtesy Carilli et al. (2017)
 qac_log("ngVLA")
 ms1={}
 for c in cfg:
@@ -143,7 +146,7 @@ for c in cfg:
             sn0 = qac_noise(noise,pdir+'/clean3_noise', ms1[c], imsize_s, pixel_s, phasecenter=phasecenter)
             print("QAC_NOISE: %g" % sn0)
             ms1[c] = qac_vla(pdir,model,imsize_m,pixel_m,cfg=c,ptg=ptg0, phasecenter=phasecenter, times=times0, noise=sn0)            
-        if False:
+        if wfactor != 1:
             # scale down the 6m data based on inspection of tp2vispl() ???
             tp2viswt(ms1[c],mode='mult',value=wfactor)
     else:
@@ -189,6 +192,7 @@ if True:
         immath(cdir+'/skymodel.tmp','evalexpr',cdir+'/skymodel.rebin.image','IM0*%g'%sfac)
     else:
         print("Model and Sky size do not match. %g != %g.  No rebinned skymodel" % (size_m,size_s))
+    imsmooth(startmodel,'gaussian','%garcsec'%bmaj,'%garcsec'%bmaj,'0deg',outfile=pdir+'/skymodel.smooth.image')
         
 
 
@@ -298,13 +302,21 @@ except:
 qac_log("POWER SPECTRUM DENSITY")
 try:
     qac_psd([startmodel, a2, a4, a5], plot=pdir+'/'+pdir+'.psd.png')
+    if True:
+        s1 = pdir+'/skymodel.smooth.image'
+        s2 = cdir+'/skymodel.rebin.image' 
+        qac_psd([startmodel, s1, s2, a5], plot=pdir+'/'+pdir+'.psd_2.png')
+        qac_psd([startmodel, s1], plot=pdir+'/'+pdir+'.psd_3.png')
+    
 except:
-    print "qac_psf failed"
+    print("qac_psf failed")
 
 qac_log("FIDELITY")
-
-qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
-qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
+try:
+    qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
+    qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
+except:
+    print("qac_fidelity failed")    
 
 qac_log("DONE!")
 qac_end()
