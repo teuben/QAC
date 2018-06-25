@@ -179,7 +179,7 @@ cdir = pdir + '/clean3'
 qac_clean1(cdir, intms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, scales=scales, **kwargs_clean1)
 
 qac_log("BEAM")
-(bmaj,bmin) = qac_beam(cdir+'/dirtymap.psf', plot=pdir+'/clean3/dirtymap.beam.png')
+(bmaj,bmin) = qac_beam(cdir+'/dirtymap.psf', plot=cdir+'/dirtymap.beam.png')
 
 if True:
     size_m = imsize_m * pixel_m
@@ -199,23 +199,37 @@ if True:
 qac_log("OTF, SMOOTH and plots")
 # create an OTF TP map using a given dish size
 smo = qac_smooth(cdir, startmodel, name="dirtymap")
-otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
+otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=cdir+'/dirtymap.image')
 
 # scale, and possibly cheat and flip the OTF in RA
 if afactor != 1:
     print("Non-standard afactor=%g" % afactor)
-    smo1 = smo + '.tmp1'
-    immath(smo,'evalexpr',smo1, 'IM0*%g' % abs(afactor))
+    otf0 = otf
+    otf1 = otf0 + '.tmp1'
+    immath(otf0,'evalexpr',otf1, 'IM0*%g' % abs(afactor))
     if afactor < 0:
-        smo2 = smo + '.tmp2'
-        imtrans(smo1,smo2,'-0123')
-        cmd = 'rm -rf %s %s;mv %s %s' % (smo1,smo,smo2,smo)
+        otf2 = otf + '.tmp2'
+        imtrans(otf1,otf2,'-0123')
+        cmd = 'rm -rf %s %s;mv %s %s' % (otf1,otf0,otf2,otf0)
         os.system(cmd)
     else:
-        cmd = 'rm -rf %s ;mv %s %s' % (smo1,smo,smo1,smo)
+        cmd = 'rm -rf %s ;mv %s %s' % (otf1,otf0,otf1,otf0)
         os.system(cmd)
     print("CMD:%s" % cmd)
-        
+    #
+    otf0 = otf + '.pbcor'
+    otf1 = otf0 + '.tmp1'
+    immath(otf0,'evalexpr',otf1, 'IM0*%g' % abs(afactor))
+    if afactor < 0:
+        otf2 = otf + '.tmp2'
+        imtrans(otf1,otf2,'-0123')
+        cmd = 'rm -rf %s %s;mv %s %s' % (otf1,otf0,otf2,otf0)
+        os.system(cmd)
+    else:
+        cmd = 'rm -rf %s ;mv %s %s' % (otf1,otf0,otf1,otf0)
+        os.system(cmd)
+    print("CMD:%s" % cmd)
+    
 
 #qac_plot(pdir+'/clean3/skymodel.smooth.image')
 qac_plot(smo)
