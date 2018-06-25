@@ -106,7 +106,7 @@ vla2_01g_45:
 	tail -10 vla2.log
 
 vla2_01g_45_flip:
-	time casa --nogui -c vla2.py pdir='"vla2_01g_45_flip"' cfg='[0,1]' dish=45 afactor=-1 > vla2.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_flip"' cfg='[0,1]' dish=45 afactor=-1 niter='[0,1000]' > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_flip
 	tail -10 vla2.log
 
@@ -278,7 +278,6 @@ figures:
 	cp vla2_01g_45/clean3/feather45_6.image.pbcor.png    figures/map4.png
 	cp vla2_1g_18/clean3/feather18_6.image.pbcor.png     figures/map5.png
 	cp vla2_01g_18/clean3/feather18_6.image.pbcor.png    figures/map6.png
-
 
 # simple mapping scripts to start studying ngVLA project for students
 mapping0:
