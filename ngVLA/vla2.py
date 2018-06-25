@@ -58,7 +58,7 @@ grid         = 15
 dish         = 45
 
 # scaling factors 
-wfactor      = 1      # weight mult for cfg=0 (@todo)
+wfactor      = 1      # weight mult for cfg=0 
 afactor      = 1      # not implemented yet
 gfactor      = 3.0    # 18m/6m ratio of core/SBA dishes (should probably remain at 3)
 pfactor      = 1.0    # pixel size factor for both pixel_m and pixel_s
@@ -198,8 +198,24 @@ if True:
 
 qac_log("OTF, SMOOTH and plots")
 # create an OTF TP map using a given dish size
-otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
 smo = qac_smooth(cdir, startmodel, name="dirtymap")
+otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=pdir+'/clean3/dirtymap.image')
+
+# scale, and possibly cheat and flip the OTF in RA
+if afactor != 1:
+    print("Non-standard afactor=%g" % afactor)
+    smo1 = smo + '.tmp1'
+    immath(smo,'evalexpr',smo1, 'IM0*%g' % abs(afactor))
+    if afactor < 0:
+        smo2 = smo + '.tmp2'
+        imtrans(smo1,smo2,'-0123')
+        cmd = 'rm -rf %s %s;mv %s %s' % (smo1,smo,smo2,smo)
+        os.system(cmd)
+    else:
+        cmd = 'rm -rf %s ;mv %s %s' % (smo1,smo,smo1,smo)
+        os.system(cmd)
+    print("CMD:%s" % cmd)
+        
 
 #qac_plot(pdir+'/clean3/skymodel.smooth.image')
 qac_plot(smo)
