@@ -105,6 +105,11 @@ vla2_01g_45:
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45
 	tail -10 vla2.log
 
+vla2_01g_45_flip:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_flip"' cfg='[0,1]' dish=45 afactor=-1 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_flip
+	tail -10 vla2.log
+
 vla2_01g_45_a:
 	time casa --nogui -c vla2.py pdir='"vla2_01g_45_a"' cfg='[0,1]' dish=45 wfactor=0.02 > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_a
