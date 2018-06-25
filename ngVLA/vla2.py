@@ -202,6 +202,7 @@ smo = qac_smooth(cdir, startmodel, name="dirtymap")
 otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=cdir+'/dirtymap.image')
 
 # scale, and possibly cheat and flip the OTF in RA
+# @todo  copy the WCS back if afactor < 1, since the current way CASA is too smart about the flipped RA axis
 if afactor != 1:
     print("Non-standard afactor=%g" % afactor)
     otf0 = otf
