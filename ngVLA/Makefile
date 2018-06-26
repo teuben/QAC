@@ -67,6 +67,14 @@ vla2_1:
 	#time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=2048 pixel_s=0.01 > vla2_1_c.log 2>&1      # _c
 
 
+# series of single pointing mosaics with varying dish (0.006 probably better, 0.008 fails in fidelity)
+vla2_1_dish:
+	time casa --nogui -c vla2.py pdir='"vla2_1_18"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 dish=18 > vla2_1_18.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_1_30"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 dish=30 > vla2_1_30.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_1_45"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 dish=45 > vla2_1_45.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_1_100"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 dish=100 > vla2_1_100.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_1_200"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 dish=200 > vla2_1_200.log 2>&1
+
 vla2_01:
 	time casa --nogui -c vla2.py pdir='"vla2_01"' cfg='[0,1]' grid=0 pixel_m=0.005 imsize_s=512 pixel_s=0.04 > vla2_01.log 2>&1
 	cp vla2_01.log vla2.py vla2_01.ptg vla2_01
