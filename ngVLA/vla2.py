@@ -202,37 +202,29 @@ smo = qac_smooth(cdir, startmodel, name="dirtymap")
 otf = qac_tp_otf(cdir, startmodel, dish, label=dishlabel, template=cdir+'/dirtymap.image')
 
 # scale, and possibly cheat and flip the OTF in RA
-# @todo  copy the WCS back if afactor < 1, since the current way CASA is too smart about the flipped RA axis
 if afactor != 1:
+    def myflip(image, afactor):
+        """ hack: only works on 2D images....
+        """
+        tb.open(image,nomodify=False)
+        d1 = tb.getcol("map")
+        if abs(afactor) != 1:
+            d1 = d1 * abs(afactor)
+        if afactor < 0:
+            ds = d1.shape
+            d1 = d1.squeeze()
+            nx = d1.shape[0]
+            ny = d1.shape[1]
+            d1 = np.flipud(d1)
+            d1 = d1.reshape(ds)
+        tb.putcol('map',d1)
+        tb.close()
     print("Non-standard afactor=%g" % afactor)
-    otf0 = otf
-    otf1 = otf0 + '.tmp1'
-    immath(otf0,'evalexpr',otf1, 'IM0*%g' % abs(afactor))
-    if afactor < 0:
-        otf2 = otf + '.tmp2'
-        imtrans(otf1,otf2,'-0123')
-        cmd = 'rm -rf %s %s;mv %s %s' % (otf1,otf0,otf2,otf0)
-        os.system(cmd)
-    else:
-        cmd = 'rm -rf %s ;mv %s %s' % (otf1,otf0,otf1,otf0)
-        os.system(cmd)
-    print("CMD:%s" % cmd)
-    #
-    otf0 = otf + '.pbcor'
-    otf1 = otf0 + '.tmp1'
-    immath(otf0,'evalexpr',otf1, 'IM0*%g' % abs(afactor))
-    if afactor < 0:
-        otf2 = otf + '.tmp2'
-        imtrans(otf1,otf2,'-0123')
-        cmd = 'rm -rf %s %s;mv %s %s' % (otf1,otf0,otf2,otf0)
-        os.system(cmd)
-    else:
-        cmd = 'rm -rf %s ;mv %s %s' % (otf1,otf0,otf1,otf0)
-        os.system(cmd)
-    print("CMD:%s" % cmd)
+    myflip(otf,           afactor)
+    myflip(otf+'.pbcor',  afactor)
+
     
 
-#qac_plot(pdir+'/clean3/skymodel.smooth.image')
 qac_plot(smo)
 qac_plot(cdir+'/dirtymap.psf')
 qac_plot(cdir+'/dirtymap.pb')
