@@ -1,16 +1,19 @@
 #
-#  taken from snippet.txt
+#  SSC = Short Spacing Correction
+#
+#        taken from Faridani's "snippet.txt",
+#        adapted to work under QAC
+#
+#
+#
+# Last Update: 2017.09.30
+# - Fill free to use and modify this pipeline.
+# - Please consider citing the following publications
+#    1) https://arxiv.org/abs/1709.09365
+#    2) http://adsabs.harvard.edu/abs/2014A%26A...563A..99F
+# - Or contact Shahram Faridani (shahram.faridani@gmail.com)
 #
 
-"""
-Last Update: 2017.09.30
-- Fill free to use and modify this pipeline.
-- Please consider citing the following publications
-    1) https://arxiv.org/abs/1709.09365
-    2) http://adsabs.harvard.edu/abs/2014A%26A...563A..99F
-- Or contact Shahram Faridani (shahram.faridani@gmail.com)
-**********************************
-"""
 import math
 import os
 import sys
@@ -117,7 +120,7 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
 
     # Re-gridding the lowres Single-dish cube to that of the highres Interferometer cube
     if regrid:
-        print 'Regridding ... the default interpolation scheme is linear'
+        print('Regridding ... the default interpolation scheme is linear')
         imregrid(lr,hr,lr_reg, overwrite=True, asvelocity=True)
     else:
         lr_reg = lr
@@ -125,8 +128,8 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
 
     # Check if both data sets are in the same units
     if str(getBunit(lr_reg)) != str(getBunit(hr)):
-        print 'Bunits of low- and high-resolution data cubes are not identical!'
-        return
+        print('Bunits of low- and high-resolution data cubes are not identical!')
+        return None
 
     print ''
     print 'LR_Bmin: ' + str(getBmin(lr_reg))
@@ -136,9 +139,14 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
     print 'HR_Bmaj: ' + str(getBmaj(hr))
     print ''
 
-    kernel1 = math.sqrt(float(getBmaj(lr_reg))**2 - float(getBmaj(hr))**2)
-    kernel2 = math.sqrt(float(getBmin(lr_reg))**2 - float(getBmin(hr))**2)
-
+    kernel1 = float(getBmaj(lr_reg))**2 - float(getBmaj(hr))**2
+    kernel2 = float(getBmin(lr_reg))**2 - float(getBmin(hr))**2
+    if kernel1 < 0 or kernel2 < 0:
+        print('Lowres image seems to have smaller beam than Hightes image')
+        return None
+    kernel1 = math.sqrt(kernel1)
+    kernel2 = math.sqrt(kernel2)
+    
     print 'Kernel1: ' + str(kernel1)
     print 'Kernel2: ' + str(kernel2)
     print ''
@@ -182,12 +190,12 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
 
     if cleanup:
         for f in clean_up:
-            print "cleaning ",f
+            print("cleaning %s" % f)
             os.system('rm -rf %s' % f)
     else:
-        print "Preserving following files:",clean_up
+        print("Preserving following files:" + str(clean_up))
 
-    if True:
+    if False:
         qac_stats(lowres)
         qac_stats(highres)
         qac_stats(combined)
