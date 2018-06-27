@@ -25,7 +25,7 @@ model        = '../models/skymodel.fits'            # this has phasecenter with 
 phasecenter  = 'J2000 180.000000deg 40.000000deg'   # where we want this model to be on the sky, at VLA
 
 # pick the piece of the model to image, and at what pixel size
-# natively this model is 4096 pixels at 0.05" (or a 200" sky)
+# natively this model is 4096 pixels at 0.05" (or a 200" sky) - we use 100" sky to speed things up a bit
 imsize_m     = 4096
 pixel_m      = 0.025
 
@@ -190,6 +190,7 @@ if True:
         print("Model and Sky size match. Using nbin=%d sfac=%g to create a rebin image" % (nbin,sfac))
         imrebin(startmodel,cdir+'/skymodel.tmp',[nbin,nbin,1,1])
         immath(cdir+'/skymodel.tmp','evalexpr',cdir+'/skymodel.rebin.image','IM0*%g'%sfac)
+        qac_plot(cdir+'/skymodel.rebin.image')
     else:
         print("Model and Sky size do not match. %g != %g.  No rebinned skymodel" % (size_m,size_s))
     imsmooth(startmodel,'gaussian','%garcsec'%bmaj,'%garcsec'%bmaj,'0deg',outfile=pdir+'/skymodel.smooth.image')
@@ -255,6 +256,18 @@ for idx in range(len(niter)):
 qac_stats(smo)
 qac_stats(otf + '.pbcor')
 qac_stats(model)
+
+# two final difference maps
+cm1   = cdir+'/dirtymap%s.image.pbcor'   %            QAC.label(idx)
+fm1   = cdir+'/feather%s%s.image.pbcor'  %            (dishlabel,QAC.label(idx))
+dcm1  = cdir+'/dirtymap%s.diff.pbcor'    %            QAC.label(idx)
+dfm1  = cdir+'/feather%s%s.diff.pbcor'   %            (dishlabel,QAC.label(idx))
+qac_math(dcm1,smo,'-',cm1)
+qac_math(dfm1,smo,'-',fm1)
+if True:
+    qac_plot(dcm1)   # for kicks
+    qac_plot(dfm1)   # for flow diagram
+
 
 # make a bunch of plots
 idx0 = len(niter)-1    # index of last niter[] for plotting
