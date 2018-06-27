@@ -61,11 +61,14 @@ vla2_0:
 	tail -10 vla2.log
 
 vla2_1:
-	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 pixel_s=0.04 > vla2_1.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 > vla2_1.log 2>&1
 	# test targets:
 	#time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=1024 pixel_s=0.02 > vla2_1_b.log 2>&1      # _b
 	#time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=2048 pixel_s=0.01 > vla2_1_c.log 2>&1      # _c
 
+# test when clean converges, the default only does 500,1000,2000,4000
+vla2_1_long:
+	time casa --nogui -c vla2.py pdir='"vla2_1_long"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 niter='range(0,20000,1000)' > vla2_1_long.log 2>&1
 
 # series of single pointing mosaics with varying dish (0.006 probably better, 0.008 fails in fidelity)
 vla2_1_dish:
@@ -84,16 +87,16 @@ vla2_01:
 vla2_1_all: vla2_1_d vla2_1_e vla2_1_f vla2_1_g
 
 vla2_1_d:
-	time casa --nogui -c vla2.py pdir='"vla2_1_d"' cfg='[1]' pixel_m=0.005 imsize_s=512 pixel_s=0.04 pfactor=2.0 > vla2_1_d.log 2>&1 
+	time casa --nogui -c vla2.py pdir='"vla2_1_d"' cfg='[1]' pixel_m=0.005 imsize_s=512 pfactor=2.0 > vla2_1_d.log 2>&1 
 
 vla2_1_e:
-	time casa --nogui -c vla2.py pdir='"vla2_1_e"' cfg='[1]' pixel_m=0.005 imsize_s=512 pixel_s=0.04 pfactor=3.0 > vla2_1_e.log 2>&1 
+	time casa --nogui -c vla2.py pdir='"vla2_1_e"' cfg='[1]' pixel_m=0.005 imsize_s=512 pfactor=3.0 > vla2_1_e.log 2>&1 
 
 vla2_1_f:
-	time casa --nogui -c vla2.py pdir='"vla2_1_f"' cfg='[1]' pixel_m=0.005 imsize_s=512 pixel_s=0.04 pfactor=4.0 > vla2_1_f.log 2>&1 
+	time casa --nogui -c vla2.py pdir='"vla2_1_f"' cfg='[1]' pixel_m=0.005 imsize_s=512 pfactor=4.0 > vla2_1_f.log 2>&1 
 
 vla2_1_g:
-	time casa --nogui -c vla2.py pdir='"vla2_1_g"' cfg='[1]' pixel_m=0.005 imsize_s=512 pixel_s=0.04 pfactor=5.0 > vla2_1_g.log 2>&1 
+	time casa --nogui -c vla2.py pdir='"vla2_1_g"' cfg='[1]' pixel_m=0.005 imsize_s=512 pfactor=5.0 > vla2_1_g.log 2>&1 
 
 
 
@@ -116,6 +119,21 @@ vla2_01g_45:
 vla2_01g_45_flip:
 	time casa --nogui -c vla2.py pdir='"vla2_01g_45_flip"' cfg='[0,1]' dish=45 afactor=-1 niter='[0,1000]' > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_flip
+	tail -10 vla2.log
+
+vla2_01g_45_amp11:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_amp11"' cfg='[0,1]' dish=45 afactor=1.1 niter='[0,1000]' > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_amp11
+	tail -10 vla2.log
+
+vla2_01g_45_amp12:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_amp12"' cfg='[0,1]' dish=45 afactor=1.2 niter='[0,1000]' > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_amp12
+	tail -10 vla2.log
+
+vla2_01g_45_amp13:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_amp13"' cfg='[0,1]' dish=45 afactor=1.3 niter='[0,1000]' > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_amp13
 	tail -10 vla2.log
 
 vla2_01g_45_a:
@@ -174,6 +192,17 @@ vla2_1g_18:
 vla2_01g_18:
 	time casa --nogui -c vla2.py pdir='"vla2_01g_18"' cfg='[0,1]' dish=18 > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_18.ptg vla2_01g_18
+	tail -10 vla2.log
+
+# JT versions (about 30' per sim)
+vla2_01g_18_jt:
+	time casa --nogui -c vla2.py    pdir='"vla2_01g_18_jt"' cfg='[0,1]' pixel_m=0.05 imsize_s=1024 dish=18 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_18_jt.ptg vla2_01g_18_jt
+	tail -10 vla2.log
+
+vla2_01g_45_jt:
+	time casa --nogui -c vla2.py    pdir='"vla2_01g_45_jt"' cfg='[0,1]' pixel_m=0.05 imsize_s=1024 dish=45 > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45_jt.ptg vla2_01g_45_jt
 	tail -10 vla2.log
 
 # same, for default filled grid, with TP=100m
@@ -277,15 +306,61 @@ main_03:
 	     > main_03.log 2>&1
 
 # figures for talk?
-figures:
+figures:  figures_jt
 	mkdir -p figures
-	cp vla2_01g_45_d/vla2_01g_45_d.psd_3.png            figures/psd0.png
-	cp vla2_1g_18/clean3/dirtymap_6.image.pbcor.png     figures/map1.png
-	cp vla2_01g_18/clean3/dirtymap_6.image.pbcor.png    figures/map2.png
-	cp vla2_1g_45/clean3/feather45_6.image.pbcor.png    figures/map3.png
+	cp vla2_01g_45_d/vla2_01g_45_d.psd_3.png             figures/psd0.png
+	cp vla2_1g_18/clean3/dirtymap_6.image.pbcor.png      figures/map1.png
+	cp vla2_01g_18/clean3/dirtymap_6.image.pbcor.png     figures/map2.png
+	cp vla2_1g_45/clean3/feather45_6.image.pbcor.png     figures/map3.png
 	cp vla2_01g_45/clean3/feather45_6.image.pbcor.png    figures/map4.png
 	cp vla2_1g_18/clean3/feather18_6.image.pbcor.png     figures/map5.png
 	cp vla2_01g_18/clean3/feather18_6.image.pbcor.png    figures/map6.png
+	#
+	cp vla2_1_45/plot2.cmp.png                           figures/fig1.png
+	cp vla2_1_45/vla2_1_45.ngvla-core-revB.observe.png   figures/fig2.png
+	cp vla2_1_g/clean3/dirtymap_6.image.pbcor.png        figures/fig4.png
+	cp vla2_1_g/plot2.cmp.png                            figures/fig5.png
+
+figures_flow:
+	#  flow diagram
+	cp vla2_1g_45/clean3/skymodel.rebin.image.png             figures/flow1.png
+	cp vla2_1g_45/clean3/dirtymap.image.pbcor.png             figures/flow2.png
+	cp vla2_1g_45/clean3/dirtymap_6.image.pbcor.png           figures/flow3.png
+	cp vla2_1g_45/clean3/skymodel.smooth.image.png            figures/flow4.png
+	cp vla2_1g_45/clean3/feather45_6.image.pbcor.png          figures/flow5.png
+	cp vla2_1g_45/clean3/feather45_6.image.pbcor.diff.png     figures/flow6.png
+	cp vla2_1g_45/clean3/otf45.image.pbcor.png                figures/flow7.png
+
+
+figures_jt_old:
+	# Jordan's plots in the poster (need to replace this with the 0.05 pixel size, not the 0.025 which is the default)
+	cp vla2_01g_45/vla2_01g_45.ngvla-sba-revB.skymodel.png    figures/jt1a1.png
+	cp vla2_01g_45/vla2_01g_45.ngvla-sba-revB.observe.png     figures/jt1a2.png
+	cp vla2_01g_45/vla2_01g_45.ngvla-core-revB.skymodel.png   figures/jt1b1.png
+	cp vla2_01g_45/vla2_01g_45.ngvla-core-revB.observe.png    figures/jt1b2.png
+	cp vla2_01g_45/clean3/dirtymap_6.image.pbcor.png          figures/jt2.png
+	cp vla2_01g_18/clean3/otf18.image.pbcor.png          	  figures/jt3a.png
+	cp vla2_01g_45/clean3/otf45.image.pbcor.png          	  figures/jt3b.png
+	cp vla2_01g_45/clean3/skymodel.smooth.image.png           figures/jt4.png
+	cp vla2_01g_18/clean3/feather18_6.image.pbcor.png         figures/jt5a.png
+	cp vla2_01g_45/clean3/feather45_6.image.pbcor.png         figures/jt5b.png
+
+figures_jt:
+	# Jordan's plots in the poster (need to replace this with the 0.05 pixel size, not the 0.025 which is the default)
+	cp vla2_01g_45_jt/vla2_01g_45_jt.ngvla-sba-revB.skymodel.png    figures/jt1a1.png
+	cp vla2_01g_45_jt/vla2_01g_45_jt.ngvla-sba-revB.observe.png     figures/jt1a2.png
+	cp vla2_01g_45_jt/vla2_01g_45_jt.ngvla-core-revB.skymodel.png   figures/jt1b1.png
+	cp vla2_01g_45_jt/vla2_01g_45_jt.ngvla-core-revB.observe.png    figures/jt1b2.png
+	cp vla2_01g_45_jt/clean3/dirtymap_6.image.pbcor.png             figures/jt2.png
+	cp vla2_01g_18_jt/clean3/otf18.image.pbcor.png          	figures/jt3a.png
+	cp vla2_01g_45_jt/clean3/otf45.image.pbcor.png          	figures/jt3b.png
+	cp vla2_01g_45_jt/clean3/skymodel.smooth.image.png              figures/jt4.png
+	cp vla2_01g_18_jt/clean3/feather18_6.image.pbcor.png         	figures/jt5a.png
+	cp vla2_01g_45_jt/clean3/feather45_6.image.pbcor.png         	figures/jt5b.png
+	cp vla2_01g_18_jt/clean3/feather18_6.image.pbcor.fidelity.png   figures/jt8a.png
+	cp vla2_01g_45_jt/clean3/feather45_6.image.pbcor.fidelity.png   figures/jt8b.png
+	cp vla2_01g_18_jt/vla2_01g_18_jt.psd.png                        figures/jt7a.png
+	cp vla2_01g_45_jt/vla2_01g_45_jt.psd.png                        figures/jt7b.png
 
 # simple mapping scripts to start studying ngVLA project for students
 mapping0:
