@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 5-jun-2018")
+    print("qac: version 25-jun-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -827,7 +827,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
     
              #ant  cfg_name              #ant  cfg_name             extent    comments
              -----------------------     ------------------------   --------  --------
-    cfg = 0    19  ngvlaSA_2b_utm          19  ngvla-sba-revB       < 
+    cfg = 0    19  ngvlaSA_2b_utm          19  ngvla-sba-revB       < 60m     6m dishes
     cfg = 1   114  SWcore                  94  ngvla-core-revB      < 1km
     cfg = 2   214  SW214                  168  ngvla-plains-revB    < 30km
     cfg = 3   223  SWVLB                  214  ngvla-revB           < 1000km
@@ -2005,6 +2005,7 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
         absmodelim = model + '.absolute'      # @todo isn't the model alway positive?
     
     # procedure for calculating fidelity as given in task_simanalyze line 777
+    # See also eq.4 and 5 in Pety et al. (2001)
 
     # create the difference map (Model - Image)
     diff_ia = ia.imagecalc(diffim, "'%s' - '%s'"%(model, image), overwrite=True)
@@ -2015,9 +2016,8 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     # close and delete the difference map image tool
     diff_ia.close()    
     del diff_ia
-    # get the max difference or rms, not sure which is best
-    maxdiff = diffstats['medabsdevmed'][0]  # this is what taks_simanalyze uses rather than rms for some reason? change to 'rms' if you want rms
-    # maxdiff = diffstats['rms']
+    # get the max difference or rms (max diff is more robust, but is smaller by ~1.5 than rms for normal noise)
+    maxdiff = diffstats['medabsdevmed'][0]  # this is what taks_simanalyze uses rather than rms
     print("diffstats: %g rms=%g" % (maxdiff, maxdiff*1.4826))
     qac_stats(diffim)
 
@@ -2490,7 +2490,6 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         tb.open(image)
         d1 = tb.getcol("map").squeeze()
         tb.close()
-        print("SHAPE from casa: ",d1.shape)
         nx = d1.shape[0]
         ny = d1.shape[1]
         if len(d1.shape) == 2:
@@ -2865,11 +2864,15 @@ def qac_getkey(key):
 
 
 
-def qac_begin(label="QAC", log=True):
+def qac_begin(label="QAC", log=True, plot=False):
     """
     Every script should start with qac_begin() if you want to use the logger
-    and/or Dtime output for performance testing. You can safely leave this
+    and/or Dtime output for performance checking. You can safely leave this
     call out, or set log=False
+
+    label      prefix for Dtime labeling
+    log
+    plot       if True, force plots to show up interactively.
 
     See also qac_tag() and qac_end()
     """
@@ -2918,6 +2921,12 @@ class QAC(object):
         assertf
     
     """
+    @staticmethod
+    def plot(mode=None):
+        """  set plot mode to interactive or not
+        """
+        return True
+    
     @staticmethod
     def hasdt():
         if dir(QAC).count('dt') == 0: return False
