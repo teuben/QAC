@@ -180,7 +180,7 @@ qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting='natural', sta
     startmodel  str         starting model in Jy/pixel
     phasecenter str         mapping center
     t           bool        True means tclean. False means try and fallback to old clean()
-    **line                  user can provide any other (t)clean parametrs like restfreq or width here
+    **line                  user can provide any other (t)clean parameters like restfreq or width here
     
     """
 ```
