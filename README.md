@@ -19,6 +19,8 @@ file for ways how to install and use these functions in your
 [CASA](https://casa.nrao.edu/casa_obtaining.shtml)
 shell. 
 
+For documentation on the available QAC routines, see [docs/qac.md](docs/qac.md).
+
 ## Example
 
 Below a plot in which the top left panel is a selected channel from an

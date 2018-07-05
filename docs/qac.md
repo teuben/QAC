@@ -126,6 +126,29 @@ Since the ngVLA can have multiple configurations, you would need call this routi
 Setting different  weights based on dish sizes will need to be implemented. See also qac_alma(). See also
 [**simobserve()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_simobserve/about)
 
+#### input parameters:
+```python
+qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg=None, times=[0.3333333333333333, 1], fix=0, noise=0)
+    """
+    project     str         working directory for the simulation
+    skymodel    str         input image used as a model of the sky. can be CASA image or FITS file
+    imsize      int/float   desired skymodel image size in pixels i.e. 512, 1024, 2048, 4096, etc.
+    pixel       int/float   desired skymodel pixel size in arcsecs i.e. 1" per pixel, 0.5" per pixel,   etc.
+    phasecenter str         the central direction to place the sky model image, or "" or None to use    whatever is in the image already.
+    cfg         int         desired ngVLA configuration:
+                                        # ant   cfg_name            extent  comments
+                            cfg = 0     19      ngvla-sba-revB      < 60m   6m dishes
+                            cfg = 1     94      ngvla-core-revB     < 1km
+                            cfg = 2     214     ngvla-plains-revB   < 30km 
+                            cfg = 3     225     ngvla-gb-vlba-revB  <       [+ 5 25m VLBI dishes, +5 18m    at GBO]
+    ptg         str         filename of the pointing file which can be created by qac_im_ptg
+    times       list        observation lengths and integration intervals in a list of length 2. times[ 0] = total observation length in hours, times[1] = interval for each integration in seconds. e.g. 4  hour observation with 1 second integrations: times = [4, 1]
+    fix         int         if fix=1, removes pointing table. fix=0 is default
+    noise       int/float   desired simplenoise (in Jy) to add to the measurement set. default noise=0,     no noise added
+    
+    """
+```
+
 ### qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
 
 Just for kicks, we have way to create ALMA observations from diffent cycle's and cfg's. We automatically add
@@ -143,6 +166,24 @@ This is simply a front end to CASA's **tclean()**. Interesting note is that **ni
 e.g. niter=[0,1000,2000], thus creating a series of dirtymaps.
 
 [**tclean()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_tclean/about)
+
+#### input parameters:
+```python
+qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting='natural', startmodel='', phasecenter='', t=True, **line)
+    """
+    project     str         new working directly as it will be removed before starting
+    ms          str         input measurement set to be cleaned. can be single MS or a list
+    imsize      int/float   image size in pixels used in the imaging
+    pixel       int/float   pixel size in arcsecs used in the imaging
+    niter       int         iterations for cleaning. can be single number or a list. niter = 0, no  cleaning done, outputs dirty image
+    weighting   str         options for data weighting: natural, uniform, or robust
+    startmodel  str         starting model in Jy/pixel
+    phasecenter str         mapping center
+    t           bool        True means tclean. False means try and fallback to old clean()
+    **line                  user can provide any other (t)clean parameters like restfreq or width here
+    
+    """
+```
 
 ### qac_clean()
 
