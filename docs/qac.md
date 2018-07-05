@@ -232,3 +232,13 @@ to have some hysteresis problem with plot size.
 
 Create a plot showing flux as function of channel. Good to compare flux comparisons
 between various simulations and skymodels.
+
+### qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False)
+
+Calculates the fidelity between a model and observed image.
+
+
+alma memo 398 gives the mathematical definition of fidelity:
+fidelity(i,j) = abs( Model(i,j) ) / max( abs(Difference(i,j) ), 0.7 * rms(Difference) )
+
+
