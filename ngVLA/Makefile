@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 #  Example targets to run a set of ngVLA simulations
 #
@@ -67,8 +68,13 @@ vla2_1:
 	#time casa --nogui -c vla2.py pdir='"vla2_1"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=2048 pixel_s=0.01 > vla2_1_c.log 2>&1      # _c
 
 # test when clean converges, the default only does 500,1000,2000,4000
+# but these long ones showed the flux converges to different answers,and even diverges... why?
 vla2_1_long:
 	time casa --nogui -c vla2.py pdir='"vla2_1_long"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=512 niter='range(0,20000,1000)' > vla2_1_long.log 2>&1
+vla2_1_long_a:
+	time casa --nogui -c vla2.py pdir='"vla2_1_long_a"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=256 niter='range(0,20000,1000)' > vla2_1_long_a.log 2>&1
+vla2_1_long_b:
+	time casa --nogui -c vla2.py pdir='"vla2_1_long_b"' cfg='[1]' grid=0 pixel_m=0.005 imsize_s=256 niter='range(0,20000,1000)' scales='[0,5,10,20,40]' > vla2_1_long_b.log 2>&1
 
 # series of single pointing mosaics with varying dish (0.006 probably better, 0.008 fails in fidelity)
 vla2_1_dish:
@@ -156,25 +162,48 @@ vla2_01g_45_d:
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_d
 	tail -10 vla2.log
 
-# scales
+# weight factor between SBA and core
+
+vla2_01g_45_scales: vla2_01g_45_e vla2_01g_45_f vla2_01g_45_g vla2_01g_45_h vla2_01g_45_i vla2_01g_45_j vla2_01g_45_k vla2_01g_45_l
+
 vla2_01g_45_e:
-	time casa --nogui -c vla2.py pdir='"vla2_01g_45_e"' cfg='[0,1]' dish=45 wfactor=0.045 pixel_m=0.025 > vla2.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_e"' cfg='[0,1]' wfactor=0.5 > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_e
 	tail -10 vla2.log
 
 vla2_01g_45_f:
-	time casa --nogui -c vla2.py pdir='"vla2_01g_45_f"' cfg='[0,1]' dish=45 wfactor=0.1 pixel_m=0.025 > vla2.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_f"' cfg='[0,1]' wfactor=0.2 > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_f
 	tail -10 vla2.log
 
 vla2_01g_45_g:
-	time casa --nogui -c vla2.py pdir='"vla2_01g_45_g"' cfg='[0,1]' dish=45 wfactor=0.25 pixel_m=0.025 > vla2.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_g"' cfg='[0,1]' wfactor=0.1 > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_g
 	tail -10 vla2.log
 
 vla2_01g_45_h:
-	time casa --nogui -c vla2.py pdir='"vla2_01g_45_h"' cfg='[0,1]' dish=45 wfactor=0.01 pixel_m=0.025 > vla2.log 2>&1
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_h"' cfg='[0,1]' wfactor=0.05  > vla2.log 2>&1
 	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_h
+	tail -10 vla2.log
+
+vla2_01g_45_i:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_i"' cfg='[0,1]' wfactor=0.02  > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_i
+	tail -10 vla2.log
+
+vla2_01g_45_j:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_j"' cfg='[0,1]' wfactor=0.01  > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_j
+	tail -10 vla2.log
+
+vla2_01g_45_k:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_k"' cfg='[0,1]' wfactor=0.001  > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_k
+	tail -10 vla2.log
+
+vla2_01g_45_l:
+	time casa --nogui -c vla2.py pdir='"vla2_01g_45_l"' cfg='[0,1]' wfactor=0.0001  > vla2.log 2>&1
+	cp vla2.log vla2.py vla2_01g_45.ptg vla2_01g_45_l
 	tail -10 vla2.log
 
 
@@ -269,10 +298,16 @@ plains_0:
 	     > plains_0.log 2>&1
 
 plains_2:
-	time casa --nogui -c vla2.py 'cfg=[2]' pdir="'plains_2'" niter='[0,1000]' dish=45 \
+	time casa --nogui -c vla2.py 'cfg=[2]' pdir="'plains_2'" niter='[0]' grid=0 dish=45 \
 	     times='[8,1]' \
-	     pixel_m=0.01 imsize_s=2048 pixel_s=0.02 \
+	     pixel_m=0.005 imsize_s=2048 pixel_s=0.005 \
 	     > plains_2.log 2>&1
+
+plains_2a:
+	time casa --nogui -c vla2.py 'cfg=[2]' pdir="'plains_2a'" niter='[0]' grid=0 dish=45 \
+	     times='[8,1]' \
+	     pixel_m=0.005 imsize_s=2048 pixel_s=0.0025 \
+	     > plains_2a.log 2>&1
 
 plains_02:
 	time casa --nogui -c vla2.py 'cfg=[0,2]' pdir="'plains_02'" niter='[0,1000]' dish=45 \
@@ -295,9 +330,9 @@ main_0:
 	     > main_0.log 2>&1
 
 main_3:
-	time casa --nogui -c vla2.py 'cfg=[3]' pdir="'main_3'" niter='[0,1000]' dish=45 \
+	time casa --nogui -c vla2.py 'cfg=[3]' pdir="'main_3'" niter='[0]' dish=45 \
 	     times='[8,1]' \
-	     pixel_m=0.01 imsize_s=2048 pixel_s=0.02 \
+	     pixel_m=0.0001 imsize_s=2048 pixel_s=0.0001 \
 	     > main_3.log 2>&1
 
 main_03:
@@ -330,6 +365,7 @@ figures_flow:
 	cp vla2_1g_45/clean3/feather45_6.image.pbcor.png          figures/flow5.png
 	cp vla2_1g_45/clean3/feather45_6.image.pbcor.diff.png     figures/flow6.png
 	cp vla2_1g_45/clean3/otf45.image.pbcor.png                figures/flow7.png
+	cp vla2_1g_45/clean3/feather45_6.image.pbcor.fidelity.png figures/flow8.png
 
 
 figures_jt_old:
@@ -362,7 +398,22 @@ figures_jt:
 	cp vla2_01g_18_jt/vla2_01g_18_jt.psd.png                        figures/jt7a.png
 	cp vla2_01g_45_jt/vla2_01g_45_jt.psd.png                        figures/jt7b.png
 
+# jupiter test ;    courtesey: Chris Moeckel <chris.moeckel@berkeley.edu>
+
+jup1:
+	time casa --nogui -c vla2.py pdir="'jup1'" model="'Jupiter_scaled_structur_0.08as.fits'"  \
+		imsize_m=5040 pixel_m=0.03 imsize_s=512 \
+		cfg='[1]' grid=0   > jup1.log  2>&1 
+
+jup2:
+	time casa --nogui -c vla2.py pdir="'jup2'" model="'Jupiter_scaled_structur_0.08as.fits'"  \
+		imsize_m=5040 pixel_m=0.03 imsize_s=512 dish=100 \
+		cfg='[1]' grid=0   > jup2.log  2>&1 
+
+
 # simple mapping scripts to start studying ngVLA project for students
+# mapping0,1 have no short spacing added, they are fun to play with, but
+# (should) give lousy results for Fidelity and such
 mapping0:
 	time casa -c mapping0.py > mapping0.log 2>&1
 	tail -10 mapping0.log
@@ -370,3 +421,4 @@ mapping0:
 mapping1:
 	time casa -c mapping1.py > mapping1.log 2>&1
 	tail -10 mapping1.log
+
