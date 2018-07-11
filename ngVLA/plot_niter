@@ -1,0 +1,41 @@
+#! /bin/csh -f
+#
+# plot niter results:
+#
+# Usage:   plot_niter log=mapping1.log out=exp1.log
+#
+
+# set some default parameters
+set log = mapping1.log      # input log file
+set typ = dirtymap          # basename of TCLEAN data (typically:  dirtymap, feather45, feather18)
+set out = exp1.log          # output table
+
+# parse command line to override parameters
+foreach arg ($*)
+  set $arg
+end
+
+# checking before we can run
+if (! -e $log) then
+  echo File log=$log does not exist
+  exit 1
+endif
+
+# parse the $log file and produjce the $out file
+grep  -i niter $log | grep ^TCLEAN | awk -F= '{print $2}' | sed s/\)//                        > tmp.niter.tab
+grep QAC_STATS $log | grep $typ | grep -v pbcor | grep -v diff | awk '{print $3,$4,$5,$6,$7}' > tmp.flux1.tab
+grep QAC_STATS $log | grep $typ | grep pbcor                   | awk '{print $3,$4,$5,$6,$7}' > tmp.flux2.tab
+paste tmp.niter.tab tmp.flux1.tab tmp.flux2.tab                                               > $out
+set s0 = (`grep QAC_STATS $log | grep skymodel | grep -v smooth | awk '{print $3,$4,$5,$6,$7}'`)
+set s1 = (`grep QAC_STATS $log | grep skymodel | grep    smooth | awk '{print $3,$4,$5,$6,$7}'`)
+echo SKYMODEL PIXEL : $s0
+echo SKYMODEL SMOOTH: $s1
+
+if ($?NEMO) then
+  # NEMO plot flux 
+  tabplot $out xcol=1 ycol=6,11 line=1,1 color=2,3 ycoord=$s1[5] yapp=1/xs ymax="1.1*$s1[5]"
+  # NEMO plot max
+  tabplot $out xcol=1 ycol=5,10 line=1,1 color=2,3 ycoord=$s1[4] yapp=2/xs ymax="1.1*$s1[4]"
+else
+  echo No NEMO present. No NEMO plotting done. Output table out=$out produced
+endif
