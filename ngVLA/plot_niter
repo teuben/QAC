@@ -25,7 +25,10 @@ endif
 grep  -i niter $log | grep ^TCLEAN | awk -F= '{print $2}' | sed s/\)//                        > tmp.niter.tab
 grep QAC_STATS $log | grep $typ | grep -v pbcor | grep -v diff | awk '{print $3,$4,$5,$6,$7}' > tmp.flux1.tab
 grep QAC_STATS $log | grep $typ | grep pbcor                   | awk '{print $3,$4,$5,$6,$7}' > tmp.flux2.tab
-paste tmp.niter.tab tmp.flux1.tab tmp.flux2.tab                                               > $out
+echo "# Created with $0 log=$log typ=$typ out=$out"                                           > $out
+echo "#            image file                   image.pbcor file"                            >> $out
+echo "# Niter mean sigma min max flux      mean sigma min max flux"                          >> $out
+paste tmp.niter.tab tmp.flux1.tab tmp.flux2.tab                                              >> $out
 set s0 = (`grep QAC_STATS $log | grep skymodel | grep -v smooth | awk '{print $3,$4,$5,$6,$7}'`)
 set s1 = (`grep QAC_STATS $log | grep skymodel | grep    smooth | awk '{print $3,$4,$5,$6,$7}'`)
 echo SKYMODEL PIXEL : $s0

@@ -34,7 +34,7 @@ these at a much more significant level.
 
 ## Examples
 
-* https://casaguides.nrao.edu/index.php/M100_Band3_Combine_4.3  
+* https://casaguides.nrao.edu/index.php/M100_Band3_Combine_5.1
 * CASA feather: https://casa.nrao.edu/casadocs/latest/image-combination/feather
 * Kauffman's *Adding Zero-Spacing* workflow: https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa
 
