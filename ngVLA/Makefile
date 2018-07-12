@@ -422,3 +422,16 @@ mapping1:
 	time casa -c mapping1.py > mapping1.log 2>&1
 	tail -10 mapping1.log
 
+
+#
+
+exp1:
+	time casa -c mapping1.py niter='range(0,25000,500)' pdir='"exp1"' > exp1.log 2>&1
+	mv exp1.log exp1.ptg exp1
+	./plot_niter log=exp1/exp1.log out=exp1/exp1.tab
+
+exp2:
+	time casa -c mapping1.py niter=0 pdir='"exp2"' dec=60 > exp2.log 2>&1
+	mv exp2.log exp2.ptg exp2
+	./plot_niter log=exp2/exp2.log out=exp2/exp2.tab
+
