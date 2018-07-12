@@ -13,7 +13,7 @@
 
 pdir         = 'map1'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.000deg 40.000deg'         # where we want this model to be on the sky, at VLA
+dec          = 40.0                                 # Declination
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
@@ -52,6 +52,9 @@ for arg in qac_argv(sys.argv):
 
 # derived parameters
 ptg  = pdir + '.ptg'              # pointing mosaic for the ptg
+
+phasecenter  = 'J2000 180.000deg %.3fdeg' % dec    # decode the proper phasecenter
+
 
 if niter==0:   niter=[0]          # be nice to allow this, but below it does need to be a list
 
