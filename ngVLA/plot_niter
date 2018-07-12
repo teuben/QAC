@@ -36,11 +36,11 @@ echo SKYMODEL SMOOTH: $s1
 
 if ($?NEMO) then
   # NEMO plot flux 
-  tabplot $out xcol=1 ycol=6,11 xlab=Niter ylab=Flux line=1,1 color=2,3 ycoord=$s1[5] ymax="1.1*$s1[5]" yapp=1/xs 
-  tabplot $out xcol=1 ycol=6,11 xlab=Niter ylab=Flux line=1,1 color=2,3 ycoord=$s1[5] ymax="1.1*$s1[5]" yapp=$out.flux.ps/vcps 
+  tabplot $out xcol=1 ycol=6,11 xlab=Niter ylab=Flux line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[5] ymax="1.1*$s1[5]" yapp=1/xs 
+  tabplot $out xcol=1 ycol=6,11 xlab=Niter ylab=Flux line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[5] ymax="1.1*$s1[5]" yapp=$out.flux.ps/vcps 
   # NEMO plot max
-  tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 ycoord=$s1[4] ymax="1.1*$s1[4]" yapp=2/xs 
-  tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 ycoord=$s1[4] ymax="1.1*$s1[4]" yapp=$out.peak.ps/vcps 
+  tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[4] ymax="1.1*$s1[4]" yapp=2/xs 
+  tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[4] ymax="1.1*$s1[4]" yapp=$out.peak.ps/vcps 
 else
   echo No NEMO present. No NEMO plotting done. Output table out=$out produced
 endif
