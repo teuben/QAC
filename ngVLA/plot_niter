@@ -2,11 +2,11 @@
 #
 # plot niter results:
 #
-# Usage:   plot_niter log=mapping1.log out=exp1.log
+# Usage:   plot_niter log=exp1.log out=exp1.tab
 #
 
 # set some default parameters
-set log = mapping1.log      # input log file
+set log = exp1.log          # input log file
 set typ = dirtymap          # basename of TCLEAN data (typically:  dirtymap, feather45, feather18)
 set out = exp1.tab          # output table
 set tmp = tmp$$             # temporary name of file
