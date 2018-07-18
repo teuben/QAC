@@ -11,6 +11,8 @@
 #     100m PB is ~6"
 #
 
+# script input parameters that we can change via the command line
+
 pdir         = 'map1'                               # name of directory within which everything will reside
 model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
 dec          = 40.0                                 # Declination
@@ -45,6 +47,7 @@ grid         = 0
 # multi-scale? - Use [0] or None if you don't want it
 scales       = [0, 10, 30]
 
+# parse the command line to overwrite the input parameters
 # -- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):

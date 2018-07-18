@@ -2,13 +2,14 @@
 #
 # plot niter results:
 #
-# Usage:   plot_niter log=mapping1.log out=exp1.log
+# Usage:   plot_niter log=exp1.log out=exp1.tab
 #
 
 # set some default parameters
-set log = mapping1.log      # input log file
+set log = exp1.log          # input log file
 set typ = dirtymap          # basename of TCLEAN data (typically:  dirtymap, feather45, feather18)
 set out = exp1.tab          # output table
+set tmp = tmp$$             # temporary name of file
 
 # parse command line to override parameters
 foreach arg ($*)
@@ -22,25 +23,32 @@ if (! -e $log) then
 endif
 
 # parse the $log file and produjce the $out file
-grep  -i niter $log | grep ^TCLEAN | awk -F= '{print $2}' | sed s/\)//                        > tmp.niter.tab
-grep QAC_STATS $log | grep $typ | grep -v pbcor | grep -v diff | awk '{print $3,$4,$5,$6,$7}' > tmp.flux1.tab
-grep QAC_STATS $log | grep $typ | grep pbcor                   | awk '{print $3,$4,$5,$6,$7}' > tmp.flux2.tab
+grep  -i niter $log | grep ^TCLEAN | awk -F= '{print $2}' | sed s/\)//                        > $tmp.niter.tab
+grep QAC_STATS $log | grep $typ | grep -v pbcor | grep -v diff | awk '{print $3,$4,$5,$6,$7}' > $tmp.flux1.tab
+grep QAC_STATS $log | grep $typ | grep pbcor                   | awk '{print $3,$4,$5,$6,$7}' > $tmp.flux2.tab
 echo "# Created with $0 log=$log typ=$typ out=$out"                                           > $out
 echo "#            image file                   image.pbcor file"                            >> $out
 echo "# Niter mean sigma min max flux      mean sigma min max flux"                          >> $out
-paste tmp.niter.tab tmp.flux1.tab tmp.flux2.tab                                              >> $out
+paste $tmp.niter.tab $tmp.flux1.tab $tmp.flux2.tab                                           >> $out
 set s0 = (`grep QAC_STATS $log | grep skymodel | grep -v smooth | awk '{print $3,$4,$5,$6,$7}'`)
 set s1 = (`grep QAC_STATS $log | grep skymodel | grep    smooth | awk '{print $3,$4,$5,$6,$7}'`)
 echo SKYMODEL PIXEL : $s0
 echo SKYMODEL SMOOTH: $s1
 
+# if NEMO present, make a quick and dirty plot with NEMO's tabplot program
 if ($?NEMO) then
   # NEMO plot flux 
   tabplot $out xcol=1 ycol=6,11 xlab=Niter ylab=Flux line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[5] ymax="1.1*$s1[5]" yapp=1/xs 
   tabplot $out xcol=1 ycol=6,11 xlab=Niter ylab=Flux line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[5] ymax="1.1*$s1[5]" yapp=$out.flux.ps/vcps 
   # NEMO plot max
   tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[4] ymax="1.1*$s1[4]" yapp=2/xs 
-  tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[4] ymax="1.1*$s1[4]" yapp=$out.peak.ps/vcps 
+  tabplot $out xcol=1 ycol=5,10 xlab=Niter ylab=Peak line=1,1 color=2,3 point=2,0.1 ycoord=0,$s1[4] ymax="1.1*$s1[4]" yapp=$out.peak.ps/vcps
+  #
+  echo Plot Files $out.flux.ps and $out.peak.ps created
 else
   echo No NEMO present. No NEMO plotting done. Output table out=$out produced
 endif
+
+# cleanup
+echo Cleanup $tmp.*
+rm -rf $tmp.*
