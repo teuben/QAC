@@ -13,6 +13,8 @@ help:
 
 all:	$(TESTS)
 
+#  test targets
+
 test1:
 	time casa --nogui -c test1.py > test1.log 2>&1
 
@@ -408,12 +410,16 @@ jup1:
 jup2:
 	time casa --nogui -c vla2.py pdir="'jup2'" model="'Jupiter_scaled_structur_0.08as.fits'"  \
 		imsize_m=5040 pixel_m=0.03 imsize_s=512 dish=100 \
-		cfg='[1]' grid=0   > jup2.log  2>&1 
+		cfg='[1]' grid=0   > jup2.log  2>&1
 
 
 # simple mapping scripts to start studying ngVLA project for students
 # mapping0,1 have no short spacing added, they are fun to play with, but
 # (should) give lousy results for Fidelity and such
+#
+# Clone the targets mapping0, mapping1 to create your own experiments in your own Makefile (e.g. Sarafile)
+# so you can run them as:       make -f Sarafile exp1 exp2
+#
 mapping0:
 	time casa -c mapping0.py > mapping0.log 2>&1
 	tail -10 mapping0.log
@@ -422,16 +428,13 @@ mapping1:
 	time casa -c mapping1.py > mapping1.log 2>&1
 	tail -10 mapping1.log
 
+mapping2:
+	time casa -c mapping2.py > mapping2.log 2>&1
+	tail -10 mapping2.log
 
-#
-
-exp1:
-	time casa -c mapping1.py niter='range(0,25000,500)' pdir='"exp1"' > exp1.log 2>&1
-	mv exp1.log exp1.ptg exp1
-	./plot_niter log=exp1/exp1.log out=exp1/exp1.tab
-
-exp2:
-	time casa -c mapping1.py niter=0 pdir='"exp2"' dec=60 > exp2.log 2>&1
-	mv exp2.log exp2.ptg exp2
-	./plot_niter log=exp2/exp2.log out=exp2/exp2.tab
+# point source
+point1:
+	time casa --nogui -c mapping1.py pdir="'point1'" model="'../models/point.fits'" niter='range(0,10,1)' > point1.log 2&>1
+	mv point1.log point1
+	./plot_niter log=point1/point1.log out=point1/point1.tab
 
