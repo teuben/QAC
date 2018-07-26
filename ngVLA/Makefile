@@ -440,4 +440,4 @@ point1:
 
 # reproduce casa crash while running for galaxy model0
 gal_bug1:
-	time casa --nogui -c galaxy1.py pdir="'gal1'" model="'../models/model0.fits'"  > gal1.log 2&1>1
+	time casa --nogui -c galaxy1.py pdir="'gal1'" model="'../models/model0.fits'" imsize_m=192 pixel_m=0.5 imsize_s=192 pixel_s='-1' niter='[0,1000]' cfg='[0,1]' grid=15 dish=45 scales='[0]'  > gal1.log 2&1>1
