@@ -31,5 +31,5 @@ foreach log ($*)
 
 
   # report
-  echo $nptg $dish $f  $dir
+  echo "$nptg $dish $f    # $dir"
 end
