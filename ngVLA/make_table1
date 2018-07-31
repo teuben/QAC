@@ -1,0 +1,34 @@
+#! /bin/csh -f
+#
+# grab a table from a log file
+# the horrific things one needs to do to recover from an incomplete logfile
+#
+
+
+echo "# Nptg Dish F0 F1"
+echo "# created with $0"
+foreach log ($*)
+  # grab the Fidelities, there should be 2
+  set f = (`grep Fid $log | awk '{print $NF}'`)
+  if ($#f != 2) then
+    echo "# Warning, skipping logfile $log since it does not have 2 entries"
+    continue
+  endif
+
+
+  # grab the TP dish size
+  set dir = $log:h
+  if (-d $dir/clean2) then
+      set dish = (`echo exp30/clean2/feather*_2.image | awk -F/ '{print $NF}' | sed s/feather// | awk -F_ '{print $1}'`)
+  else
+      echo "# $dir $f  --no clean2--"
+      continue
+  endif
+
+  # grab the number of pointings
+  set nptg = (`grep ^Using $log | head -1 | awk '{print $2}'`)
+
+
+  # report
+  echo $nptg $dish $f  $dir
+end
