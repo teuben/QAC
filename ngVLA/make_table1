@@ -20,7 +20,7 @@ foreach log ($*)
   # grab the TP dish size
   set dir = $log:h
   if (-d $dir/clean2) then
-      set dish = (`echo exp30/clean2/feather*_2.image | awk -F/ '{print $NF}' | sed s/feather// | awk -F_ '{print $1}'`)
+      set dish = (`echo $dir/clean2/feather*_2.image | awk -F/ '{print $NF}' | sed s/feather// | awk -F_ '{print $1}'`)
   else
       echo "# $dir $f  --no clean2--"
       continue
