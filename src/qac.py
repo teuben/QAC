@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 25-jun-2018")
+    print("qac: version 1-aug-2018")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -41,6 +41,14 @@ def qac_log(message, verbose=True):
         print("")
         
     #-end of qac_log()
+
+def qac_par(par):
+    """ qac parameter logging, for eazier log parsing
+    """
+    print("QAC_PAR: %s %s" % (par,eval(par)))
+        
+    #-end of qac_par()
+    
 
 def qac_project(project):
     """ start a new project (directory) """
@@ -2526,7 +2534,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         
     #-end of qac_plot()
 
-def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgrid=[], ygrid=[], plot=None,  labels=True):
+def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgrid=[], ygrid=[], plot=None, labels=True, rescale=True):
     """
     Same as qac_plot() except it can plot a nrow x ncol grid of images and optionally add
     a column of difference images
@@ -2545,13 +2553,15 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     xgrid   List of strings for the X panels in the grid
     ygrid   List of strings for the Y panels in the grid
     plot    if given, plotfile name
-    labels  if true, then print image names in plot. if false, then don't
+    labels  if True, then print image names in plot. if false, then don't
+    rescale if True, it will attempt to rescale based on beam size difference (for Jy/beam type maps)
+            and thus it expects to find a beam
 
     0,0 is top left in row,col notation
 
     WARNINGS:
     - Since there is no WCS on the images, it is the responsibility of the caller to make sure each
-    image has the same physical scale, although the pixel scale does not matter.
+      image has the same physical scale, although the pixel scale does not matter.
     - box is applied to all images in the same way. This makes the previous item even more dangerous.
     
     
@@ -2559,6 +2569,11 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     @todo   we need a colorbar (or nrows's) somewhere on the right?
 
     """
+    def get_beam(image):
+        """ just need the beam area"""
+        (a,b) = qac_beam(image)
+        return a*b
+        
     qac_tag("plot_grid")
     #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
@@ -2567,10 +2582,15 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     print("QAC_PLOT_GRID",images)
     n = len(images)
     dim = range(n)
+    ppb = range(n)
     for i in range(n):
         tb.open(images[i])
         d1 = tb.getcol("map").squeeze()
         tb.close()
+        if rescale:
+            ppb[i] = get_beam(images[i])
+        else:
+            ppb[i] = 1.0
         nx = d1.shape[0]
         ny = d1.shape[1]
         if len(d1.shape) == 2:
@@ -2607,6 +2627,9 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
         if ncol != 2:
             print("Cannot compute diff with ncol=",ncol)
             return
+        else:
+            factor = ppb[0]/ppb[1]
+            print("Rescale factor 2nd column = %g" % factor)
         ncol = ncol + 1
     print("Nrow/col = ",nrow,ncol)
     # @todo check if enough xgrid[] and ygrid[]
@@ -2619,7 +2642,10 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
         for col in range(ncol):
             if diff != 0:
                 if col < 2:
-                    d[row][col] = dim[i]
+                    if col == 0:
+                        d[row][col] = dim[i]
+                    else:
+                        d[row][col] = dim[i]*factor
                     i=i+1
                 else:
                     d[row][col] = d[row][col-1] - d[row][col-2]
@@ -2628,7 +2654,14 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
             else:
                 d[row][col] = dim[i]
                 i=i+1
-
+            if row==0 and col==0:
+                dmin = d[row][col].min()
+                dmax = d[row][col].max()
+            else:
+                dmin = min(d[row][col].min(), dmin)
+                dmax = max(d[row][col].max(), dmax)
+    print("Data min/max",dmin,dmax)
+    
     fig = pl.figure()
     # pl.title(title)     # @todo global title needs work
     # fig.tight_layout()   # @todo this didn't work
