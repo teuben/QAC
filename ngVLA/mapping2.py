@@ -101,6 +101,12 @@ qac_begin(pdir,False)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
+# report parameters
+qac_par('grid')
+qac_par('dish')
+qac_par('dec')
+qac_par('pixel_m')
+qac_par('noise')
 
 # create a mosaic of pointings for the TP 'dish'
 p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,outfile=ptg)
@@ -320,7 +326,8 @@ for idx in range(len(niter)):
     dg.append(c[idx])
 
 try:
-    qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
+    #qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
+    qac_plot_grid([a2, a3, a4, a3],         diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
     qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
     qac_plot_grid(bg,                       diff=10, plot=pdir+'/plot3.cmp.png', labels=True)
     qac_plot_grid(cg,                       diff=10, plot=pdir+'/plot4.cmp.png', labels=True)
