@@ -73,6 +73,9 @@ noise        = 0.0
 # clean maps (set to 0 if you just want the ms file(s)
 clean        = 1
 
+# fidelity for all iterations? (default is last one only)
+fidall       = 0
+
 # -- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
@@ -358,11 +361,19 @@ except:
     print("qac_psf failed")
 
 qac_log("FIDELITY")
-try:
-    qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
-    qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
-except:
-    print("qac_fidelity failed")    
+if fidall == 0:
+    # do only the last iteration
+    try:
+        qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor' % QAC.label(idx0),              figure_mode=[1,2,3,4,5])
+        qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
+    except:
+        print("qac_fidelity failed")
+else:
+    # loop over all iterations
+    for idx in range(len(niter)-1):
+        f0 = qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor' % QAC.label(idx),              figure_mode=[1,2,3,4,5])
+        f1 = qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx)), figure_mode=[1,2,3,4,5])
+        qac_par(["idx","f0","f1"])
 
 qac_log("DONE!")
 qac_end()
