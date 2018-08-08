@@ -44,8 +44,17 @@ def qac_log(message, verbose=True):
 
 def qac_par(par):
     """ qac parameter logging, for eazier log parsing
+        can do a list of parameters, but this is discouraged
     """
-    print("QAC_PAR: %s %s" % (par,eval(par)))
+    if type(par) == type([]):
+        fmt = "QAC_PAR:"
+        for p in par:
+            fmt = fmt + " " + p
+        for p in par:
+            fmt = fmt + " " + str(eval(p))
+        print(fmt)
+    else:
+        print("QAC_PAR: %s %s" % (par,eval(par)))
         
     #-end of qac_par()
     
@@ -54,7 +63,10 @@ def qac_project(project):
     """ start a new project (directory) """
     print("QAC_PROJECT %s" % project)
     os.system('rm -rf %s ; mkdir -p %s' % (project,project))
-
+    
+    #-end of qac_par()
+    
+    
 def qac_tmp(prefix, tmpdir='.'):
     """ Create a temporary file in a tmpdir
 
@@ -75,6 +87,7 @@ def qac_tmp(prefix, tmpdir='.'):
     return name
 
     #-end of qac_tmp()
+    
 
 def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, outfile=None):
     """
@@ -845,6 +858,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
     fix        fix=1    removing pointing table
     noise      add this as simplenoise (in Jy) to the MS
 
+    @todo   if project has subdirectories in itself, this will fail - needs fix
     
     """
     qac_tag("vla")
@@ -1981,26 +1995,18 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     fidelityim:     string; name of the created fidelity map. defaults to None which outputs 'image.fidelity'
     absmodelim:     string; name of the created absolute value of the input skymodel. defaults to None with outputs 'model.absolute'
     interactive:    boolean; interactive plotting or not
+
+    Returns:        scalar fidelity
+   
     """
 
     # check if input images exist
     if not QAC.exists(model):
-        print('%s does not exist. Trying %s.image'%(model,model))
-        if QAC.exists(model + '.image'):
-            model = model + '.image'
-        else:
-            print('%s.image does not exist. Exiting...'%model)
-            return
+        print('%s.image does not exist. Exiting...'%model)
+        return 0
     elif not QAC.exists(image):
-        print('%s does not exist. Trying %s.image'%(image,image))
-        if QAC.exists(image +'.image'):
-            image = image + '.image'
-        else:
-            print('%s does not exist. Exiting...'%image)
-            return
-
-    print('%s will be used as the model.'%model)
-    print('%s will be used as the image.'%image)
+        print('%s does not exist. Exiting...'%image)
+        return 0
 
     # name the output files if user did not input names
     if diffim     == None:
@@ -2051,7 +2057,7 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
     scalarfidel = maxmodel / maxdiff
     # save as a float instead of an array of len 1
     scalarfidel = scalarfidel[0]
-    print('Fidelity range (max model / rms difference) = %s'%scalarfidel)
+    print('Fidelity range (max model / rms difference) = %s' % scalarfidel)
 
     # grab fidelity data
     tb.open(fidelityim)
@@ -2163,28 +2169,30 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
                 subprocess.call(cmd.split())
             except OSError as e:
                 print 'Montage failed: ', e
-                return
+                break
         elif mode == 3:
             cmd = 'montage -title %s %s %s -tile 2x1 -geometry +0+0 %s'% (project_name, diffim+'.png', fidelityim+'.png', image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
                 print 'Montage failed: ', e
-                return
+                break
         elif mode == 4:
             cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, diffim+'.png', diffim+'.hist.png', fidelityim+'.png',image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
                 print 'Montage failed: ', e
-                return
+                break
         elif mode == 5:
             cmd = 'montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', diffim+'.png', fidelityim+'.png',image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
                 print 'Montage failed: ', e
-                return
+                break
+            
+    return scalarfidel
 
   
 def qac_analyze(project, imagename, skymodel=None, niteridx=0):
@@ -2457,11 +2465,20 @@ def qac_math(outfile, infile1, oper, infile2):
 
     #-end of qac_math()
     
-def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None):
+def qac_plot(image, channel=0, box=None, range=None, mode=0, title=None, plot=None):
     """
+    image      CASA image (fits file should also work)
+    channel    which channel (0=first) in case it's a cube
+    box        None or [xmin,ymin,xmax,ymax]
+    range      None or [vmin,vmax]
+
     mode=0     pick the default
     mode=1     force casa
     mode=2     force numpy/imshow
+
+    title      if None, filename and channel 
+    plot       output if override the png from the image name
+    
     """
     qac_tag("plot")
 
@@ -2522,15 +2539,16 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title="", plot=None
         pl.colorbar()
         pl.ylabel('X')
         pl.xlabel('Y')
-        pl.title('%s chan=%d %s' % (image,channel,title))
+        if title == None:
+            pl.title('%s chan=%d' % (image,channel))
+        else:
+            pl.title('%s' % (title))
         print("QAC_PLOT: %s range=%s   %s" % (image,str(range),out))
         pl.savefig(out)
         if False:
             pl.show()
         else:
             pl.close('all') 
-           
-        
         
     #-end of qac_plot()
 
@@ -2704,7 +2722,6 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
     #-end of qac_plot_grid()
     
-
 def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
     """ Plotting min,max,rms as function of channel
     
@@ -2818,8 +2835,9 @@ def qac_psd(image, plot='qac_psd.png', fit=False, pixel_s=None):
     pl.title('Power Spectrum Density', size=18)
     pl.savefig(plot)
     pl.show()
+
+    #-end of qac_psd()
     
-        
 def qac_combine(project, TPdata, INTdata, **kwargs):
     """
     Wishful Function to combine total power and interferometry data.
