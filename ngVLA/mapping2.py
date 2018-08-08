@@ -73,6 +73,9 @@ noise        = 0.0
 # clean maps (set to 0 if you just want the ms file(s)
 clean        = 1
 
+# fidelity for all iterations? (default is last one only)
+fidall       = 0
+
 # -- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
@@ -101,6 +104,12 @@ qac_begin(pdir,False)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
+# report parameters
+qac_par('grid')
+qac_par('dish')
+qac_par('dec')
+qac_par('pixel_m')
+qac_par('noise')
 
 # create a mosaic of pointings for the TP 'dish'
 p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,outfile=ptg)
@@ -320,7 +329,8 @@ for idx in range(len(niter)):
     dg.append(c[idx])
 
 try:
-    qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
+    #qac_plot_grid([a1, a2, a2, a3, a4, a3], diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
+    qac_plot_grid([a2, a3, a4, a3],         diff=10, plot=pdir+'/plot1.cmp.png', labels=True)
     qac_plot_grid([a2, a5, a4, a6, a4, a5], diff=10, plot=pdir+'/plot2.cmp.png', labels=True)
     qac_plot_grid(bg,                       diff=10, plot=pdir+'/plot3.cmp.png', labels=True)
     qac_plot_grid(cg,                       diff=10, plot=pdir+'/plot4.cmp.png', labels=True)
@@ -351,11 +361,19 @@ except:
     print("qac_psf failed")
 
 qac_log("FIDELITY")
-try:
-    qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor'% QAC.label(idx0), figure_mode=[1,2,3,4,5])
-    qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor'% (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
-except:
-    print("qac_fidelity failed")    
+if fidall == 0:
+    # do only the last iteration
+    try:
+        qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor' % QAC.label(idx0),              figure_mode=[1,2,3,4,5])
+        qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx0)), figure_mode=[1,2,3,4,5])
+    except:
+        print("qac_fidelity failed")
+else:
+    # loop over all iterations
+    for idx in range(len(niter)-1):
+        f0 = qac_fidelity(smo,cdir+'/dirtymap%s.image.pbcor' % QAC.label(idx),              figure_mode=[1,2,3,4,5])
+        f1 = qac_fidelity(smo,cdir+'/feather%s%s.image.pbcor' % (dishlabel,QAC.label(idx)), figure_mode=[1,2,3,4,5])
+        qac_par(["idx","f0","f1"])
 
 qac_log("DONE!")
 qac_end()
