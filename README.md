@@ -60,6 +60,7 @@ within QAC.
 * CASA data weights and combination:  https://casaguides.nrao.edu/index.php/DataWeightsAndCombination
 * Nordic Tools SD2VIS: https://www.oso.nordic-alma.se/software-tools.php
 * Kauffman's *Adding Zero-Spacing* workflow: https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa
+* Radio Imaging Combination Analysis (RICA) : https://gitlab.com/mileslucas/rica
 * Papers of interest:
   * [Ekers and Rots]()
   * Braun and Walterbos  197x?
