@@ -57,6 +57,7 @@ t2v_arrays['ALMATP'] = apara.copy()
 
 # VIRTUAL TP2VIS array [for TP visibilities]
 use_vp = False
+#use_vp = True
 if use_vp:
     apara = {'observatory':'VIRTUAL',           # a primary beam of 
              'antList':    ['VIRTUAL'],         # virtual interferometer
@@ -246,7 +247,9 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     --------------------------
     There are 46 virtual antennas, each pointing will be visited 'nvgrp' times before
     going to the next field. Within each there are gaussian distributed 1035 visibilities
-    as we don't store auto-correlations. 
+    as we don't store auto-correlations. Antenna positions are arbitrary, we only randomize
+    the distribution in UV, and force a (0,0) for total flux. Thus UV is not derived from
+    the antpos.
     """
 
     # CASA bug fixes
@@ -326,7 +329,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Obtain pointing coordinates
     # ===========================
 
-    print "Using ptg = ",ptg,type(ptg)
+    print "Using ptg = ",ptg
     if type(ptg) == type([]):
         pointings = ptg                         # list of J2000/RA/DEC strings
     else:
@@ -470,8 +473,8 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
 
     # Fake antenna parms
     tel_antposx     = np.arange(nant)*1000.0    # fake ant positions
-    tel_antposy     = np.arange(nant)*1000.0
-    tel_antposz     = np.arange(nant)*1000.0
+    tel_antposy     = np.arange(nant)*1000.0    # the UV's will be random
+    tel_antposz     = np.arange(nant)*1000.0    # later one
     tel_antdiam     = [tel_dish] * nant         # all dish sizes the same
 
     # Numbers of vis per pointing and for all pointings
@@ -1300,7 +1303,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
     outfig    file name of output figure
     """
 
-    print "TP2VISPL: Plot MSs - takes time for large data"
+    print "TP2VISPL: Plot MSs - ignores flags"
 
     # Parameters
     # ----------
@@ -1500,6 +1503,8 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
         # Bottom-left: uvdist vs wtdens
         axbl.plot(uvbins,wtbins,c=color,drawstyle='steps-mid',label=ms)
 
+        wtbins = wtbins[wtbins>0]
+        print "weight min/max ",wtbins.min(),wtbins.max()
         del uu,vv,uvdist,wt,uvbins,wtbins
 
     # Plot frames, scales, etc
