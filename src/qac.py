@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 1-aug-2018")
+    print("qac: version 14-mar-2019")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -950,6 +950,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
     cycle 4:   ALMA cfg = 1..9    ACA ok
     cycle 5:   ALMA cfg = 1..10   ACA ok [same as 4]
     cycle 6:   ALMA cfg = 1..10   ACA ok [same as 5]
+    cycle 7:   ALMA cfg = 1..10   ACA ok [same as 6]
     """
     qac_tag("alma")
     
@@ -960,6 +961,9 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5
         visweightscale = (7.0/12.0)**2
     else:
         visweightscale = 1.0
+
+    if cycle == 7:
+        cycle = 6
         
     #                                                  os.getenv("CASAPATH").split()[0]+"/data/alma/simmos/"    
     data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
@@ -1417,7 +1421,7 @@ def qac_noise(noise, *args, **kwargs):
 
     #-end of qac_noise()
 
-def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, do_concat=False, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
 
@@ -1435,6 +1439,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     startmodel   Jy/pixel starting model [ignored in clean() mode]
     phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
     t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
+    do_concat    work around a bug in tclean ?  Default is true until this bug is fixed
     **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
 
     Note that clean() uses a different naming convention (e.g. .flux)
@@ -1528,7 +1533,12 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         for niter in niters:
             print("TCLEAN(niter=%d)" % niter)
             tclean_args['niter']      = niter
-            tclean(vis = vis1, imagename = outim1, **tclean_args)
+            if do_concat:
+                print("Using concat to bypass tclean bug - also using copypointing=False")
+                concat(vis=vis1,concatvis=outim1+'.tmpms',copypointing=False)
+                tclean(vis=outim1+'.tmpms', imagename = outim1, **tclean_args)                
+            else:
+                tclean(vis = vis1, imagename = outim1, **tclean_args)
             tclean_args['startmodel'] = ""
             tclean_args['restart']    = False
     else:
@@ -1556,7 +1566,12 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
                 outim2 = outim1
             else:
                 outim2 = "%s_%d" % (outim1,i)
-            clean(vis = vis1, imagename = outim2, **clean_args)
+            if do_concat:
+                print("Using concat to bypass clean bug - also using copypointing=False")
+                concat(vis=vis1,concatvis=outim2+'.tmpms',copypointing=False)
+                clean(vis=outim2+'.tmpms', imagename = outim2, **clean_args)
+            else:
+                clean(vis = vis1, imagename = outim2, **clean_args)
             clean_args['modelimage']    = ""
         # for niter
             
