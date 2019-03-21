@@ -108,8 +108,7 @@ def axinorder(image):
     order = ''
     for ax in ['Right Ascension','Declination','Stokes','Frequency']:
         if not ax in axname:
-            print "ERROR: No %s axis in %s" % (ax,image)
-            raise
+            raise Exception("ERROR: No %s axis in %s" % (ax,image))
         else:
             iax   = list(axname).index(ax)
             order = order + '%1d' % (iax)
@@ -355,13 +354,13 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     print "UVCUT:", uvcut/1000.0,"kLambda"
 
     # Generate uvdist^2 image [notice: x-axis runs vertically] 
-    du        = 1.0/(cb_nx*cb_dx)               # pixel sizes in u,v
-    dv        = 1.0/(cb_ny*cb_dy)
-    vgrd,ugrd = np.meshgrid(np.arange(cb_ny),np.arange(cb_nx)) # make grid
-    ugrd      = (ugrd-0.5*(cb_nx-1.0))*du       # [-uspan/2,+uspan/2]
-    vgrd      = (vgrd-0.5*(cb_ny-1.0))*dv       # [-vspan/2,+vspan/2]
+    frqx      = np.fft.fftfreq(cb_nx,cb_dx)     # frequency in x
+    frqy      = np.fft.fftfreq(cb_ny,cb_dy)     # frequency in y
+    vgrd,ugrd = np.meshgrid(frqy,frqx)          # make grid
     uvgrd2    = ugrd**2+vgrd**2                 # uvdist^2 image
-    uvgrd2    = np.fft.fftshift(uvgrd2)         # shift peak to corner
+
+    del frqx,frqy,vgrd,ugrd
+
 
     # Open TP cube
     ia.open(imagename)
@@ -1133,7 +1132,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
 ## TP2VISTWEAK: Adjust beam size after (t)clean
 ## ============================================
 
-def tp2vistweak(dirtyname, cleanname, pbcut=0.8):
+def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
     """
     Mismatch of dirty and clean/restore beam areas become noticable in
     TP+INT joint-deconvolution. This function compares the two beam areas,
@@ -1148,6 +1147,7 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8):
     cleanname   pre-name of clean images
     pbcut       cutoff level of .pb map to define area for flux integration
                 @todo clean() was using minpb=,   tclean() now uses pblimit=
+    mask        user specified mask
 
     dirty and clean images must have the same shape, and it is assumed that
     your version of tclean() has also create the corresponding .residual and
@@ -1160,6 +1160,7 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8):
     > tp2vistweak('dirty','clean')
     This will expect 'dirty.image' and 'clean.image' as well as
     'clean.pb' and 'clean.residual'
+    > tp2vistweak('dirty','clean',pbcut=0.9,mask='test_clean.image>10')
       
     """
 
@@ -1239,6 +1240,8 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8):
 
     # Sum over high PB area 
     maskarea  = '\'' + pbmap + '\'' + '>' + str(pbcut)           # CASA LEL friendly
+    if mask != '':
+        maskarea = maskarea + '&&' + mask
     sum_dirty = imstat(diff_dirty,mask=maskarea)['sum'][0]
     sum_clean = imstat(diff_clean,mask=maskarea)['sum'][0]
     sum_dirty = sum_dirty * np.abs(dx_dirty*dy_dirty) / (cbm*bmaj_dirty*bmin_dirty)
