@@ -15,6 +15,32 @@ CASA  = casa
 help:
 	@echo tests = $(TESTS)
 
+#  benchmark data are in the QAC/data directory
+DATA1   = M100_TP_CO_cube.bl.image
+DATA2   = M100_aver_7.ms
+DATA3   = M100_aver_12.ms
+DATA4   = skymodel.fits
+
+data:	data1 data2 data3 data4
+
+data1:	$(DATA1)
+
+data2:  $(DATA2)
+
+data3:  $(DATA3)
+
+data4:  $(DATA4)
+
+$(DATA1):
+	ln -s ../data/$@
+$(DATA2):
+	ln -s ../data/$@
+$(DATA3):
+	ln -s ../data/$@
+$(DATA4):
+	ln -s ../data/$@
+
+
 .PHONY: $(TESTS)
 
 bench:
@@ -236,10 +262,10 @@ sky2_uvmin1:
 pjt:
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1a"' minuv=1 > sky2_uvmin1a.log grid=25 >&1
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1b"' minuv=1 > sky2_uvmin1b.log grid=20 >&1
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1c"'  minuv=1 > sky2_uvmin1c.log niter='range(0,5000,500)' 2>&1
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1d"'  minuv=1 > sky2_uvmin1d.log grid=15 dish=24 maxuv=24 niter='range(0,5000,500)' 2>&1
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1e"'  minuv=2 > sky2_uvmin1e.log grid=15 dish=24 maxuv=24 niter='range(0,5000,500)' 2>&1
-	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1f"'  minuv=1 > sky2_uvmin1f.log grid=22 dish=18 maxuv=18 niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1c"' minuv=1 > sky2_uvmin1c.log niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1d"' minuv=1 > sky2_uvmin1d.log grid=15 dish=24 maxuv=24 niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1e"' minuv=2 > sky2_uvmin1e.log grid=15 dish=24 maxuv=24 niter='range(0,5000,500)' 2>&1
+	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin1f"' minuv=1 > sky2_uvmin1f.log grid=22 dish=18 maxuv=18 niter='range(0,5000,500)' 2>&1
 
 sky2_uvmin2:
 	time $(CASA) --nogui -c sky2.py pdir='"sky2_uvmin2"' minuv=2 > sky2_uvmin2.log 2>&1
