@@ -429,8 +429,12 @@ mapping1:
 	tail -10 mapping1.log
 
 mapping2:
-	time casa -c mapping2.py > mapping2.log 2>&1
+	time casa -c mapping2.py grid=15 pixel_m=0.01 clean=0  > mapping2.log 2>&1
 	tail -10 mapping2.log
+
+mapping3:
+	time casa -c mapping3.py > mapping3.log 2>&1
+	tail -10 mapping3.log
 
 # point source
 point1:
