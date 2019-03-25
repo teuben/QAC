@@ -13,6 +13,7 @@
 #    2) http://adsabs.harvard.edu/abs/2014A%26A...563A..99F
 # - Or contact Shahram Faridani (shahram.faridani@gmail.com)
 #
+#  @todo      use PSF instead of beam header to compute? -> no, highres image has zero flux in the PSF
 
 import math
 import os
