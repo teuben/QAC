@@ -24,7 +24,7 @@ Ignore the request to run "make install_casa", we will do this manually in the n
 Assuming we don't have CASA yet, we will install CASA using a script available in QAC
 
       cd casa
-      ./install_casa https://casa.nrao.edu/download/distro/linux/release/el6/casa-release-5.3.0-143.el6.tar.gz
+      ./install_casa https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.4.1-32.el7.tar.gz
       echo $SHELL
 
 if you see the bash shell being reported, use
