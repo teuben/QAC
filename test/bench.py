@@ -24,9 +24,10 @@
 #
 #  x270:    740.188u 19.676s 5:35.37 226.5%	0+0k 667504+3014296io 1124pf+0w      i7-3630QM CPU @ 2.40GHz
 #
-#  t280:    449.42   18.94   2:41.23                                                 i7-8550U CPU @ 1.80GHz
+#  t480:    449.42   18.94   2:41.23                                                 i7-8550U CPU @ 1.80GHz
 #           443.93   18.37   1:43.66
-#           
+#           911.93   19.32   2:40.82 579%CPU        mar-13
+#           929.81   19.20   2:44.03                pre mar-21
 #
 #
 #  t530:    738.632u 17.956s 5:05.12 247.9%	0+0k 96792+2968744io   578pf+0w      i7-3630QM CPU @ 2.40GHz
@@ -126,7 +127,10 @@ if clean1 == 1:
 if clean == 1:
     print "Continuing benchmark with clean=1"
     #qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,**line)
-    qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=True,**line)    
+    #    for 5.3.0-112 and above the do_concat=False will now fail
+    #qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=False,**line)
+    qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=True,**line)
+    # Jin says we can skip the concat again.... but it's not true
     if tweak == 1:
         print "Continuing benchmark with tweak=1"
         # loop over all 2nd and higher iterations and tweak them 
@@ -151,9 +155,10 @@ if clean == 1:
 r1 = "0.0038324075245612802 0.021439737328652425 -0.04851343110203743 0.41929441690444946 383.60319947466479"
 r2 = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624 0.41929447650909424 383.60327838373536"   # 5.1.2
 r3 = "0.0038308492108101041 0.021409590356922827 -0.048478055745363235 0.41353103518486023 383.4472095101716"    # clark instead of hogbom
+r4 = "0.0038472646829610813 0.021499494640955678 -0.047635149210691452 0.4208904504776001 384.45247992991648"    # 5.4
 
 qac_stats(test+'/clean/tpint.image')
-qac_stats(test+'/clean/tpint_2.tweak.image', r3)
+qac_stats(test+'/clean/tpint_2.tweak.image', r4)
 
 # final plot if enough data was accumulated for this comparison
 if plot == 1:
