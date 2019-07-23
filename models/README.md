@@ -40,3 +40,8 @@ For the ngVLA modeling we will however inject noise using CASA's simobserve, not
 The script "mkfield" is a simple python script by which some gaussian disks can be added to a field.
 This will be useful for wide field imaging, and in particular for high dynamic range images.
 
+## turbostat
+
+See https://arxiv.org/abs/1904.10484 and https://github.com/Astroua/TurbuStat and https://turbustat.readthedocs.io
+
+
