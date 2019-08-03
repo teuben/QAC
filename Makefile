@@ -3,17 +3,17 @@
 #    including a CASA install if it's not present yet
 #
 
-.PHONY:  tp2vis distribute install test casa
+.PHONY:  tp2vis.git distribute.git install test casa
 
 
 # should just be an ID, e.g. 0.5 or 0.5a, or 0.5.1, in one single line.
 VERSION = `cat VERSION`
 
 # the master git repo
-URL1     = https://github.com/kodajn/tp2vis
+URL1     = https://github.com/kodajn/tp2vis.git
 
 # the distribute git repo
-URL2     = https://github.com/tp2vis/distribute
+URL2     = https://github.com/tp2vis/distribute.git
 
 # data url
 URL3     = http://admit.astro.umd.edu/~teuben/QAC/
@@ -79,21 +79,26 @@ data:
 	(cd data; wget $(URL3)/skymodel.ptg)
 	(cd data; wget $(URL3)/qac_bench.tar.gz -O - | tar zxf -)
 
-# public release is in a directory 'distribute', go figure
-tp2vis:
-	if [ ! -d distribute ]; then \
+# the public release is in a directory 'distribute', or 'distribute.git'
+# do not modify this, it gets updated from the developers release 
+tp2vis: distribute.git
+
+distribute.git:
+	if [ ! -d distribute.git ]; then \
 	  git clone $(URL2) ;\
 	else \
-	  (cd distribute; git status; git pull)\
+	  (cd distribute.git; git status; git pull)\
 	fi
+	@echo Done with the public release distribute.git
 
-# private developers version is in a directory 'tp2vis'
-dev:
-	if [ ! -d tp2vis ]; then \
+# private developers version is in a directory 'tp2vis', or 'tp2vis.git'
+dev: tp2vis.git
+	if [ ! -d tp2vis.git ]; then \
 	  git clone $(URL1) ;\
 	else \
-	  (cd tp2vis; git status; git pull)\
+	  (cd tp2vis.git; git status; git pull)\
 	fi
+	@echo Done with the developer release tp2vis.git
 
 clean:
 	rm -rf distribute tp2vis
