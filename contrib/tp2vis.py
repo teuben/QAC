@@ -17,6 +17,10 @@
 #    arangeax()
 #    guessarray()
 #
+# Todo:
+#    Schwab
+#    bug028
+#    deconv check units
 
 import os, sys, shutil, re, time, datetime
 import numpy as np
@@ -90,7 +94,7 @@ dish3 = None
 ## =================
     
 def tp2vis_version():
-    print "15-may-2018 PJT"
+    print "tp2vis: 4-aug-2019 PJT"
 
    
 def axinorder(image):
@@ -453,13 +457,14 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
 
     # Observatory
     if use_vp:
+        obs_obsname     = 'WSRT'      # picking this results in no data in pure tp2vis even
         obs_obsname     = 'ALMA'
         obs_obspos      = me.observatory(obs_obsname)          # coordinate
         obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory        
     else:
         obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory
         obs_obspos      = me.observatory(obs_obsname)          # coordinate
-        
+
     # Telescopes
     tel_pbFWHM      = t2v_arrays['VIRTUAL']['fwhm100']*(100./spw_fstart) # asec
     tel_mounttype   = 'alt-az'
@@ -467,7 +472,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     tel_antname     = t2v_arrays['VIRTUAL']['antList'][0]
     tel_dish        = t2v_arrays['VIRTUAL']['dish']
     if dish3 != None:
-        print "WARNING: using non-standard tel_dish = %g " % dish3
+        print "WARNING: using non-standard tel_dish = %g for antname = " % (dish3,tel_antname)
         tel_dish = dish3
 
     # Fake antenna parms
@@ -523,7 +528,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     else:
         vptable = None
 
-    print obs_obsname, obs_obspos, tel_antname, tel_mounttype, tel_coordsystem, tel_antdiam
+    print "OBS/TEL:",obs_obsname, obs_obspos, tel_antname, tel_mounttype, tel_coordsystem, tel_antdiam
 
     sm.setconfig(telescopename=obs_obsname,
                 referencelocation=obs_obspos,
