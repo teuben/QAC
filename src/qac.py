@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 14-mar-2019")
+    print("qac: version 5-aug-2019")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -60,11 +60,15 @@ def qac_par(par):
     
 
 def qac_project(project):
-    """ start a new project (directory) """
+    """
+        start a new project in given project directory name
+
+        project:      directory name. it will be created (and removed if present)
+    """
     print("QAC_PROJECT %s" % project)
     os.system('rm -rf %s ; mkdir -p %s' % (project,project))
     
-    #-end of qac_par()
+    #-end of qac_project()
     
     
 def qac_tmp(prefix, tmpdir='.'):
@@ -369,10 +373,10 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
            with this in terms of loosing a first or last channel
 
     """
-    def casa_version_check(version='5.0.0'):
+    def casa_version_check(version='5.5.0'):
         cur = casa['build']['version'].split('.')
         req = version.split('.')
-        print("qac: %s %s" % (cur,req))
+        print("casa_version_check: %s %s" % (cur,req))
         if cur[0] >= req[0]: return
         if cur[1] >= req[1]: return
         if cur[2] >= req[2]: return
@@ -426,13 +430,13 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         cwa = [casaworkaround]
     print("tp2vischeck: casaworkaround: " + str(cwa))
 
-    casa_version_check('5.0.0')
+    casa_version_check('5.6.0')
 
     # check sign of freq axis
     sign1 = ms_sign(ms)     # 0, 1 or -1
     sign2 = im_sign(tp)     # 0, 1 or -1
     if sign1*sign2 != 0 and sign1 != sign2:
-        print("Adding workaround 11 for flip freq axis")
+        print("Adding workaround 11 for flip FREQ axis")
         cwa.append(11)
 
     # check if we have a fits file
@@ -446,11 +450,13 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     if 3 in cwa:
         if tpout != None:
             importfits(tp,tpout,overwrite=True)
-            print("Converted fits to casa image " + tpout)
-            print("Rerun tp2vischeck() to ensure no more fixed needed")
-            return
+            print("Converted fits to casa image %s" % tpout)
+            tp = tpout
+            #print("Rerun tp2vischeck() to ensure no more fixed needed")
+            #return
         else:
             print("No output file given, expect things to fail now")
+    print("PJT cwa",cwa)
 
     if 1 in cwa or 11 in cwa:
         #  1: ensure we have a RA-DEC-POL-FREQ cube
@@ -1129,6 +1135,44 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
 
     #-end of qac_int_generic()
 
+def qac_vp(my_vp=False, my_schwab=False):
+    """
+        Some behind the scenes tricks for QAC to enable features in TP2VIS:
+    
+        my_vp:      Set usage of VP.
+        my_schwab:  Use SchwabSpheroidal for TP deconvolution
+    """
+    if not my_vp: return
+    
+    global use_vp
+    use_vp = my_vp
+
+    global use_schwab
+    use_schwab = my_schwab
+    
+    # the following code for adding a VP is copied from tp2vis.py
+    
+    apara = {'observatory':'VIRTUAL',           # a primary beam of 
+             'antList':    ['VIRTUAL'],         # virtual interferometer
+             'dish':        12.0,               # should be defined here.
+             'fwhm100':     65.2,
+             'maxRad':     150.0}
+    vp.reset()                                  # reset vpmanager
+    vp.setpbgauss(telescope='OTHER',
+                  othertelescope=apara['antList'][0],# set PB of VI in vpmanager
+                  halfwidth=str(apara['fwhm100'])+'arcsec',
+                  maxrad=str(apara['maxRad'])+'arcsec',
+                  reffreq='100.0GHz',
+                  dopb=True)
+    # antnames='DV00' etc.
+    vp.summarizevps()
+
+    if 'VIRTUAL' in t2v_arrays:
+        print("Warning: overwriting current virtual observatory %s" % t2v_arrays['VIRTUAL']['observatory'])
+    t2v_arrays['VIRTUAL']    = apara.copy()
+    print("QAC_VP: new VIRTUAL")
+    
+
 def qac_tpdish(name, size=None):
     """
     A patch to work with dishes that are not 12m (currently hardcoded in tp2vis.py)
@@ -1195,8 +1239,8 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
     # assert input files
     QAC.assertf(imagename)
     
-    # clean up any existing old project
-    qac_project(project)
+    if dish3 != None:
+        print("Warning: dish3=%g" % dish3)
 
     if pixel != None:
         # make a new model
@@ -1310,18 +1354,29 @@ def qac_sd_vis(**kwargs):
 
     #-end of qac_sd_vis()
         
-def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name="dirtymap"):
+def qac_tp_otf(project, skymodel, dish, label="", freq=None, factor=1.13, template=None, name="dirtymap"):
     """
     helper function to create on-the-fly total power map
-    
+
+    See also qac_smooth()
+
+    project:    working directory of the cleaned image
+    skymodel:   must be the model gridded on the cleaned image, not the original???
     dish:       dish diameter in meters - no default
-    freq:       frequency in GHz, if you want to override the image header value 
+    label:
+    freq:       frequency, in GHz, if you want to override the image header value
+                The input FITS skymodel will be checked for axes 3 and 4.
+    factor:     The beam is calculated as factor * lambda / dish. For ALMA models
+                factor=1.13, which is the default. 1.22 is the factor you often
+                read in textbooks.
     template:   dirty image --> must come from tclean so there is both *.image and *.pb
-    
+    name:       dirty image name in the project directory
+
+   
     @todo make use of the template for regrid
     @todo come up with a good way to handle the directory structure for the project input 
     
-    E.g. for 45 m single dish configuration:
+    E.g. for 45 m single dish:
 
     qac_tp_otf('test10/clean1', 'skymodel.im', dish=45)
     """
@@ -1339,17 +1394,23 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, template=None, name
 
     # check if a freq was specificed in the input
     if freq == None:
-        # if none, then pull out frequency from skymodel header
-        # @todo come up with a way to check if we are actually grabbing the frequency from the header. it's not always crval3
+        # @todo come up with a more reliable way to get the frequency from the header
         h0 = imhead(skymodel,mode='list')
-        freq = h0['crval4'] # hertz
+        print(h0)
+        if h0['ctype3'] == 'Frequency':
+            freq = h0['crval3']
+        elif h0['ctype4'] == 'Frequency':
+            freq = h0['crval4']
+        else:
+            print("Need frequency specified")
+            return None
     else:
         freq = freq * 1.0e9
 
     # calculate beam size in arcsecs
     # 1.13 is the ALMA nominal value for their dishes (values range from 1.02 to 1.22)
     beam = 1.13 * cms / (freq * dish) * apr
-    print("TP_OTF: %g %g %g %s" % (dish, freq/1e9, beam, out_image))
+    print("TP_OTF: %g m %g GHz %g arcsec  %s" % (dish, freq/1e9, beam, out_image))
 
     # convolve skymodel with beam. assumes circular beam
     imsmooth(imagename=skymodel,
@@ -1460,8 +1521,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     vp.reset()
     nvp = 0
     for msi in vis1:
-        if QAC.exists(msi+'/QAC.vp'):
-            vp.loadfromtable(msi+'/QAC.vp')
+        if QAC.exists(msi+'/TP2VISVP'):
+            vp.loadfromtable(msi+'/TP2VISVP')
             nvp = nvp + 1
         try:
             tb.open(msi + '/SPECTRAL_WINDOW')
@@ -1474,7 +1535,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
         except:
             print("Bypassing some error displaying freq ranges")
     if nvp > 0:
-        vptable = project + '/QAC.vp'
+        vptable = project + '/TP2VISVP'
         vp.saveastable(vptable)
     else:
         vptable = None
@@ -1917,9 +1978,12 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
     including a regridding since model and sky pixels are not always the same
 
+    See also qac_tp_otf()
+
     project    typical  "sky3/clean2", somewhere where tclean has run
     skymodel   a skymodel
     name       basename, typically feather, or dirtymap, or (tp)int.   Default is feather
+               Needed to find the input image to work from
     label      only used with OTF beams
     niteridx   0,1,2,.... if a niter[] was used so it can be inherited in the basename
     do_flux    if True, do the comparison in flux flat (image.pbcor) space, else noise flat (.image)
