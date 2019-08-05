@@ -62,10 +62,13 @@ install_casa:
 	@tail -1 $(PWD)/casa/casa_start.csh
 	@echo "Add one of those lines to your .bashrc or .cshrc file or cut-and-paste it into your current shell"
 
+install_au:
+	(cd ~/.casa; curl ftp://ftp.cv.nrao.edu/pub/casaguides/analysis_scripts.tar | tar xf -)
+	@echo Ensure your sys.path.append in your ~/.casa/init.py includes analysis_scripts
+	@echo 'As well as "import analysisUtils as au"'
+
 install_astropy:
 	@casa -c contrib/install_astropy.py
-
-
 
 test:
 	@echo Simple test, needs no data, test if your installation is good.
