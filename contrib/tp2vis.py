@@ -17,13 +17,10 @@
 #    arangeax()
 #    guessarray()
 #
-# Todo:
-#    Schwab
-#    bug028
-#    deconv check units
 
 import os, sys, shutil, re, time, datetime
 import numpy as np
+import scipy as sp
 import matplotlib.pyplot as plt
 import pyfits
 from scipy.ndimage import distance_transform_edt
@@ -55,13 +52,14 @@ t2v_arrays['ALMA07'] = apara.copy()
 apara = {'observatory':'ALMA',
          'antList':    ['TP'],
          'dish':        12.0,
-         'fwhm100':     65.2,                   # fwhm@100GHz [56.5"@115.2GHz]
+#        'fwhm100':     65.2,                   # fwhm@100GHz [56.5"@115.2GHz]
+         'fwhm100':     58.3,                   # fwhm@100GHz [before SF conv]
          'maxRad':     999.0}
 t2v_arrays['ALMATP'] = apara.copy()
 
 # VIRTUAL TP2VIS array [for TP visibilities]
+# see also qac_vp()
 use_vp = False
-#use_vp = True
 if use_vp:
     apara = {'observatory':'VIRTUAL',           # a primary beam of 
              'antList':    ['VIRTUAL'],         # virtual interferometer
@@ -88,13 +86,16 @@ t2v_arrays['VIRTUAL']    = apara.copy()
 # softer dish sampling instead of the VIRTUAL dish size
 dish3 = None
 
+# see also qac_vp()
+use_schwab = False
+
 
 ## =================
 ## Support functions
 ## =================
     
 def tp2vis_version():
-    print "tp2vis: 4-aug-2019 PJT"
+    print "tp2vis: 5-aug-2019 PJT"
 
    
 def axinorder(image):
@@ -214,6 +215,38 @@ def guessarray(msfile):
 
     return mostlikelyarray
 
+def schwab_spheroidal(alpha,m,rscale,dist2d):
+    """ return 2d kernel image of schwab's spheroidal function (Schwab 1984)
+    
+    CASA's sdimaging() uses the tabulated approx. of spheroidal funciton
+    in Schwab 1984. The schwab's definition is different from the common
+    definition as used in scipy. Within Schwab, the defition of
+    key parameters (e.g., alpha, m) are not consistent in text and in table.
+    Using the definition in the Schwab's table, the Schwab's spheroidal
+    function is related to the scipy's as:
+    
+    Schwab(alpha,m,eta) =
+      (1-eta^2)^((2-alpha)/2) *  scipy.special.pro_ang1(0, 0, m*pi/2, eta)[0]
+
+    This means in the scipy's notation, n=0, alpha=m=0, and gamma=m*pi/2.
+    In our definition, dist2d is eta, and the new parameter rscale to 
+    Note again that this alpha and m are different from Schwab's.
+    
+    Required:
+    ---------
+    alpha       Schwab's parameter alpha
+    m           Schwab's parameter m
+    rscale      size of kernel - it becomes zero at pixel=rscale
+    dist2d      2d image that contains distances from center
+    """
+    gamma        = m * np.pi / 2.0
+    schwab       = (1.0-(dist2d/rscale)**2)**((2.0-alpha)/2.0) * \
+                       sp.special.pro_ang1(0,0,gamma,(dist2d/rscale))[0]
+    bad          = np.isnan(schwab)
+    schwab[bad]  = 0.0
+    schwab       = schwab / np.sum(schwab)
+    return schwab
+
 
 ## ==========================================================
 ## TP2VIS: main function to convert TP cube into visibilities
@@ -259,6 +292,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # ==============
 
     bug001_Fixed = False
+    bug028_Fixed = False
 
     # Parameters
     # ==========
@@ -341,7 +375,18 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Deconvolution of TP cube (images) by TP beam
     #   (if deconv=False the input image will be used instead)
     # ========================================================
+    
+    # Check unit of TP cube
+    if deconv:
+        if cb_bunit != 'JY/BEAM':
+            print "ERROR: unit should be 'Jy/beam' when deconv=True",cb_bunit
+	    return
+    else:
+        if cb_bunit != 'JY/PIXEL':
+            print "ERROR: unit should be 'Jy/pixel' when deconv=False",cb_bunit
+	    return
 
+    # Constants
     apr    = qa.convert('1.0rad','arcsec')['value'] # arcsec per radian
     cbm    = np.pi/(4.0*np.log(2.0))                # beamarea=cbm*bmaj*bmin
 
@@ -375,6 +420,17 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         imagedecname = 'tmp_imagedec_' + dd + '.im'
         ia2 = ia.newimagefromimage(imagename,imagedecname,overwrite=True)
 
+        if use_schwab:
+            # Schwab's spheroidal function [pixel unit]
+            x0        = np.arange(-int(cb_nx/2),-int(cb_nx/2)+cb_nx) # get cb_nx pix
+            y0        = np.arange(-int(cb_ny/2),-int(cb_ny/2)+cb_ny) # get cb_ny pix
+            xx,yy     = np.meshgrid(x0,y0)
+            xygrid    = np.sqrt(xx*xx + yy*yy)
+            schwab    = schwab_spheroidal(1.0,6.0,3.0,xygrid) # alpha=1, m=6
+            schwab_ft = np.fft.fft2(np.fft.ifftshift(schwab))
+
+            del x0,y0,xx,yy,xygrid,schwab
+
         # Loop over channels
         print "Deconvolution loop starts"
         for iz in range(cb_nchan):
@@ -383,6 +439,8 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
             freq      = cb_fstart+cb_fwidth*(0.5+iz)      # chan cen freq [GHz]
             beamSigFT = tp_beamSigFT * freq/cb_reffreq
             beamFT    = np.exp(-uvgrd2/(2.0*beamSigFT**2))
+            if use_schwab:
+                beamFT    = beamFT * schwab_ft            # Gauss * Schwab
 
             # Channel image to be deconvolved
             image     = ia.getchunk([-1,-1,-1,iz],[-1,-1,-1,iz])
@@ -409,7 +467,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
                 del dist,mask
 
             # Deconvolution 
-            imageFT   = np.fft.fft2(image,axes=(0,1))
+            imageFT          = np.fft.fft2(image,axes=(0,1))
             imageFTdec       = imageFT.copy()
             idx0             = (uvgrd2   > (uvcut**2))    # idx of outer uv
             idx1             = np.logical_not(idx0)       # idx of inner uv
@@ -418,8 +476,9 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
             imagedec         = np.fft.ifft2(imageFTdec)
             ia2.putchunk(np.real(imagedec), blc=[0,0,0,iz])
 
-        ia2.close()            
-
+        ia2.close()
+        imhead(imagedecname,mode='put',hdkey='bunit',hdvalue='Jy/pixel')
+                                                          # unit=Jy/pixel
     ia.close()
 
 
@@ -509,6 +568,8 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     print "   ttot                                 %f" % (ttot)
     print "   frame:                               %s" % (spw_refcode)
     print "   seed:                                %d" % (seed)
+    print "   use_vp:                              %s" % (repr(use_vp))
+    print "   use_schwab:                          %s" % (repr(use_schwab))
 
     # Set parameters in CASA
     # ======================
@@ -737,6 +798,19 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         rf = tb.getcol('REF_FREQUENCY')
         rf = rf * 0 + restfreq
         tb.putcol('REF_FREQUENCY',rf)
+        tb.close()
+
+    if not bug028_Fixed:
+        print "Set offset time stamps between fields"
+        # clean task requires different time stamps for different fields
+        tb.open(outfile,nomodify=False)
+        time0 = tb.getcol("TIME")
+        time1 = tb.getcol("TIME_CENTROID")
+        t0    = time0[0]
+        time0 = [t0 + 1.*ii for ii in range(len(time0))]
+        time1 = time0
+        tb.putcol('TIME',time0)
+        tb.putcol('TIME_CENTROID',time1)
         tb.close()
 
     if delimage:
