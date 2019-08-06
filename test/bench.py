@@ -103,6 +103,8 @@ qac_begin(test)
 qac_version()
 tp2vis_version()
 
+qac_project(test)
+
 
 #   make sure all the files we need are here
 QAC.assertf(tpim)
