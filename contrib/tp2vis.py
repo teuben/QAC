@@ -95,7 +95,7 @@ use_schwab = False
 ## =================
     
 def tp2vis_version():
-    print "tp2vis: 5-aug-2019 PJT"
+    print "tp2vis: 6-aug-2019 PJT"
 
    
 def axinorder(image):
@@ -292,7 +292,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # ==============
 
     bug001_Fixed = False
-    bug028_Fixed = False
+    bug028_Fixed = True
 
     # Parameters
     # ==========
