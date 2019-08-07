@@ -81,10 +81,6 @@ tweak       = 1
 alma        = 0
 plot        = 0
 
-clean1 = 0
-alma   = 0
-plot   = 0
-
 #-- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
@@ -133,6 +129,7 @@ if clean == 1:
     #qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=False,**line)
     qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=True,**line)
     # Jin says we can skip the concat again.... but it's not true
+    # in 5.5.0-149 this still crashes 
     if tweak == 1:
         print "Continuing benchmark with tweak=1"
         # loop over all 2nd and higher iterations and tweak them 
