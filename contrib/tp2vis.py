@@ -77,7 +77,7 @@ if use_vp:
     vp.summarizevps()
 else:                                           # without vpmanager working,
     apara = {'observatory':'ALMA',              # use ALMA for now
-             'antList':    ['ALMA'],
+             'antList':    ['ALMA'],            # experiment with 'DV01' (an Airy function)
              'dish':        12.0,
              'fwhm100':     65.2,
              'maxRad':     999.0}
@@ -95,7 +95,7 @@ use_schwab = False
 ## =================
     
 def tp2vis_version():
-    print "tp2vis: 6-aug-2019 PJT"
+    print("tp2vis: 7-aug-2019 PJT")
 
    
 def axinorder(image):
@@ -421,6 +421,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         ia2 = ia.newimagefromimage(imagename,imagedecname,overwrite=True)
 
         if use_schwab:
+            print("Using Schwab's spheroidal function in TP deconvolution")
             # Schwab's spheroidal function [pixel unit]
             x0        = np.arange(-int(cb_nx/2),-int(cb_nx/2)+cb_nx) # get cb_nx pix
             y0        = np.arange(-int(cb_ny/2),-int(cb_ny/2)+cb_ny) # get cb_ny pix
