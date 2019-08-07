@@ -934,7 +934,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
 
     #-end of qac_vla()
     
-def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, ptg = None, times=None, fix=0):
+def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=7, cfg=0, ptg = None, times=None, fix=0):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
@@ -1142,13 +1142,15 @@ def qac_vp(my_vp=False, my_schwab=False):
         my_vp:      Set usage of VP.
         my_schwab:  Use SchwabSpheroidal for TP deconvolution
     """
-    if not my_vp: return
+    print("QAC_VP: %s %s" % (repr(my_vp),repr(my_schwab)))
     
     global use_vp
     use_vp = my_vp
 
     global use_schwab
     use_schwab = my_schwab
+
+    if not use_vp: return
     
     # the following code for adding a VP is copied from tp2vis.py
     
@@ -1217,6 +1219,7 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
       ===================
     
       pixel:         pixel size, in arcsec, if to be overriden from the input map. Default: None
+                     Note we won't allow you to change the imsize.
       phasecenter    Defaults to mapcenter (note special format)
                      e.g. 'J2000 00h48m15.849s -73d05m0.158s'
       rms            if set, this is the TP cube noise to be used to set the weights
