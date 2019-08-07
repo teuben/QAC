@@ -1926,7 +1926,7 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
 
 def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="dirtymap"):
     """
-    Feather combination of a highres and lowres image
+    Feather combination of a highres and lowres image. See also qac_ssc()
 
     project    typical  "sky3/clean2", somewhere where tclean has run
     highres    override default, needs full name w/ its project
@@ -2842,12 +2842,12 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
     #-end of qac_flux()
 
 def qac_psd(image, plot='qac_psd.png', fit=False, pixel_s=None):
-    """ compute the PSD of a map
+    """ compute the Power Spectral Density (PSD) of a map
 
     image:      casa image (fits file not allowed here)
     plot:       name for the figure
     fit:        choose if fit the power spectrum or not
-    pixel_s:    pixel size in order to scale spatial frequency. not used currenlty
+    pixel_s:    pixel size in order to scale spatial frequency. currently not used 
     
     see also: radio_astro_tools et al. (sd2018)
     """
