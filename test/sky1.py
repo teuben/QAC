@@ -1,5 +1,8 @@
 # -*- python -*-
 #
+#  Typical usage (see also Makefile)
+#      casa -c sky3.py 
+#
 #  Play with the skymodel 
 #     - one or full pointing set
 #     - options for tp2vis, feather, ssc
@@ -8,62 +11,55 @@
 #      12m PB is 50" (FWHM)   [FWHM" ~ 600/DishDiam]
 #       7m PB is 85"
 #
-#  Timing:
-#           30' on T530
-#  Memory:
-#           1.7GB +  3.0
-#  Space:
-#           Uses about 1.4 GB
 
-test         = 'sky1'                               # name of directory within which everything will reside
+pdir         = 'sky1'                               # name of directory within which everything will reside
 model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model to be on the sky
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
-# @todo qac_tp_vis handles this differently from simobserve()
 imsize_m     = 4096
 pixel_m      = 0.05
 
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
-# pick the pixel_s based on the largest array configuration (see below) choosen
+# pick the pixel_s based on the largest array configuration (cfg[], see below) choosen
 imsize_s     = 256
 pixel_s      = 0.8
 
 # number of TP cycles
-nvgrp        = 16
+nvgrp        = 4
 
 # pick a few niter values for tclean to check flux convergence 
 niter        = [0,500,1000,2000]
-#niter        = [0,100]
-#niter        = [0,100,1000]
-niter        = [0,1000]
 niter        = [0,1000,4000]
 
 
 # pick which ALMA configurations you want (0=7m ACA , 1,2,3...=12m ALMA)
 #cfg          = [0,1,2,3,4,5,6,7,8,9,10]
-#cfg          = [0,1,2,3]
-cfg          = []
+cfg          = [0,1,2,3]
+cfg          = [1]
 times        = [2, 1]     # 2 hrs in 1 min integrations
 
 # TP dish size in m; uvmax will be taken as 5/6 of this
-# @todo   this now seems broken, tclean() now crashes if dish not 12m
-dish         = 50.0      # this is the eqv. GBT 100m, the bigger dish
-dish3        = 50.0      # this is the eqv. VLA 25m, the smaller dish
+# @todo   don't change this
+dish         = 12.0  
 
 # single pointing?  Set grid to a positive arcsec grid spacing if the field needs to be covered
 #                   ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
-grid         = 8       # this can be pointings good for small dish nyquist
+grid         = 30       # this can be pointings good for small dish nyquist
 
-# OTF: if selected, tp2vis will get an OTF, instead of the jy/pixel map
-otf          = 0  
 
+# OTF: if selected, tp2vis will get an OTF, instead of the model jy/pixel map
+otf          = 0
+
+# advanced features
+VP           = 0
+SCHWAB       = 0
 
 # scaling factors
 wfactor      = 0.01
-afactor      = 1      # not implemented
+afactor      = 1      # not implemented yet
 
 # -- do not change parameters below this ---
 import sys
@@ -71,41 +67,43 @@ for arg in qac_argv(sys.argv):
     exec(arg)
 
 # derived parameters
-ptg = test + '.ptg'              # pointing mosaic for the ptg
-
-# imsize_m =  imsize_m / 2       # test w/ smaller portion of grid ?
+ptg  = pdir + '.ptg'              # pointing mosaic for the ptg
+test = pdir                       # compat
 
 # report, add Dtime
-qac_begin(test,False)
+qac_begin(pdir,False)
+qac_project(pdir)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
+
 if grid > 0:
-    # create a mosaic of pointings for 12m, that's overkill for the 7m
+    # create a mosaic of pointings 
     p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 else:
     # create a single pointing 
     qac_ptg(phasecenter,ptg)
     p = [phasecenter]
 
-
 qac_log("TP2VIS")
 
-# create TP MS  - this starts a new clean project
 if True:
-    qac_tpdish('ALMATP',dish)    # e.g. 25m
-    qac_tpdish('VIRTUAL',dish)   # e.g. 25m
+    qac_tpdish('ALMATP', dish)
+    qac_tpdish('VIRTUAL',dish)
+    qac_vp(VP,SCHWAB)
     
 maxuv = 5.0*dish/6.0     
 
 if otf == 0:
-    tpms = qac_tp_vis(test,model,ptg,imsize_s,pixel_s,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+    tpms = qac_tp_vis(pdir,model,ptg,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
 else:
+    tp_beam = 56.7     # @todo
     beam = '%sarcsec' % tp_beam
     otf = model.replace('.fits','.otf')
+    print("Creating %s" % otf)
     imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otf,overwrite=True)
-    tpms = qac_tp_vis(test,otf,ptg,imsize_s,pixel_s,phasecenter=phasecenter,maxuv=maxuv,nvgrp=nvgrp,fix=0)    
+    tpms = qac_tp_vis(test,otf,ptg,phasecenter=phasecenter,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)    
 
 qac_log("CLEAN1:")
 tp2viswt(tpms,wfactor,'multiply')
@@ -121,11 +119,11 @@ for idx in range(len(niter)):
     qac_stats(im2)            # flux flat
 
 if len(cfg) > 0:
-    # create an MS based on a model and antenna configuration for ACA/ALMA
+    # create a series of MS based on a model and antenna configuration for different ACA/ALMA confirgurations
     qac_log("ALMA 7m/12m")
     ms1={}
     for c in cfg:
-        ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=5,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+        ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
     # startmodel for later
     startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 
@@ -140,10 +138,10 @@ if len(cfg) > 0:
     qac_log("CLEAN with TP2VIS")
     if False:
         qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
-        qac_tweak(test+'/clean3','int',niter)
+        qac_tweak(test+'/clean3','int',  niter)
         qac_tweak(test+'/clean3','tpint',niter)
     else:
-        qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False)
+        qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
         qac_tweak(test+'/clean3','tpint',niter)
 
 
@@ -190,6 +188,7 @@ if len(cfg) > 0:
     qac_stats(model)
     qac_stats(test+'/clean0/dirtymap.image')
     qac_stats(test+'/clean0/dirtymap.image.pbcor')
+    qac_stats(test+'/clean3/int.image')
     qac_stats(test+'/clean3/tpint.image')
     qac_stats(test+'/clean3/tpint_2.image')
     qac_stats(test+'/clean3/tpint_3.image')
