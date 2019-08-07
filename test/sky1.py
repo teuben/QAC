@@ -69,6 +69,7 @@ for arg in qac_argv(sys.argv):
 # derived parameters
 ptg  = pdir + '.ptg'              # pointing mosaic for the ptg
 test = pdir                       # compat
+psd  = []                         # accumulate images for qac_psd()
 
 # report, add Dtime
 qac_begin(pdir,False)
@@ -103,7 +104,8 @@ else:
     otf = model.replace('.fits','.otf')
     print("Creating %s" % otf)
     imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otf,overwrite=True)
-    tpms = qac_tp_vis(test,otf,ptg,phasecenter=phasecenter,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)    
+    tpms = qac_tp_vis(test,otf,ptg,phasecenter=phasecenter,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+    psd.append(otf)
 
 qac_log("CLEAN1:")
 tp2viswt(tpms,wfactor,'multiply')
@@ -117,6 +119,7 @@ for idx in range(len(niter)):
     qac_plot(im1,mode=1)      # casa based plot w/ colorbar
     qac_stats(im1)            # noise flat
     qac_stats(im2)            # flux flat
+    if idx==0: psd.append(im2)
 
 if len(cfg) > 0:
     # create a series of MS based on a model and antenna configuration for different ACA/ALMA confirgurations
@@ -126,13 +129,12 @@ if len(cfg) > 0:
         ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
     # startmodel for later
     startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
+    psd.append(startmodel)
 
     # find out which MS we got for the INT, or use intms = ms1.values()
     intms = ms1.values()
 
     tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
-
-
 
     # JD clean for tp2vis
     qac_log("CLEAN with TP2VIS")
@@ -143,6 +145,8 @@ if len(cfg) > 0:
     else:
         qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
         qac_tweak(test+'/clean3','tpint',niter)
+    psd.append(test+'/clean3/tpint.image.pbcor')
+    psd.append(test+'/clean3/skymodel.smooth.image')        
 
 
     if False:
@@ -155,7 +159,6 @@ if len(cfg) > 0:
         qac_clean(test+'/clean5',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False,t=True)
         qac_tweak(test+'/clean5','int',niter)
         qac_tweak(test+'/clean5','tpint',niter)
-
 
 
     qac_log("OTF")
@@ -249,38 +252,14 @@ if len(cfg) > 0:
 else:
     qac_log("no INT work to be done")
 
+
+
+# How to compare PDS plot?
+# use some psd.append(...) to trigger the comparison plot
+
+if len(psd) > 0:
+    qac_log("QAC_PSD")
+    p2=qac_psd(psd, plot=pdir+'/psd.png')
+
 qac_log("DONE!")
 qac_end()
-
-
-"""
-How to compare PDS plot?
-
-p1 = qac_pds()
-p2 = qac_pds()
-r1 = np.arange(1,len(p1)+1)
-
-plt.figure()
-plt.loglog(r1,p1)
-plt.loglog(r1,p2)
-plt.show()
-plt.savefig('cmp12.png')
-
-p1=qac_psd('skymodel1.im')
-r1=np.arange(1,len(p1)+1)
-
-p2=qac_psd('skymodel2s.im')
-imsmooth('skymodel2.im','gaussian','10arcsec','10arcsec',pa='0deg',outfile='skymodel2ss.im',overwrite=True)
-p3=qac_psd('skymodel2ss.im')
-imsmooth('skymodel2.im','gaussian','0.1arcsec','0.1arcsec',pa='0deg',outfile='skymodel2sss.im',overwrite=True)
-p4=qac_psd('skymodel2sss.im')
-
-plt.figure()
-plt.loglog(r1,p1)
-plt.loglog(r1,p2)
-plt.loglog(r1,p3)
-plt.loglog(r1,p4)
-
-
-
-"""
