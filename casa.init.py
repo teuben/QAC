@@ -36,11 +36,24 @@ if False:
     execfile('/astromake/opt/casa/Nordic_Tools/casairing_1.1/mytasks.py')
 
 
-#   QAC version 18-mar-2018  
+#   QAC version 6-aug-2019
+#
+#   To select the version of tp2vis to be activated:
+#   - in QAC run "make tp2vis dev" which places two .git repos in QAC
+#     (developers release is not public)
+#   - manually make a symlink to the name without ".git" if you want to activate it
+#     e.g.      ln -s tp2vis.git tp2vis
+#               ln -s distribute.git distribute
+#   - note that this is the order of searching for tp2vis.py:   contrib, distribute, tpvis
 try:
     if sys.path[0] != "":   sys.path.insert(0,'')                  # ipython5 took this out, we put it back
     qac_root  = os.environ['HOME'] + '/.casa/QAC'                  # SET THIS TO YOUR LOCATION OF QAC or use a symlink
-    py_files  = ['src/qac', 'src/ssc', 'src/plot', 'contrib/tp2vis', 'distribute/tp2vis', 'tp2vis/tp2vis']
+    py_files  = ['src/qac',
+                 'src/ssc',
+                 'src/plot',
+                 'contrib/tp2vis',
+                 'distribute/tp2vis',
+                 'tp2vis/tp2vis']
     sys.path.append(qac_root + '/src')
     work_dir = os.getcwd()
     os.chdir(qac_root)
