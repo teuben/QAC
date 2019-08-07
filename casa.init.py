@@ -16,6 +16,7 @@
 import os, sys
 
 # https://casaguides.nrao.edu/index.php/Analysis_Utilities
+# ftp://ftp.cv.nrao.edu/pub/casaguides/analysis_scripts.tar
 if False:
     print "Adding au"
     sys.path.append("/astromake/opt/casa/analysis_scripts")
