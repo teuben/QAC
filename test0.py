@@ -10,10 +10,12 @@ import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
 
-#   report
+#   start/report
 qac_log("TEST0: n=%d" % n)
 qac_version()
 tp2vis_version()
+
+#   end (note we use python3 style now)
 qac_log("END OF TEST")
 print("If you see this line, it looks like everything is in the right place. ")
 print("Carefully look at the CASA, QAC and TP2VIS versions")
