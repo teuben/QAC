@@ -1,6 +1,7 @@
 # -*- python -*-
 #
 #  compare mapping of tp2vis data vs. OTF/smooth under various situations
+#  !! there is no interferometric data used here !!
 #
 #
 #  12m TP-ALMA dish at 115.271GHz has PB ~ 56.5" (Tsujoshi, private comm.)
@@ -30,7 +31,7 @@
 #  Notes on beamsizes (ALMA technical handbook talks about HPBW and FWHM)
 #  ----------------------------------------------------------------------
 #  FWHM = 51.5305 * a / D12 / f100
-#  51.5305 = cms*apr/12e11
+#  51.5305 = cms*apr/12/1e11
 #  a    is 1.22 (or something close to it, manual talks about 1.02 for ideal dish, and 1.13 for alma 12m dish)
 #  D12  is diameter in units of 12m
 #  f100 is freq in units of 100GHz  (so CO is at 1.152712)
@@ -38,7 +39,7 @@
 #  tp2vis talks about 65.2 at 100 or 56.5 at 115.2 (we do mean 115.2712)
 #                     105  at 100 for 7m [this ratio doesn't vibe with scaling 12/7, that would predict 112")
 #
-#  If we believe the a=1.13 value, we would have 58.2", not 65.2
+#  If we believe the a=1.13 value, we would have 58.2", not 65.2   (Jin changed it to 58.3 in the new tp2vis)
 #  Reversing, the 65.2 would mean a=1.265, which is clearly too high.
 #  If we set a=1.13 and use 56.5 this implies D12 = 51.5305 * 1.13 / 56.5 / 1.152712 = 0.894 -> D=10.7m
 
@@ -67,7 +68,7 @@ niter        = [0,1000,4000]
 #                  ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
 
-# these don't work with use_vp=True yet, in meter
+# these don't work with use_vp=True yet, in meters
 dish         = 12.0
 maxuv        = 10.0
 minuv        = 0.0
@@ -76,7 +77,7 @@ minuv        = 0.0
 # this is an alternative to changing the pixel size (pixel_m and pixel_s)
 dscale       = 1.0
 
-# do clean?
+# also tclean?
 clean        = 1
 
 
@@ -87,19 +88,20 @@ for arg in qac_argv(sys.argv):
 
 # derived parameters
 ptg   = pdir + '.ptg'              # pointing mosaic file
-grid  = grid / dscale              # re-scaling the dish/grid
-dish  = dish * dscale              # instead of the pixel
+grid  = grid  / dscale             # re-scaling the dish/grid
+dish  = dish  * dscale             # instead of the pixel
 maxuv = maxuv * dscale
 
 
 # report, add Dtime
 qac_begin(pdir,False)
-qac_log("REPORT")
+qac_log("REPORT:")
+qac_project(pdir)
 qac_version()
 tp2vis_version()
 
 # create a mosaic of pointings 
-p = qac_im_ptg(phasecenter, imsize_m, pixel_m, grid, rect=True, outfile=ptg)
+p = qac_im_ptg(phasecenter, imsize_m, pixel_m, grid, outfile=ptg)
 
 
 # tp2vis
@@ -146,7 +148,7 @@ qac_stats(model)
 # ah, wrong grid
 # qac_smooth(pdir+'/clean0', startmodel, name="dirtymap")
 
-qac_log("IMSMOOTH")
+qac_log("IMSMOOTH:")
 im2 = pdir+'/clean0/dirtymap.image.pbcor'
 beam0 = imhead(im2)['restoringbeam']
 imsmooth(pdir+'/skymodel.im', outfile=pdir+'/clean0/skymodel.smooth',beam=beam0,overwrite=True)
