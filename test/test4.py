@@ -4,7 +4,7 @@
 #
 # execfile('test4.py')
 
-test 		 = 'test4'
+pdir         = 'test4'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
 
@@ -27,6 +27,8 @@ chans        = '-1' # must be a string. for a range of channels --> '24~30'
 import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
+
+test = pdir 
 
 # rename model variable if single channel (or range) has been chosen so we don't overwrite models 
 if chans != '-1':

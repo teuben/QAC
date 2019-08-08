@@ -8,7 +8,7 @@
 #
 # @todo figure out regression for this test
 
-test 		 = 'test2'
+pdir         = 'test2'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
 
@@ -42,6 +42,7 @@ if chans != '-1':
     # rewrite the model variable with our new model
     model = model_out
 
+test = pdir  
 ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
 if type(niter) != type([]): niter = [niter]
 

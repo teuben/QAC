@@ -8,7 +8,7 @@
 #
 # @todo figure out regression for this test
 
-test 		 = 'test5'
+pdir         = 'test5'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
 
@@ -30,10 +30,10 @@ chans        = '-1' # must be a string. for a range of channels --> '24~30'
 # choose ngVLA antennae configuation
 cfg          = 1
 
-# change this if you want mosiac (True) or not (False)
-mosiac       = False
+# change this if you want mosaic (True) or not (False)
+mosaic       = False
 
-if mosiac == False:
+if mosaic == False:
     ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
 else:
     ptg = None
@@ -45,6 +45,8 @@ if type(niter) != type([]): niter = [niter]
 import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
+
+test = pdir    
 
 # rename model variable if single channel (or range) has been chosen so we don't overwrite models 
 if chans != '-1':

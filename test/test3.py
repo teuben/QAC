@@ -8,7 +8,7 @@
 # 3'18" running /dev/shm for full channels
 #
 
-test         = 'test3'
+pdir         = 'test3'
 model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
 
@@ -49,7 +49,8 @@ if multiscale == True:
 else:
     scales = None
 
-ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
+test = pdir
+ptg  = test + '.ptg'              # use a single pointing mosaic for the ptg
 if type(niter) != type([]): niter = [niter]
 
 

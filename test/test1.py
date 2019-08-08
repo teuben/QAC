@@ -6,7 +6,7 @@
 # 667.692u 20.628s 9:45.15 117.6%	0+0k 1121096+3180192io 335pf+0w     niter=0
 # 2073.348u 37.540s 30:59.81 113.4%	0+0k 2335376+3269568io 887pf+0w     niter=[0,1000,2000]
 
-test         = 'test1'
+pdir         = 'test1'
 model        = '../models/skymodel.fits'           # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'  # so modify this for ngVLA
 
@@ -27,6 +27,7 @@ import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
 
+test = pdir    
 ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
 if type(niter) != type([]): niter = [niter]
 
@@ -34,6 +35,7 @@ if type(niter) != type([]): niter = [niter]
 # report
 qac_log("TEST: %s" % test)
 qac_begin(test)
+qac_project(test)
 qac_version()
 
 # create a single pointing mosaic
