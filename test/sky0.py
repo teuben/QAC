@@ -28,6 +28,7 @@ niter        = [0]
 # pick which ALMA configurations you want (0=7m ACA , 1,2,3...=12m ALMA)
 cfg          = [0,1]
 cfg          = [1]
+cfg          = [0,1]
 
 # integration times
 times        = [2, 1]     # 2 hrs in 1 min integrations
@@ -56,6 +57,8 @@ qac_begin(test,False)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
+
+qac_project(test)
 
 p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
