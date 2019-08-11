@@ -7,15 +7,21 @@
 #  make -f ../Makefile M100
 #
 
+.PHONY: M100 M100a
+
+CASA = time casa --nogui -c
+
 help:
 	@echo No help
 
 
 # about 3 hours
+M100a:
+	#	time casa --nogui -c ../example1.py   > example1.log  2>&1
+	$(CASA) workflow6a.py > example6a.log 2>&1
+
 M100:
-	time casa --nogui -c ../example1.py   > example1.log  2>&1
-	time casa --nogui -c ../workflow6a.py > example6a.log 2>&1
-	time casa --nogui -c ../workflow6.py  > workflow6.log 2>&1
+	$(CASA) workflow6.py  > workflow6.log 2>&1
 
 # about 10 mins and 4.5 GB
 cloud197:
