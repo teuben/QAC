@@ -41,8 +41,10 @@ boxlist = QAC.iarray(box)       # convert to an ascii list of ints [219,148,612,
     
 
 #   report
+qac_begin("M100")
 qac_log("QAC_VERSION")
 qac_version()
+qac_project('test6')
 
 #   make sure all the files we need are here
 QAC.assertf(tpim)
@@ -55,45 +57,49 @@ qac_summary(tpim,[ms12,ms07])
 qac_ms_ptg(ms12,'M100_aver_12.ptg')
 
 qac_log("TP2VIS with rms=0.15")       # rms from imstat() one edge channels
-qac_tp_vis('test6',tpim,'M100_aver_12.ptg',nsize,pixel,niter=0,rms=0.15,phasecenter=phasecenter)          # PSF is blank for[C69:P0]
+qac_tp_vis('test6',tpim,'M100_aver_12.ptg',niter=0,rms=0.15,phasecenter=phasecenter)          # PSF is blank for[C69:P0]
 qac_log("TP2VISWT - should show no change; about 0.0107354")
 tp2viswt('test6/tp.ms',value=0.15,mode='rms')
 
-if True:
+qac_clean1('test6/clean0','test6/tp.ms',nsize,pixel,niter=0,phasecenter=phasecenter)
+
+if False:
+    # @todo qac_tp_vis doesn't make maps anymore - make it clean0 ?
     # Look at the difference between TP and dirty map from TP2VIS (Jin Koda)
     temp_dict = imregrid(imagename='test6/dirtymap.image', template="get")
     imregrid(imagename='M100_TP_CO_cube.bl.image',output='M100_TP_CO_cube.bl.smo',template=temp_dict,overwrite=True)
     os.system('rm -rf temp.diff')
     immath(imagename=['test6/dirtymap.image','M100_TP_CO_cube.bl.smo'],expr='IM0-0.915684045023*IM1',outfile='temp.diff')
 
-if True:
+
+if False:
     # plot comparing flux of TP
-    f0a =  imstat('M100_TP_CO_cube.bl.image',axes=[0,1])['flux']
-    f1a =  imstat('test6/dirtymap.image',    axes=[0,1])['flux']
-    f1b =  imstat('M100_TP_CO_cube.bl.smo',  axes=[0,1])['flux']
-    f1c =  imstat('M100_TP_CO_cube.bl.smo',  axes=[0,1], box=box)['flux']    
+    f0a =  imstat('M100_TP_CO_cube.bl.image',    axes=[0,1])['flux']
+    f1a =  imstat('test6/clean0/dirtymap.image', axes=[0,1])['flux']
+    f1b =  imstat('M100_TP_CO_cube.bl.smo',      axes=[0,1])['flux']
+    f1c =  imstat('M100_TP_CO_cube.bl.smo',      axes=[0,1], box=box)['flux']    
     plot2a([f0a,f1a,f1b,f1c],'Flux Comparison %d %g' % (nsize,pixel),'test6/plot2a0.png')
         
 qac_log("CLEAN clean1: TP+7m")
-qac_clean('test6/clean1','test6/tp.ms',ms07,nsize,pixel,niter=0,phasecenter=phasecenter,do_alma=True,**line)
-qac_beam('test6/clean1/tpalma.psf',plot='test6/clean1/qac_beam.png',normalized=True)
+qac_clean('test6/clean1','test6/tp.ms',ms07,nsize,pixel,niter=0,phasecenter=phasecenter,do_concat=True,**line)
+qac_beam('test6/clean1/tpint.psf',plot='test6/clean1/qac_beam.png',normalized=True)
 # QAC_BEAM: test2c/tpalma.psf  14.8567 11.6334 0.5 783.349 783.349
 # QAC_BEAM: Max/Last/PeakLoc 1.34796753314 1.18801575148 43.5
 
 qac_log("CLEAN clean2: TP+12m")
-qac_clean('test6/clean2','test6/tp.ms',ms12,nsize,pixel,niter=0,phasecenter=phasecenter,do_alma=True,**line)
-qac_beam('test6/clean2/tpalma.psf',plot='test6/clean2/qac_beam.png',normalized=True)
+qac_clean('test6/clean2','test6/tp.ms',ms12,nsize,pixel,niter=0,phasecenter=phasecenter,do_concat=True,**line)
+qac_beam('test6/clean2/tpint.psf',plot='test6/clean2/qac_beam.png',normalized=True)
 # QAC_BEAM: test2d/tpalma.psf  3.99421 2.63041 0.5 47.6187 47.6187
 # QAC_BEAM: Max/Last/PeakLoc 4.11547851528 3.62032676416 76.5
 
 qac_log("CLEAN clean3: TP+7m+12m")
-qac_clean('test6/clean3','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,3000,10000],phasecenter=phasecenter,do_alma=True,**line)
-qac_beam('test6/clean3/tpalma.psf',plot='test6/clean3/qac_beam.png',normalized=True)
+qac_clean('test6/clean3','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,3000,10000],phasecenter=phasecenter,do_concat=True,do_int=True,**line)
+qac_beam('test6/clean3/tpint.psf',plot='test6/clean3/qac_beam.png',normalized=True)
 # QAC_BEAM: test2e/tpalma.psf  4.4261 2.94494 0.5 59.0776 59.0776
 # QAC_BEAM: Max/Last/PeakLoc 2.95162277943 2.47391209456 76.0
-tp2vistweak('test6/clean3/tpalma','test6/clean3/tpalma_2')
+tp2vistweak('test6/clean3/tpint','test6/clean3/tpint_2')
 # scale  0.7455
-tp2vistweak('test6/clean3/tpalma','test6/clean3/tpalma_3')
+tp2vistweak('test6/clean3/tpint','test6/clean3/tpint_3')
 # scale  0.732610
 
 qac_log("TP2VISWT wt*10")
@@ -101,8 +107,8 @@ tp2viswt('test6/tp.ms',mode='multiply',value=10)
 # wt -> 0.1073537
 
 qac_log("CLEAN clean4")
-qac_clean('test6/clean4','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=0,phasecenter=phasecenter,**line)
-qac_beam('test6/clean4/tpalma.psf',plot='test6/clean4/qac_beam.png',normalized=True)
+qac_clean('test6/clean4','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=0,phasecenter=phasecenter,do_concat=True,**line)
+qac_beam('test6/clean4/tpint.psf',plot='test6/clean4/qac_beam.png',normalized=True)
 # QAC_BEAM: test2f/tpalma.psf  4.73778 3.16311 0.5 67.9224 67.9224
 # QAC_BEAM: Max/Last/PeakLoc 20.2581768937 19.8506027809 76.5
 
@@ -112,33 +118,35 @@ tp2viswt(['test6/tp.ms',ms07,ms12], makepsf=True, mode='beammatch')
 # wt -> 0.0044103029511 -> 0.00433382295945 -> 0.00465955996837  -> 0.002709 
 
 qac_log("CLEAN clean6")
-qac_clean('test6/clean6','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,3000,10000],phasecenter=phasecenter,**line)
-qac_beam('test6/clean6/tpalma.psf',plot='test6/clean6/qac_beam.png',normalized=True)
+qac_clean('test6/clean6','test6/tp.ms',[ms12,ms07],nsize,pixel,niter=[0,3000,10000],phasecenter=phasecenter,do_concat=True,**line)
+qac_beam('test6/clean6/tpint.psf',plot='test6/clean6/qac_beam.png',normalized=True)
 # -> QAC_BEAM: test2h/tpalma.psf  4.40321 2.92833 0.5 58.4404 58.4404
 #    QAC_BEAM: Max/Last/PeakLoc 1.86142086595 0.623532966042 7.5
 
-tp2vistweak('test6/clean6/tpalma','test6/clean6/tpalma_2')
+tp2vistweak('test6/clean6/tpint','test6/clean6/tpint_2')
 # scale 3.129287
-tp2vistweak('test6/clean6/tpalma','test6/clean6/tpalma_3')
+tp2vistweak('test6/clean6/tpint','test6/clean6/tpint_3')
 # scale 2.939141
 
-f0  =  imstat('M100_TP_CO_cube.regrid',           axes=[0,1],box=box)['flux']
-f1  =  imstat('test6/clean6/tpalma.image',        axes=[0,1],box=box)['flux']
-f2  =  imstat('test6/clean6/tpalma_2.image',      axes=[0,1],box=box)['flux']
-f3  =  imstat('test6/clean6/tpalma_3.image',      axes=[0,1],box=box)['flux']
-f4  =  imstat('test6/clean6/tpalma_2.tweak.image',axes=[0,1],box=box)['flux']
-f5  =  imstat('test6/clean6/tpalma_3.tweak.image',axes=[0,1],box=box)['flux']
+# f0  =  imstat('M100_TP_CO_cube.regrid',          axes=[0,1],box=box)['flux']
+f1  =  imstat('test6/clean6/tpint.image',        axes=[0,1],box=box)['flux']
+f2  =  imstat('test6/clean6/tpint_2.image',      axes=[0,1],box=box)['flux']
+f3  =  imstat('test6/clean6/tpint_3.image',      axes=[0,1],box=box)['flux']
+f4  =  imstat('test6/clean6/tpint_2.tweak.image',axes=[0,1],box=box)['flux']
+f5  =  imstat('test6/clean6/tpint_3.tweak.image',axes=[0,1],box=box)['flux']
 #
-plot2a([f0,f1,f2,f3],  'plot2h1',       'test6/plot2h1.png')
-plot2a([f0,f1,f4,f5],  'plot2h2 tweak', 'test6/plot2h2.png')
+#plot2a([f0,f1,f2,f3],  'plot2h1',       'test6/plot2h1.png')
+plot2a([f1,f2,f3],  'plot2h1',       'test6/plot2h1.png')
+plot2a([f1,f4,f5],  'plot2h2 tweak', 'test6/plot2h2.png')
+#plot2a([f0,f1,f4,f5],  'plot2h2 tweak', 'test6/plot2h2.png')
 
 qac_log("PAPER FIGURE-4")
 # figure 4 in the paper , comparing without (left) and with (right) 
-im1 = 'test6/clean3/alma_3.image'
+im1 = 'test6/clean3/int_3.image'
 qac_plot(im1, channel=13, range=[-0.05,0.3],box=boxlist,plot='M100_fig4a.png')
 qac_plot(im1, channel=17, range=[-0.05,0.3],box=boxlist,plot='M100_fig4c.png')
 qac_plot(im1, channel=21, range=[-0.05,0.3],box=boxlist,plot='M100_fig4e.png')
-im2 = 'test6/clean3/tpalma_3.image'
+im2 = 'test6/clean3/tpint_3.image'
 qac_plot(im2, channel=13, range=[-0.05,0.3],box=boxlist,plot='M100_fig4b.png')
 qac_plot(im2, channel=17, range=[-0.05,0.3],box=boxlist,plot='M100_fig4d.png')
 qac_plot(im2, channel=21, range=[-0.05,0.3],box=boxlist,plot='M100_fig4f.png')
@@ -174,17 +182,19 @@ qac_stats(ms12,                       r[0])
 qac_stats(ms07,                       r[1])
 qac_stats('test6/tp.ms',              r[2])
 qac_stats(tpim,                       r[3])
-qac_stats('test6/dirtymap.image',     r[4])
-qac_stats('test6/clean1/alma.image',        r[5])     # test2c
-qac_stats('test6/clean1/tpalma.image',      r[6])
-qac_stats('test6/clean2/alma.image',        r[7])     # test2d
-qac_stats('test6/clean2/tpalma.image',      r[8])
-qac_stats('test6/clean3/alma.image',        r[9])     # test2d
-qac_stats('test6/clean3/tpalma.image',      r[10])
-qac_stats('test6/clean4/tpalma.image',      r[11])      # test2f
-qac_stats('test6/clean5/tpalma.image',      r[12])     # test2g
-qac_stats('test6/clean6/tpalma.image',      r[13])             # test2h series
-qac_stats('test6/clean6/tpalma_2.image')
-qac_stats('test6/clean6/tpalma_3.image')
-qac_stats('test6/clean6/tpalma_2.tweak.image',pb='test6/clean6/tpalma.pb')
-qac_stats('test6/clean6/tpalma_3.tweak.image',pb='test6/clean6/tpalma.pb')
+qac_stats('test6/dirtymap.image',     r[4])                         # @todo should become clean0 ???
+qac_stats('test6/clean1/int.image',        r[5])     # test2c
+qac_stats('test6/clean1/tpint.image',      r[6])
+qac_stats('test6/clean2/int.image',        r[7])     # test2d
+qac_stats('test6/clean2/tpint.image',      r[8])
+qac_stats('test6/clean3/int.image',        r[9])     # test2d
+qac_stats('test6/clean3/tpint.image',      r[10])
+qac_stats('test6/clean4/tpint.image',      r[11])      # test2f
+qac_stats('test6/clean5/tpint.image',      r[12])     # test2g
+qac_stats('test6/clean6/tpint.image',      r[13])             # test2h series
+qac_stats('test6/clean6/tpint_2.image')
+qac_stats('test6/clean6/tpint_3.image')
+qac_stats('test6/clean6/tpint_2.tweak.image',pb='test6/clean6/tpint.pb')
+qac_stats('test6/clean6/tpint_3.tweak.image',pb='test6/clean6/tpint.pb')
+
+qac_end()
