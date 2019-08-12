@@ -63,16 +63,15 @@ tp2viswt('test6/tp.ms',value=0.15,mode='rms')
 
 qac_clean1('test6/clean0','test6/tp.ms',nsize,pixel,niter=0,phasecenter=phasecenter)
 
-if False:
-    # @todo qac_tp_vis doesn't make maps anymore - make it clean0 ?
-    # Look at the difference between TP and dirty map from TP2VIS (Jin Koda)
-    temp_dict = imregrid(imagename='test6/dirtymap.image', template="get")
+if True:
+    temp_dict = imregrid(imagename='test6/clean0/dirtymap.image', template="get")
     imregrid(imagename='M100_TP_CO_cube.bl.image',output='M100_TP_CO_cube.bl.smo',template=temp_dict,overwrite=True)
+    # Look at the difference between TP and dirty map from TP2VIS (Jin Koda)
     os.system('rm -rf temp.diff')
-    immath(imagename=['test6/dirtymap.image','M100_TP_CO_cube.bl.smo'],expr='IM0-0.915684045023*IM1',outfile='temp.diff')
+    immath(imagename=['test6/clean0/dirtymap.image','M100_TP_CO_cube.bl.smo'],expr='IM0-0.915684045023*IM1',outfile='temp.diff')
 
 
-if False:
+if True:
     # plot comparing flux of TP
     f0a =  imstat('M100_TP_CO_cube.bl.image',    axes=[0,1])['flux']
     f1a =  imstat('test6/clean0/dirtymap.image', axes=[0,1])['flux']
@@ -81,13 +80,13 @@ if False:
     plot2a([f0a,f1a,f1b,f1c],'Flux Comparison %d %g' % (nsize,pixel),'test6/plot2a0.png')
         
 qac_log("CLEAN clean1: TP+7m")
-qac_clean('test6/clean1','test6/tp.ms',ms07,nsize,pixel,niter=0,phasecenter=phasecenter,do_concat=True,**line)
+qac_clean('test6/clean1','test6/tp.ms',ms07,nsize,pixel,niter=0,phasecenter=phasecenter,do_int=True,do_concat=True,**line)
 qac_beam('test6/clean1/tpint.psf',plot='test6/clean1/qac_beam.png',normalized=True)
 # QAC_BEAM: test2c/tpalma.psf  14.8567 11.6334 0.5 783.349 783.349
 # QAC_BEAM: Max/Last/PeakLoc 1.34796753314 1.18801575148 43.5
 
 qac_log("CLEAN clean2: TP+12m")
-qac_clean('test6/clean2','test6/tp.ms',ms12,nsize,pixel,niter=0,phasecenter=phasecenter,do_concat=True,**line)
+qac_clean('test6/clean2','test6/tp.ms',ms12,nsize,pixel,niter=0,phasecenter=phasecenter,do_int=True,do_concat=True,**line)
 qac_beam('test6/clean2/tpint.psf',plot='test6/clean2/qac_beam.png',normalized=True)
 # QAC_BEAM: test2d/tpalma.psf  3.99421 2.63041 0.5 47.6187 47.6187
 # QAC_BEAM: Max/Last/PeakLoc 4.11547851528 3.62032676416 76.5
@@ -182,7 +181,7 @@ qac_stats(ms12,                       r[0])
 qac_stats(ms07,                       r[1])
 qac_stats('test6/tp.ms',              r[2])
 qac_stats(tpim,                       r[3])
-qac_stats('test6/dirtymap.image',     r[4])                         # @todo should become clean0 ???
+qac_stats('test6/clean0/dirtymap.image',   r[4])  
 qac_stats('test6/clean1/int.image',        r[5])     # test2c
 qac_stats('test6/clean1/tpint.image',      r[6])
 qac_stats('test6/clean2/int.image',        r[7])     # test2d
