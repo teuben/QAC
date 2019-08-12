@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 5-aug-2019")
+    print("qac: version 12-aug-2019")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -903,7 +903,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
     # bootstrap noise calculator (will require another call to qac_noise() to computer the correct value
     if noise < 0.0:
         simplenoise = '1Jy'
-        print("QAC_ALMA: bootstrapping with simplenoise='1Jy'")
+        print("QAC_VLA: bootstrapping with simplenoise='1Jy'")
         # zero out the data
         tb.open(outms,nomodify=False)
         for d in ['DATA', 'CORRECTED_DATA']:
@@ -924,7 +924,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
     # add noise from the simulator (recipe from carilli et al.2017)
     if noise > 0.0:
         simplenoise = '%gJy' % noise
-        print("QAC_ALMA: adding simplenoise=%s" % simplenoise)
+        print("QAC_VLA: adding simplenoise=%s" % simplenoise)
         sm.openfromms(outms)
         sm.setnoise(mode='simplenoise',simplenoise=simplenoise)
         sm.corrupt()
@@ -1030,8 +1030,8 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
 
     project     - name (one directory deep) to which files are accumulated - will accumulate
     skymodel    - jy/pixel map, should have a restfreq if you want your velocities to come out right
-    imsize      -
-    pixel       -
+    imsize      - size of image to use for modeling
+    pixel       - set new pixel size in the model
     phasecenter - where to place the reference pixel
     times       - a list of two numbers: totaltime in hours, integration time in minutes
     fix         - fix=1 remove pointing table
@@ -1781,7 +1781,7 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural"
             
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
     
-    #-end of qac_clean1()
+    #-end of qac_clean1f()
     
 def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", startmodel="", phasecenter="", niter=0, do_concat = False, do_int = False, do_cleanup = True, **line):
     """
@@ -2790,6 +2790,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
             if row==nrow-1 and len(xgrid) > 0:    # @todo should auto-create "diff" if diff != 0
                 f1.set_xlabel(xgrid[col])
             i = i + 1
+    #plt.tight_layout(h_pad=0, w_pad=0, pad=0)
+    pl.tight_layout()               
     if plot != None:
         pl.savefig(plot)
 
@@ -2997,7 +2999,7 @@ def qac_getkey(key):
 
 
 
-def qac_begin(label="QAC", log=True, plot=False):
+def qac_begin(label="QAC", log=True, plot=False, ltp2vis=True):
     """
     Every script should start with qac_begin() if you want to use the logger
     and/or Dtime output for performance checking. You can safely leave this
@@ -3006,9 +3008,17 @@ def qac_begin(label="QAC", log=True, plot=False):
     label      prefix for Dtime labeling
     log
     plot       if True, force plots to show up interactively.
+    tp2vis     if a local tp2vis.py exists, execfile it
 
     See also qac_tag() and qac_end()
     """
+    if ltp2vis:
+        if os.path.exists('tp2vis.py'):
+            print("Reading a local tp2vis, which doesn't seem to work")
+            execfile('./tp2vis.py')
+            tp2vis_version()
+        
+    
     if log:
         from utils import Dtime
         import logging
