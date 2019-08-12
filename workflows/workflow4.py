@@ -26,7 +26,7 @@ ptg3        = 'test4-grid.ptg'    # ptg from a grid
 phasecenter = 'J2000 12h00m0.000s -30d00m00.000s'
 
 # decimate to a more workable regression (the original is 4096) [pick from: 1, 2, 4]
-factor      = 4
+factor      = 1
 #
 box1        = '512,512,3584,3584'
 box2        = '256,256,1791,1791'
@@ -38,11 +38,11 @@ tp_beam     = 56.7    # arcsec
 tp_scale    = 1.0     # set to a number if you want to scale up/down TP (but not array)
 
 # maxalma is the max configuration number taken in the 12m cfg's
-maxalma     = 5
+maxalma     = 1
 
 # gridding, using factor
 mapsize     = 4096/factor
-pixel       = 0.0625*factor     # 0.0625 or 0.075
+pixel       = 0.05*factor
 grid        = 30.0
 niter       = 10000
 niters1     = [0,1,10,100,1000,10000]      # test4r,test4s
@@ -55,6 +55,7 @@ ptg         = ptg1
 #   summary
 qac_log("SUMMARY")
 qac_version()
+qac_project('test4')
 qac_summary(skymodel)
 
 if False:
@@ -116,18 +117,14 @@ if False:
         qac_stats(iname)
 
 if True:
-    # make sure it's clean, since qac_alma() accumulates
-    os.system('rm -rf %s' % 'test4a')
-    skymodel = 'skymodel3.im'
+    if False:
+        # make sure it's clean, since qac_alma() accumulates
+        os.system('rm -rf %s' % 'test4a')
+        skymodel = 'skymodel3.im'
 
-    # 7m data
-    qac_log("ALMA 7m")
-    qac_alma('test4a',skymodel, mapsize,pixel,cfg=0, phasecenter=phasecenter,niter=0)
-    qac_stats('test4a/dirtymap.image')
-
-    # 12m data
-    qac_log("ALMA 12m")
-    for cfg in range(0,maxalma):
+    # 7m+12m data
+    qac_log("ALMA 7+12m")
+    for cfg in range(0,maxalma+1):
         qac_alma('test4a',skymodel,cfg=cfg)
 
     # look at 12m pointings from the 1st 12m cfg
@@ -135,6 +132,7 @@ if True:
 
     # scale the TP for just tp2vis so we can check what can go wrong if tp_scale not 1
     immath([skymodel],'evalexpr','test4a/skymodel3_scaled.im','IM0*%g' % tp_scale)
+    qac_project('test4a/tp')
     qac_tp_vis('test4a/tp','test4a/skymodel3_scaled.im',ptg,deconv=False,fix=0)
     #qac_stats('test4a/tp/dirtymap.image')
     #qac_plot('test4a/tp/dirtymap.image')
@@ -151,14 +149,14 @@ tp2vispl([ms0]+ms1+ms2)
 
 qac_log("MAPPING")
 
-qac_clean('test4a/clean1', ms0,ms1+ms2, mapsize,pixel,niter=niters2,phasecenter=phasecenter,do_alma=True, do_concat=False)
+qac_clean('test4a/clean1', ms0,ms1+ms2, mapsize,pixel,niter=niters2,phasecenter=phasecenter,do_concat=False)
 
 # do the 7m/12, : odd, they don't converge, all the same
 for i in range(0,len(niters2)): 
     if i==0:
-        iname = 'test4a/clean1/alma.image'
+        iname = 'test4a/clean1/int.image'
     else:
-        iname = 'test4a/clean1/alma_%d.image' % (i+1)
+        iname = 'test4a/clean1/int_%d.image' % (i+1)
     qac_plot(iname)
     qac_stats(iname)
 
@@ -172,14 +170,14 @@ for i in range(0,len(niters2)):
     qac_stats(iname)
 
 for i in range(1,len(niters2)): 
-    inamed = 'test4a/clean1/tpalma'
-    inamec = 'test4a/clean1/tpalma_%d' % (i+1)
+    inamed = 'test4a/clean1/tpint'
+    inamec = 'test4a/clean1/tpint_%d' % (i+1)
     tp2vistweak(inamed,inamec)
-    iname = 'test4a/clean1/tpalma_%d.tweak.image' % (i+1)
+    iname = 'test4a/clean1/tpint_%d.tweak.image' % (i+1)
     qac_plot(iname)
     qac_stats(iname)
 
-qac_beam('test4a/clean1/tpalma.psf',plot='test4a/clean1/qac_beam.png',normalized=True)
+qac_beam('test4a/clean1/tpint.psf',plot='test4a/clean1/qac_beam.png',normalized=True)
 
 
 if True:
@@ -216,8 +214,8 @@ if True:
     qac_stats('test72e/dirtymap.image',      box=box)
     
     qac_stats('map123a/dirtymap.image',      box=box)
-    qac_stats('map123b/alma.image',          box=box)
-    qac_stats('map123b/tpalma.image',        box=box)
-    qac_stats('map123b1/alma.image',         box=box)
-    qac_stats('map123b1/tpalma.image',       box=box)
-    qac_stats('map123b1/tpalma.tweak.image', box=box)
+    qac_stats('map123b/int.image',           box=box)
+    qac_stats('map123b/tpint.image',         box=box)
+    qac_stats('map123b1/int.image',          box=box)
+    qac_stats('map123b1/tpint.image',        box=box)
+    qac_stats('map123b1/tpint.tweak.image',  box=box)
