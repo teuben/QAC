@@ -8,7 +8,7 @@
 #  Space needs:        ~500MB
 #  Memory needed:      ~2.6GB
 #
-#  Example runs:       casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]' 
+#  Other examples:     casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]' 
 #                      casa --nogui -c bench.py niter='[0,100,300,1000,3000,10000]'  nvgrp=16 test='"bench16"'
 #
 #  On a Mac you may need to use  /Applications/CASA.app/Contents/MacOS/casa
@@ -28,7 +28,7 @@
 #           443.93   18.37   1:43.66
 #           911.93   19.32   2:40.82 579%CPU        mar-13
 #           929.81   19.20   2:44.03                pre mar-21
-#
+#           742.82   19.67   2:13.11 572%CPU        5.6 aug2019
 #
 #  t530:    738.632u 17.956s 5:05.12 247.9%	0+0k 96792+2968744io   578pf+0w      i7-3630QM CPU @ 2.40GHz
 #           748.144u 19.440s 5:02.15 254.0%	0+0k 2104+2799288io      2pf+0w
