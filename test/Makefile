@@ -1,4 +1,4 @@
-# final one
+#    Various tests for tp2vis and other QAC methods
 
 TESTS = bench bench0 bench1 \
         sky0a sky0b sky1 sky2 \
@@ -7,13 +7,16 @@ TESTS = bench bench0 bench1 \
 
 #TESTS = bench bench0 bench1 sky1 test1 test2 test3 test4 test5
 
+SLIDES = slide1 slide2 slide3 slide4 slide6 slide7 slide8 slide9 slide10
+SLIDES = slide6 slide7 slide8 slide9 slide10
+
 TESTS = bench bench0 bench1 \
         sky0a sky0b \
 	sky1 sky1a sky1b sky1c sky1d \
 	sky2 \
         test1 test2 test3 test4 test5 \
 	sky2_1f \
-	slide1 slide2 slide3 slide4 slide5 slide6 slide7 slide8 slide9 slide10
+	$(SLIDES)
 
 .PHONY: $(TESTS)
 
@@ -58,6 +61,7 @@ $(DATA4):P
 
 bench:
 	$(CASA) bench.py > bench.log 2>&1
+	cp bench.log bench
 	tail -4 bench.log
 
 benchplot:
@@ -66,11 +70,17 @@ benchplot:
 
 bench0:
 	$(CASA) bench0.py > bench0.log 2>&1
+	cp bench0.log bench0
 	tail -8 bench0.log
 
 bench1:
 	$(CASA) bench1.py > bench1.log 2>&1
+	cp bench1.log bench1
 	tail -8 bench1.log
+
+#       Slides to show off some examples features
+
+slides:	$(SLIDES)
 
 #
 #       Various styles of combination of skymodel (TP and ALMA configs)
@@ -346,6 +356,13 @@ test5:
 	$(CASA) test5.py > test5.log 2>&1
 	tail -8 test5.log
 
+
+#
+
+# 26.42user 2.87system 0:22.91elapsed 127%CPU
+sky3:
+	$(CASA) sky3.py pdir='"sky3"' > sky3.log  2>&1
+	cp sky3.log sky3
 
 dish3:
 	casa -c sky3.py test='"sky_12"' pixel_m=0.025
