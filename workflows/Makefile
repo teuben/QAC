@@ -16,10 +16,12 @@ help:
 
 
 # about 3 hours
-M100a:
-	#	time casa --nogui -c ../example1.py   > example1.log  2>&1
-	$(CASA) workflow6a.py > example6a.log 2>&1
+#	time casa --nogui -c ../example1.py   > example1.log  2>&1
 
+# ?
+M100a: $(CASA) workflow6a.py > example6a.log 2>&1
+
+# about 1 hour
 M100:
 	$(CASA) workflow6.py  > workflow6.log 2>&1
 
@@ -29,4 +31,4 @@ cloud197:
 
 # 
 skymodel:
-	time casa --nogui -c ../workflow4.py  > workflow4.log 2>&1
+	$(CASA)  workflow4.py  > workflow4.log 2>&1
