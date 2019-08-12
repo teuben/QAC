@@ -1,8 +1,13 @@
+Here we list contributed software, as well as usage tips.
+
+
 tp2vis:     this may or may not be an old version of tp2vis that we
             distribute just in case the formal one on
-	    https://github.com/tp2vis/distribute is not available.
+	    https://github.com/tp2vis/distribute is not available
+	    or deemed outdated.	    					
 	    Do not use this unless you know what you are doing and/or
 	    have spoken to the developers.
+	    This version has likely untested features as well.
 
 test_ssc:   Faridina's method  (now in: src/ssc.py as qac_ssc())
 
