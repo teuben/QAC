@@ -21,7 +21,7 @@ should take around 2 minutes to run.
     cd ~/.casa
     ln -s ~/QAC
     cd ~/QAC/test
-    ln -s ../data/M100_TP_CO_cube.bl.fits
+    ln -s ../data/M100_TP_CO_cube.bl.image
     ln -s ../data/M100_aver_12.ms
     ln -s ../data/M100_aver_7.ms
     make bench
