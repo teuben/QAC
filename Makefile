@@ -29,6 +29,7 @@ help:
 	@echo "  install_casa    install this if you don't have casa yet"
 	@echo "  test            confirm all components are working"
 	@echo "  clean           remove the 'distribute' version"
+	@echo ""
 	@echo "  tp2vis          install the public version of tp2vis (recommended)"
 	@echo "  dev             install the developers version of tp2vis"
 	@echo ""
@@ -74,13 +75,17 @@ test:
 	@echo Simple test, needs no data, test if your installation is good.
 	$(CASA) --no-gui -c test0.py n=1
 
-pjt:
-
 data:
 	mkdir -p data
 	(cd data; wget $(URL3)/skymodel.fits)
 	(cd data; wget $(URL3)/skymodel.ptg)
 	(cd data; wget $(URL3)/qac_bench.tar.gz -O - | tar zxf -)
+
+data2:
+	mkdir -p data
+	(cd data; curl -O $(URL3)/skymodel.fits)
+	(cd data; curl -O $(URL3)/skymodel.ptg)
+	(cd data; curl $(URL3)/qac_bench.tar.gz | tar zxf -)
 
 # the public release is in a directory 'distribute', or 'distribute.git'
 # do not modify this, it gets updated from the developers release 
