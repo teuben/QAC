@@ -54,7 +54,10 @@ try:
                  'src/plot',
                  'contrib/tp2vis',
                  'distribute/tp2vis',
-                 'tp2vis/tp2vis']
+                 'tp2vis/tp2vis',
+                 'contrib/sdint_helper',
+                 'contrib/sdint_imager',
+                 ]
     sys.path.append(qac_root + '/src')
     work_dir = os.getcwd()
     os.chdir(qac_root)
