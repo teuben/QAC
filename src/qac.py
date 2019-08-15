@@ -1156,11 +1156,11 @@ def qac_vp(my_vp=False, my_schwab=False):
     if not use_vp: return
     
     # the following code for adding a VP is copied from tp2vis.py
-    
-    apara = {'observatory':'VIRTUAL',           # a primary beam of 
-             'antList':    ['VIRTUAL'],         # virtual interferometer
-             'dish':        12.0,               # should be defined here.
-             'fwhm100':     65.2,
+    # This uses newly defined values for the VIRTUAL interferometer dish size and FWHM.
+    apara = {'observatory':'VIRTUAL',
+             'antList':    ['VIRTUAL'],
+             'dish':       t2v_arrays['VIRTUAL']['dish'],
+             'fwhm100':    t2v_arrays['VIRTUAL']['fwhm100'],
              'maxRad':     150.0}
     vp.reset()                                  # reset vpmanager
     vp.setpbgauss(telescope='OTHER',
