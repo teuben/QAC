@@ -1201,7 +1201,7 @@ def qac_tpdish(name, size=None):
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print("QAC_DISH: %g %g -> %g %g" % (old_size, old_fwhm, size, old_fwhm/r))
 
-def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):    
+def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, winpix=0, **line):    
            
     """
       Simple frontend to call tp2vis() and an optional tclean()
@@ -1236,6 +1236,8 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
                      @todo   there is a flux difference between fix=0 and fix=1 in dirtymap
       deconv         Use the deconvolved map as model for the simulator
                      Within CASA you can use use deconvolve() to construct a Jy/pixel map.
+
+      winpix         Tukey window [0]
 
       line           Dictionary of tclean() parameters, usually the line parameters are useful, e.g.
                      line = {"restfreq":"115.271202GHz","start":"1500km/s", "width":"5km/s","nchan":5}
@@ -1278,7 +1280,7 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
         print("No PTG specified, no auto-regioning yet")
         return None
 
-    tp2vis(imagename2,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv)
+    tp2vis(imagename2,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv, winpix=winpix)
 
     vptable = outfile + '/TP2VISVP'    
     if QAC.iscasa(vptable):                   # note: current does not have a Type/SubType
