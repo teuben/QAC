@@ -108,10 +108,13 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, outfile=None)
     -------------------
         phasecenter : str 
             phasecenter of the image/pointings *only in J2000 decimal degrees format* 
-            Example: phasecenter = 'J2000 52.26483deg 31.28025deg' 
+            Example: phasecenter = 'J2000 52.26483deg 31.28025deg'
+            @todo:   phasecenter = 'J2000 12h22m54.900s +15d49m15.000s'
+
         imsize : int or list of 2 ints
             Number of pixels 
-            Example: imsize = [1400,1800] imsize = 500 is equivalent to [500,500] 
+            Example: imsize = [1400,1800]
+                     imsize = 500 is equivalent to [500,500] 
         pixel : float
             Pixel size in arcsecs
             Example: pixel = 0.5
