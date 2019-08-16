@@ -24,3 +24,14 @@ casaviewer.desktop:     copy this file to your ~/.local/share/kservices5/Service
 
 			If you are a KDE user, you will quickly appreciate being able
 			to directly right click into a directory that's a CASA image
+
+
+install astropy / ....   into casa
+
+http://docs.astropy.org/en/stable/install.html#installing-astropy-into-casa
+
+from setuptools.command import easy_install
+easy_install.main(['--user', 'pip'])
+import subprocess, sys
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--user', 'astropy'])
+import astropy
