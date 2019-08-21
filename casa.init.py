@@ -15,6 +15,18 @@
 
 import os, sys
 
+
+#          for some large mosaics you will need to modify the max. open files
+#          here's a python method to do this. The shell can do this with
+#                  ulimit -Sn 8000
+if False:
+    nofiles = 8000
+    import resource
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (nofiles, hard))
+    print("Changing max open files from %d to %d" % (soft,nofiles))
+
+
 # https://casaguides.nrao.edu/index.php/Analysis_Utilities
 # ftp://ftp.cv.nrao.edu/pub/casaguides/analysis_scripts.tar
 if False:
