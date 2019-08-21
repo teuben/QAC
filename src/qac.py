@@ -5,10 +5,10 @@
 #        Some are wrappers around CASA, others are also convenient for regression and performance testing.
 #
 #        The simplicity of these functions is intended to simplify usage of CASA and promote
-#        testing your codes.
+#        testing and regressing your scripts.
 #
 
-import os, shutil, math, tempfile
+import os, sys, shutil, math, tempfile
 import os.path
 from utils import constutils as const
 from utils import radialProfile
@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 12-aug-2019")
+    print("qac: version 17-aug-2019")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -1141,6 +1141,8 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
 def qac_vp(my_vp=False, my_schwab=False):
     """
         Some behind the scenes tricks for QAC to enable features in TP2VIS:
+
+        @todo  explain relationship with qac_tpdish()
     
         my_vp:      Set usage of VP.
         my_schwab:  Use SchwabSpheroidal for TP deconvolution
@@ -1164,7 +1166,7 @@ def qac_vp(my_vp=False, my_schwab=False):
              'maxRad':     150.0}
     vp.reset()                                  # reset vpmanager
     vp.setpbgauss(telescope='OTHER',
-                  othertelescope=apara['antList'][0],# set PB of VI in vpmanager
+                  othertelescope=apara['antList'][0],        # set PB of VI in vpmanager
                   halfwidth=str(apara['fwhm100'])+'arcsec',
                   maxrad=str(apara['maxRad'])+'arcsec',
                   reffreq='100.0GHz',
@@ -1181,6 +1183,8 @@ def qac_vp(my_vp=False, my_schwab=False):
 def qac_tpdish(name, size=None):
     """
     A patch to work with dishes that are not 12m (currently hardcoded in tp2vis.py)
+
+    @todo   explain relationship to qac_vp()
 
     E.g. for GBT (a 100m dish) you would need to do:
 
@@ -1204,7 +1208,7 @@ def qac_tpdish(name, size=None):
 def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, winpix=0, **line):    
            
     """
-      Simple frontend to call tp2vis() and an optional tclean()
+      Simple frontend to call tp2vis() 
     
     
       _required_keywords:
@@ -1337,6 +1341,22 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
     #-end of qac_tp()
 
+def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
+    """
+    QAC interface to sdint
+
+    Note for 1D a different calling scheme is needed
+    """
+    if True:
+        print("SDINT experimental version not yet enabled")
+        return
+        
+    jointim = SDINT_imager(vis=vis,
+                           sdimage=sdimage,
+                           sdpsf=sdpsf,
+                           sdgain=1.0,
+                           dishdia=dishdia,
+                           )
 
 def qac_sd_vis(**kwargs):
     """
@@ -1927,7 +1947,15 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
         cname = "%s/%s_%d" % (project,name,i+2)
         print("tweak %s %s " % (dname,cname))
         tp2vistweak(dname,cname,**kwargs)
-    
+
+    #-end of qac_tweak()        
+
+        
+def qac_mac(project, **kwargs):
+    """
+    Model Assisted Cleaning
+    """
+    #-end of qac_mac()    
 
 def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="dirtymap"):
     """
@@ -1982,9 +2010,10 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="
 
 def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux = True):
     """
-    helper function to smooth skymodel using beam of feathered image
+    helper function to smooth skymodel using beam of (feathered) image
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
     including a regridding since model and sky pixels are not always the same
+    Can also compute a residual image 
 
     See also qac_tp_otf()
 
@@ -3004,20 +3033,20 @@ def qac_getkey(key):
 
 
 
-def qac_begin(label="QAC", log=True, plot=False, ltp2vis=True):
+def qac_begin(label="QAC", log=True, plot=False, local=False):
     """
     Every script should start with qac_begin() if you want to use the logger
-    and/or Dtime output for performance checking. You can safely leave this
-    call out, or set log=False
+    and/or Dtime output for performance checking.
+    You can safely leave this call out, or set log=False
 
     label      prefix for Dtime labeling
-    log
+    log        Use logger ?
     plot       if True, force plots to show up interactively.
-    tp2vis     if a local tp2vis.py exists, execfile it
+    ltp2vis    if a local tp2vis.py exists, execfile it  (does not work)
 
     See also qac_tag() and qac_end()
     """
-    if ltp2vis:
+    if local:
         if os.path.exists('tp2vis.py'):
             print("Reading a local tp2vis, which doesn't seem to work")
             execfile('./tp2vis.py')
@@ -3034,7 +3063,6 @@ def qac_begin(label="QAC", log=True, plot=False, ltp2vis=True):
         print('handlers:', root_logger.handlers)
         handler = root_logger.handlers[0]
         print('handler stream:', handler.stream)
-        import sys
         print('sys.stderr:', sys.stderr)
         QAC.dt = Dtime.Dtime(label)
 
@@ -3067,6 +3095,8 @@ class QAC(object):
         casa2np
         imsize2
         assertf
+        maxofiles
+        ...
     
     """
     @staticmethod
@@ -3178,7 +3208,23 @@ class QAC(object):
         else:
             lab = "_%d" % (idx+1)
         return lab
-        
+
+    @staticmethod    
+    def maxofiles(nofiles = None):
+        """ Change the max number of open files, and return this.
+            Some large mosaics may need this in some casa versions.
+            If no argument is given, it will report the current max.
+            See also casa.init.py
+        """
+        import resource
+        soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        if nofiles == None:
+            print("Max open files set %d [hard=%d]" % (soft,hard))            
+            return soft
+        resource.setrlimit(resource.RLIMIT_NOFILE, (nofiles, hard))
+        print("Changing max open files from %d to %d [hard=%d]" % (soft,nofiles,hard))
+        return nofiles
+     
         
     
 #- end of qac.py
