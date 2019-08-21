@@ -61,10 +61,11 @@ within QAC.
 * Nordic Tools SD2VIS: https://www.oso.nordic-alma.se/software-tools.php
 * Kauffman's *Adding Zero-Spacing* workflow: https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa
 * Radio Imaging Combination Analysis (RICA) : https://gitlab.com/mileslucas/rica
-* Papers of interest:
-  * [Ekers and Rots]()
-  * Braun and Walterbos  197x?
-  * Vogel et al.   1984?
-  * [Jorsater and van Moorsel 1995](http://adsabs.harvard.edu/abs/1995AJ....110.2037J)
-  * [Kurono, Morita, Kamazaki 2009](http://adsabs.harvard.edu/abs/2009PASJ...61..873K)
-  * [Koda et al. 2011](http://adsabs.harvard.edu/abs/2011ApJS..193...19K)
+* Papers of (historic) interest:
+  * [Ekers and Rots](https://ui.adsabs.harvard.edu/abs/1979ASSL...76...61E)
+  * [Vogel et al. 1984](https://ui.adsabs.harvard.edu/abs/1984ApJ...283..655V)
+  * [Braun and Walterbos  1985](https://ui.adsabs.harvard.edu/abs/1985A%26A...143..307B)
+  * [Jorsater and van Moorsel 1995](https://ui.adsabs.harvard.edu/abs/1995AJ....110.2037J)
+  * [Kurono, Morita, Kamazaki 2009](https://ui.adsabs.harvard.edu/abs/2009PASJ...61..873K)
+  * [Koda et al. 2011](https://ui.adsabs.harvard.edu/abs/2011ApJS..193...19K)
+  * [Koda et al. 2019](https://ui.adsabs.harvard.edu/abs/2019PASP..131e4505K)
