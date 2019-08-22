@@ -158,22 +158,30 @@ def plot2(plot2file, f1=None, f2=None, plot='plot2.png'):
     plt.show()
     return flux
 
-def plot2a(f, title='Flux Comparison', plot='plot2a.png'):
+def plot2a(f, title='Flux Comparison', plot='plot2a.png', label=[], dv=1.0):
     """ Plotting flux as function of channel for various situations
         f = list of equal sized arrays of fluxes
-        Also prints out the flux sums (sans the km/s factor we don't know)
+        Also prints out the flux sums, using the dv that needs to be given.
     """
     plt.figure()
     chan = np.arange(len(f[0]))
+    if len(label) == 0:
+        labels=range(len(f))
+        for n in range(len(f)):
+            labels[n] = "%d" % (n+1)
+    else:
+        labels = label
+            
     for (fi,n) in zip(f,range(len(f))):
-        plt.plot(chan,fi,label='%d' % (n+1))
-        print "Sum[%d]: %g Jy (* unknown km/s)" % (n+1,fi.sum())
+        plt.plot(chan,fi,label=labels[n])
+        print "Sum[%d]: %g Jy (* assumed %g km/s) %s" % (n+1,fi.sum()*dv, dv, labels[n])
     zero = 0.0 * f[0]
     plt.plot(chan,zero,c='black')
     plt.ylabel('Flux')
     plt.xlabel('Channel')
     plt.title(title)
-    plt.legend()
+    #plt.legend(loc='lower center')
+    plt.legend(loc='best')    # fontsize='x-small'
     plt.savefig(plot)
     plt.show()
     return 
