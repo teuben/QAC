@@ -1,0 +1,22 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "name": "QAC: Quick Array Combinations front end to CASA",
+    "description": "QAC (Quick Array Combinations) is a front end to CASA (ascl:1107.013) and calls tools and tasks to help in combining data from a single dish and interferometer. QAC hides some of the complexity of writing CASA scripts and provide a simple interface to array combination tools and tasks in CASA. This project was conceived alongside the TP2VIS (ascl:1904.021) project, where it was used to provide an easier way to call CASA and perform regression tests.",
+    "identifier": "ascl:1908.001",
+    "author": [
+        {
+            "@type": "Person",
+            "givenName": "Peter",
+            "familyName": "Teuben",
+            "id": "PLACEHOLDER: Add ORCID (https://orcid.org/xxxxxx) here"
+        }
+    ],
+    "citation": "https://ui.adsabs.harvard.edu/abs/2019ascl.soft08001T",
+    "relatedLink": [
+        "PLACEHOLDER: Add related links here"
+    ],
+    "codeRepository": "https://github.com/teuben/QAC",
+    "version": "PLACEHOLDER: Add version here",
+    "license": "PLACEHOLDER: Add license (ideally as a URL to the SPDX page - e.g. https://spdx.org/licenses/MIT.html) here"
+}
