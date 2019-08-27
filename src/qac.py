@@ -327,11 +327,13 @@ def qac_line(im):
     start = str(start) + 'km/s'
     return {'start' : start, 'width' : width, 'nchan' : nchan, 'restfreq' : restfreq}
 
-def qac_fits(image,overwrite=True):
+def qac_fits(image,outfile=None,overwrite=True):
     """ exportfits shortcut, appends the extension ".fits" to a casa image
         also handles a list of images
 
         image     casa image, or list of images, to be converted to fits
+        outfile   if given, output fits file name, else add ".fits"
+        overwite  remove any existing outfile if present
     """
     if type(image) == type([]):
         ii = image
@@ -339,6 +341,8 @@ def qac_fits(image,overwrite=True):
         ii = [image]
     for i in ii:
         fi = i + '.fits'
+        if len(ii)==1 and outfile!=None:
+            fi = outfile
         exportfits(i,fi,overwrite=overwrite)
         print("Wrote " + fi)
 
@@ -1345,7 +1349,9 @@ def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
     """
     QAC interface to sdint
 
-    Note for 1D a different calling scheme is needed
+    Note for 1D a different calling scheme is needed: 
+      set deconvolver='mtmfs', specmode='mfs', nterms=1, and refreq=''.
+    This should give a *joint.multiterm.image.tt0 image you can use to compare to the other combination methods.
     """
     if True:
         print("SDINT experimental version not yet enabled")
@@ -2010,7 +2016,7 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="
 
 def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux = True):
     """
-    helper function to smooth skymodel using beam of (feathered) image
+    helper function to smooth skymodel using beam of another image
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
     including a regridding since model and sky pixels are not always the same
     Can also compute a residual image 
@@ -2505,20 +2511,31 @@ def qac_summary(tp, ms=None, source=None, line=False):
 
     #-end of qac_summary()
 
-def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None):
+def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None, momfac = [2.0, 5.5, 5.5]):
     """
-    Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
+    Take mom0, mom1 and mom2 of an image cube, in the style of the M100 casaguide.
+    (see e.g. https://casaguides.nrao.edu/index.php/M100_Band3_Combine_5.4)
+    
+    Here you specify the rms defined by channel ranges or directly, and with optional PB correction.
+    Channel ranges are also used to limit the channels over which the moments are computed.
+
+    required:
     
     imcube:      image cube (flux flat, i.e. the .image file)
     chan_rms:    list of 4 integers, which denote the low and high channel range where RMS should be measured
-    pb:          primary beam. If given, it can do a final pb corrected version and use it for masking
-    pbcut:       if PB is used, this is the cutoff above which mask is used
-    rms:         if given, overrides computed rms
+                 normally a range at the start and end of the channels, perhaps excluding first and last.
+                 Note the moments are taken between the two channel ranges.
+                 Example:   [2,10,60,68]
 
-    Note the rms value is used in masking, but for mom0 2*rms and for mom1 5.5*rms
-
-    @todo    add the mom2 by default as well
+    optional:
     
+    pb:          primary beam. If given, it can do a final pb corrected version and use it for masking
+    pbcut:       if PB is used, this is the cutoff above which the mask is used
+    rms:         if given, overrides computed rms
+    momfac:      rms factor for mom0,1,2 maps [2, 5.5, 5.5]
+
+    Note the rms value is used in masking, but different factors are adviced for mom0, mom1 and mom2.
+
     """
     def lel(name):
         """ convert filename to a safe filename for LEL expressions, e.g. in mask=
@@ -2529,7 +2546,7 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None):
         print("WARNING: there is a pb file, but you are not using it. Assuming flat pb")
     chans1='%d~%d' % (chan_rms[0],chan_rms[1])
     chans2='%d~%d' % (chan_rms[2],chan_rms[3])
-    chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2])
+    chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2]-1)
     if rms == None:
         rms  = imstat(imcube,axes=[0,1])['rms']
         dmax = imstat(imcube,axes=[0,1])['max']
@@ -2538,7 +2555,7 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None):
         rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
         rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
         print(rms1,rms2)
-        rms = 0.5*(rms1+rms2)
+        rms = 0.5*(rms1+rms2)      # @todo should do weighted average
         print("RMS = %f" % rms)
         print("MINMAX = %f %f" % (dmin.min(),dmax.max()))
     else:
@@ -2550,11 +2567,13 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None):
         print("Using mask=%s" % mask)
     mom0 = imcube + '.mom0'
     mom1 = imcube + '.mom1'
-    os.system('rm -rf %s %s' % (mom0,mom1))
-    immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0, stretch=True)
-    immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1, stretch=True)
+    mom2 = imcube + '.mom2'
+    os.system('rm -rf %s %s %s' % (mom0,mom1,mom2))
+    immoments(imcube, 0, chans=chans3, includepix=[rms*momfac[0],999999], mask=mask, outfile=mom0, stretch=True)
+    immoments(imcube, 1, chans=chans3, includepix=[rms*momfac[1],999999], mask=mask, outfile=mom1, stretch=True)
+    immoments(imcube, 2, chans=chans3, includepix=[rms*momfac[2],999999], mask=mask, outfile=mom2, stretch=True)
 
-    print("QAC_MOM: Written %s %s" % (mom0,mom1))
+    print("QAC_MOM: Written %s %s %s" % (mom0,mom1,mom2))
 
     #-end of qac_mom()
 
@@ -2840,10 +2859,14 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
     #-end of qac_plot_grid()
     
-def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
+def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
     """ Plotting min,max,rms as function of channel
     
-        box     xmin,ymin,xmax,ymax       defaults to whole area
+        box     'xmin,ymin,xmax,ymax'       defaults to whole area
+        border  take off a border 
+        edge    if > 0, mean the two channel edges for rms
+
+        Also plotting a "diff", (max+min) which should be 0 at the edges.
 
         A useful way to check the the mean RMS at the first
         or last 10 channels is:
@@ -2855,25 +2878,39 @@ def qac_flux(image, box=None, dv = 1.0, plot='qac_flux.png'):
     qac_tag("flux")
     
     pl.figure()
+    h    = imhead(image)
+    nx = h['shape'][0]
+    ny = h['shape'][1]
+    if border > 0:
+        box = '%d,%d,%d,%d' % (border,border,nx-border,ny-border)
     _tmp = imstat(image,axes=[0,1],box=box)
     fmin = _tmp['min']
     fmax = _tmp['max']
     frms = _tmp['rms']
+    diff = fmax+fmin
+    if edge > 0:
+        rms1 = frms[:edge].mean()
+        rms2 = frms[-edge:].mean()
+        rms = 0.5 * (rms1+rms2)
     chan = np.arange(len(fmin))
     f = 0.5 * (fmax - fmin) / frms
     pl.plot(chan,fmin,c='r',label='min')
     pl.plot(chan,fmax,c='g',label='max')
     pl.plot(chan,frms,c='b',label='rms')
+    pl.plot(chan,diff,c='black',linestyle='--',label='diff')    
     # pl.plot(chan,f,   c='black', label='<peak>/rms')
     zero = 0.0 * frms
     pl.plot(chan,zero,c='black')
     pl.ylabel('Flux')
     pl.xlabel('Channel')
-    pl.title('%s  Min/Max/RMS' % (image))
+    pl.title('%s  Min/Max/RMS/diff' % (image))
     pl.legend()
     pl.savefig(plot)
     pl.show()
-    print("Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv))
+    if edge > 0:
+        print("Sum: %g Jy km/s (%g km/s)  %d x %d -%d rms(%d): %g" % (fmax.sum() * dv,dv,nx,ny,border,edge,rms))
+    else:
+        print("Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv))
 
     #-end of qac_flux()
 
