@@ -44,6 +44,7 @@ set L2 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.
 set L3 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.3.0-143.el7.tar.gz
 set L4 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.4.1-32.el7.tar.gz
 set L5 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.5.0-149.el7.tar.gz
+set L6 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.6.0-60.el7.tar.gz
 
 set l3 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.3.0-89.el7.tar.gz
 set l4 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.4.0-9.el7.tar.gz
@@ -80,7 +81,7 @@ set rel = https://casa.nrao.edu/download/distro/$uname/release/el7/
 if ($#argv > 0) then
    set url = $1
 else
-   set url = $L5
+   set url = $L6
 endif
 
 echo Using $url
