@@ -18,6 +18,7 @@
 #
 #   7-mar-2018  Peter Teuben      initial version written for SD2018
 #  22-jun-2018  PJT               bit more user friendly for Mac
+#  16-jul-2019  PJT               adapted for DC2019
 #
 #  TODO's:
 #  - test to check if everything was installed properly and working ok
@@ -42,6 +43,7 @@ set L1 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.
 set L2 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.1.1-5.el7.tar.gz
 set L3 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.3.0-143.el7.tar.gz
 set L4 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.4.1-32.el7.tar.gz
+set L5 = https://casa.nrao.edu/download/distro/linux/release/el7/casa-release-5.5.0-149.el7.tar.gz
 
 set l3 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.3.0-89.el7.tar.gz
 set l4 = https://casa.nrao.edu/download/distro/linux/prerelease/el7/casa-prerelease-5.4.0-9.el7.tar.gz
@@ -56,9 +58,10 @@ if ($uname == osx) then
    if (-d /Applications/CASA.app) then
        echo it seems you have CASA installed:
        set bin1 = /Applications/CASA.app/Contents/MacOS
+       set bin2 = /Applications/CASA.app/Contents/darwin/bin
        $bin1/casa-config --version
-       echo "set path = ($bin1 "'$path); rehash'  >> casa_start.csh
-       echo "export PATH=${bin1}:"'$PATH'         >> casa_start.sh
+       echo "set path = ($bin1 $bin2 "'$path); rehash'   >> casa_start.csh
+       echo "export PATH=${bin1}:${bin2}"'$PATH'         >> casa_start.sh
    endif
    exit 0
 else
@@ -77,7 +80,7 @@ set rel = https://casa.nrao.edu/download/distro/$uname/release/el7/
 if ($#argv > 0) then
    set url = $1
 else
-   set url = $L4
+   set url = $L5
 endif
 
 echo Using $url
@@ -91,9 +94,14 @@ set dir   = $targz:r:r
 if (-d $dir) then
     echo $dir already exists, not installing again
 else
-    echo $dir does not exist, downloading starts in 5 seconds....
-    sleep 5
-    curl $url | tar zxf -
+    if (! -e $targz) then
+      echo $dir does not exist, downloading starts in 5 seconds....
+      sleep 5
+      curl $url | tar zxf -
+    else
+      echo tar zxf $targz
+      tar zxf $targz
+    endif
 endif
 
 
