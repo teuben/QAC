@@ -158,7 +158,7 @@ def plot2(plot2file, f1=None, f2=None, plot='plot2.png'):
     plt.show()
     return flux
 
-def plot2a(f, title='Flux Comparison', plot='plot2a.png', label=[], dv=1.0):
+def plot2a(f, title='Flux Comparison', plot='plot2a.png', label=[], dv=1.0, v=[]):
     """ Plotting flux as function of channel for various situations
         f = list of equal sized arrays of fluxes
         Also prints out the flux sums, using the dv that needs to be given.
@@ -173,12 +173,20 @@ def plot2a(f, title='Flux Comparison', plot='plot2a.png', label=[], dv=1.0):
         labels = label
             
     for (fi,n) in zip(f,range(len(f))):
-        plt.plot(chan,fi,label=labels[n])
-        print "Sum[%d]: %g Jy (* assumed %g km/s) %s" % (n+1,fi.sum()*dv, dv, labels[n])
+        if len(v) > 0:
+            plt.plot(v[n],fi,label=labels[n])
+            dv = v[n][1]-v[n][0]
+        else:
+            plt.plot(chan,fi,label=labels[n])
+        print "Flux[%d]: %g Jy (* assumed %g km/s) %s" % (n+1,fi.sum()*dv, dv, labels[n])
     zero = 0.0 * f[0]
-    plt.plot(chan,zero,c='black')
     plt.ylabel('Flux')
-    plt.xlabel('Channel')
+    if len(v) > 0:
+        plt.plot(v[0],zero,c='black')
+        plt.xlabel('Velocity (km/s)')
+    else:
+        plt.plot(chan,zero,c='black')
+        plt.xlabel('Channel')
     plt.title(title)
     #plt.legend(loc='lower center')
     plt.legend(loc='best')    # fontsize='x-small'
@@ -365,3 +373,110 @@ def plot6(imlist, bins=50, range=None, log=False, alpha=[1, 0.3, 0.1], box=None,
     plt.savefig(plot)
     plt.show()
     
+def plot7(basename, idx=0, channel=0, box=None, range=None, plot='plot7.png', residual = True, verbose=False):
+    """
+    composite for a channel in a cube, needs to be flux flat since we histograms
+
+    basename         e.g.  int_2.image     tpint_2.image     tpint_2.tweak.image
+                           int_2.residual  tpint_2.residual  tpint_2.tweak.residual
+    """
+    def plotim(image, channel, drange, box=None):
+        """
+        """
+        if image == None:
+            return
+        if not QAC.iscasa(image):
+            return
+        tb.open(image)
+        d1 = tb.getcol("map").squeeze()
+        tb.close()
+        nx = d1.shape[0]
+        ny = d1.shape[1]
+        if len(d1.shape) == 2:
+            d3 = np.flipud(np.rot90(d1.reshape((nx,ny))))            
+        else:
+            d2 = d1[:,:,channel]
+            d3 = np.flipud(np.rot90(d2.reshape((nx,ny))))
+        if box != None:
+            data = d3[box[1]:box[3],box[0]:box[2]]
+        else:
+            data = d3
+        alplot = plt.imshow(data, origin='lower', vmin = drange[0], vmax = drange[1])
+        plt.title("%s[%d]" % (image,channel))
+        print("%s[%d]  %g %g" % (image,channel,data.min(),data.max()))
+
+    def plothi(image, channel, drange, bins=32, box=None):
+        """
+        simple histogram, overlaying seleted channel on full cube histogram
+        """
+        if image == None:
+            return
+        if not QAC.iscasa(image):
+            return
+
+        tb.open(image)
+        d1 = tb.getcol("map").squeeze()
+        tb.close()
+        nx = d1.shape[0]
+        ny = d1.shape[1]
+        d2 = d1[:,:,channel]
+        # @todo mask out 0's or masked or NaN
+        plt.hist(d1.ravel(),bins=bins,range=drange,log=True)   # alpha=a
+        plt.hist(d2.ravel(),bins=bins,range=drange,log=True)   # alpha=a
+        
+    im0 = []
+    im0.append( basename + '/int%s.image.pbcor' % QAC.label(idx) )
+    im0.append( basename + '/tpint%s.image.pbcor' % QAC.label(idx) )
+    im0.append( basename + '/tpint%s.tweak.image.pbcor' % QAC.label(idx) )
+    im0.append( basename + '/int%s.residual' % QAC.label(idx) )
+    im0.append( basename + '/tpint%s.residual' % QAC.label(idx) )
+    im0.append( basename + '/tpint%s.tweak.residual' % QAC.label(idx) )
+
+    dmin = dmax = None
+    print(im0)
+    print(len(im0))
+    # for i in range(len(im0)):
+    for i in [0,1,2,3,4,5]:
+        if QAC.iscasa(im0[i]):
+            if verbose: qac_stats(im0[i])
+            # if range == None:
+            if True:
+                h = imstat(im0[i])
+                if dmin == None:
+                    dmin = h['min']
+                    dmax = h['max']
+                else:
+                    if h['min'] < dmin: dmin = h['min']
+                    if h['max'] > dmax: dmax = h['max']
+        else:
+            print('%s failed' % im0[i])
+            im0[i] = None
+    if range == None:
+        qprint("Global data min/max = %g %g " % (dmin,dmax))
+        drange = [dmin,dmax]
+    else:
+        drange = range
+
+    bins = 100
+
+    fig = plt.figure()
+    plt.subplot(3,3,1);      plotim(im0[0],channel,drange,box)
+    plt.subplot(3,3,2);      plotim(im0[1],channel,drange,box)
+    plt.subplot(3,3,3);      plotim(im0[2],channel,drange,box)
+    plt.colorbar()    
+    plt.subplot(3,3,4);      plotim(im0[3],channel,drange,box)
+    plt.subplot(3,3,5);      plotim(im0[4],channel,drange,box)
+    plt.subplot(3,3,6);      plotim(im0[5],channel,drange,box)
+    plt.colorbar()
+    if not residual:
+        plt.subplot(3,3,7);  plothi(im0[0],channel,[dmin,dmax],bins,box)
+        plt.subplot(3,3,8);  plothi(im0[1],channel,[dmin,dmax],bins,box)
+        plt.subplot(3,3,9);  plothi(im0[2],channel,[dmin,dmax],bins,box)
+    else:
+        plt.subplot(3,3,7);  plothi(im0[3],channel,drange,bins,box)
+        plt.subplot(3,3,8);  plothi(im0[4],channel,drange,bins,box)
+        plt.subplot(3,3,9);  plothi(im0[5],channel,drange,bins,box)
+
+    
+    plt.savefig(plot)
+    plt.show()
