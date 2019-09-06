@@ -8,7 +8,7 @@
 #        testing and regressing your scripts.
 #
 
-import os, sys, shutil, math, tempfile
+import os, sys, shutil, math, tempfile, glob
 import os.path
 from utils import constutils as const
 from utils import radialProfile
@@ -59,14 +59,17 @@ def qac_par(par):
     #-end of qac_par()
     
 
-def qac_project(project):
+def qac_project(project, chdir=False):
     """
         start a new project in given project directory name
 
         project:      directory name. it will be created (and removed if present)
+        chdir:        also change directory into this project directory
     """
     print("QAC_PROJECT %s" % project)
     os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+    if chdir:
+        os.chdir(project)
     
     #-end of qac_project()
     
@@ -334,6 +337,8 @@ def qac_fits(image,outfile=None,overwrite=True):
         image     casa image, or list of images, to be converted to fits
         outfile   if given, output fits file name, else add ".fits"
         overwite  remove any existing outfile if present
+
+        Returns the (last) fits file  (@todo: should do a list if input is a list)
     """
     if type(image) == type([]):
         ii = image
@@ -345,6 +350,21 @@ def qac_fits(image,outfile=None,overwrite=True):
             fi = outfile
         exportfits(i,fi,overwrite=overwrite)
         print("Wrote " + fi)
+    return fi
+
+def qac_ds9(image):
+    """
+    poor man's ds9. assumes you have ds9 and xpatools installed in your $PATH
+    ds9 must also be running already, or you must have the "tods9" script
+    """
+    # check if it's a directory, if so, we'll need a fits file
+    if os.path.isdir(image):
+        fi = qac_fits(image)
+    else:
+        fi = image
+    print("Sending %s to ds9" % fi)
+    os.system("tods9 %s" % fi)
+    
 
 def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
     """
@@ -651,7 +671,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
 def qac_beam(im, normalized=True, chan=-1, plot=None):
     """ show some properties of the PSF
 
-    Returns the BMAJ,BMIN (in arcsec)
+    Returns the BMAJ,BMIN (in arcsec).   Ignoring the BPA.
 
     im:           image representing the beam (usually a .psf file)
     normalized:   if True, axes are arcsec and normalized flux
@@ -660,7 +680,9 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
     plot:         if set, this is the plot created, usually a png
 
     @todo   have an option to just print beam, no volume info
-    @todo   does not work when image is not square            
+    @todo   does not work when image is not square
+    @todo   omegarat agrees at 1.0 but scales wrong compared to tp2vistweak
+    
     """
     if not QAC.iscasa(im):
         print("QAC_BEAM: missing %s " % im)
@@ -2814,6 +2836,9 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
                 dmin = min(d[row][col].min(), dmin)
                 dmax = max(d[row][col].max(), dmax)
     print("Data min/max",dmin,dmax)
+    if minmax != None:
+        dmin = minmax[0]
+        dmax = minmax[1]
     
     fig = pl.figure()
     # pl.title(title)     # @todo global title needs work
@@ -2914,6 +2939,44 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
 
     #-end of qac_flux()
 
+def qac_niter_flux(basename, box=None, plot=None):
+    """
+    basename:        trigger to find .model files, this will set the niter counter.
+    """
+    a=glob.glob("%s_*.model" % basename)
+    n = len(a) + 1
+    print("Found %d niter results" % n)
+    for i in range(n):
+        fi = []
+        if True:
+            # add all possible names    @todo add the basename properly
+            fi.append("dirtymap%s.model" % QAC.label(i))
+            fi.append("dirtymap%s.image" % QAC.label(i))
+            fi.append("dirtymap%s.image.pbcor" % QAC.label(i))
+            fi.append("int%s.model" % QAC.label(i))
+            fi.append("int%s.image" % QAC.label(i))
+            fi.append("int%s.image.pbcor" % QAC.label(i))
+            fi.append("tpint%s.model" % QAC.label(i))
+            fi.append("tpint%s.image" % QAC.label(i))
+            fi.append("tpint%s.image.pbcor" % QAC.label(i))
+            fi.append("tpint%s.tweak.image" % QAC.label(i))
+            fi.append("tpint%s.tweak.image.pbcor" % QAC.label(i))
+
+        fx = []
+        if i==1: fn = []
+        for ff in fi:
+            if not QAC.exists(ff): continue
+            if i==1: fn.append(ff) 
+            if ff.find(".model") > 0:
+                fx0 = imstat(ff,box=box)['sum'][0]
+            else:
+                fx0 = imstat(ff,box=box)['flux'][0]            
+            fx.append(fx0)
+        print(fx)
+    print(fn)
+    
+    #-end of qac_niter_flux()
+    
 def qac_psd(image, plot='qac_psd.png', fit=False, pixel_s=None):
     """ compute the Power Spectral Density (PSD) of a map
 
