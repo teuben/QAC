@@ -25,7 +25,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 17-aug-2019")
+    print("qac: version 9-sep-2019")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -2555,6 +2555,7 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None, momfac = [2.0, 5.5, 
     pbcut:       if PB is used, this is the cutoff above which the mask is used
     rms:         if given, overrides computed rms
     momfac:      rms factor for mom0,1,2 maps [2, 5.5, 5.5]
+                 @todo Note this introduces a bias to positive signal
 
     Note the rms value is used in masking, but different factors are adviced for mom0, mom1 and mom2.
 
@@ -3325,6 +3326,23 @@ class QAC(object):
         print("Changing max open files from %d to %d [hard=%d]" % (soft,nofiles,hard))
         return nofiles
      
+    @staticmethod
+    def select(thisone,sellist=0,label=None):
+        """
+        thisone     the current one that needs to be checked
+        sellist     list that user entered via command line, or 0 if always true
+        
+        """
+        retval = False
+        if sellist==0:
+            retval = True
+        elif thisone in sellist:
+            retval = True
+        else:
+            retval = False
+        if label != None:
+            print("QAC.select %s %s" % (str(retval),label))
+        return retval
         
     
 #- end of qac.py
