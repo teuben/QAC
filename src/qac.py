@@ -2940,28 +2940,29 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
 
     #-end of qac_flux()
 
-def qac_niter_flux(basename, box=None, plot=None):
+def qac_niter_flux(dirname, box=None, plot=None):
     """
     basename:        trigger to find .model files, this will set the niter counter.
     """
-    a=glob.glob("%s_*.model" % basename)
+    a=glob.glob("%s/*.model" % dirname)
     n = len(a) + 1
     print("Found %d niter results" % n)
+    fn = []
     for i in range(n):
         fi = []
         if True:
             # add all possible names    @todo add the basename properly
-            fi.append("dirtymap%s.model" % QAC.label(i))
-            fi.append("dirtymap%s.image" % QAC.label(i))
-            fi.append("dirtymap%s.image.pbcor" % QAC.label(i))
-            fi.append("int%s.model" % QAC.label(i))
-            fi.append("int%s.image" % QAC.label(i))
-            fi.append("int%s.image.pbcor" % QAC.label(i))
-            fi.append("tpint%s.model" % QAC.label(i))
-            fi.append("tpint%s.image" % QAC.label(i))
-            fi.append("tpint%s.image.pbcor" % QAC.label(i))
-            fi.append("tpint%s.tweak.image" % QAC.label(i))
-            fi.append("tpint%s.tweak.image.pbcor" % QAC.label(i))
+            fi.append("%s/dirtymap%s.model"          % (dirname,QAC.label(i)))
+            fi.append("%s/dirtymap%s.image"          % (dirname,QAC.label(i)))
+            fi.append("%s/dirtymap%s.image.pbcor"    % (dirname,QAC.label(i)))
+            fi.append("%s/int%s.model"               % (dirname,QAC.label(i)))
+            fi.append("%s/int%s.image"               % (dirname,QAC.label(i)))
+            fi.append("%s/int%s.image.pbcor"         % (dirname,QAC.label(i)))
+            fi.append("%s/tpint%s.model"             % (dirname,QAC.label(i)))
+            fi.append("%s/tpint%s.image"             % (dirname,QAC.label(i)))
+            fi.append("%s/tpint%s.image.pbcor"       % (dirname,QAC.label(i)))
+            fi.append("%s/tpint%s.tweak.image"       % (dirname,QAC.label(i)))
+            fi.append("%s/tpint%s.tweak.image.pbcor" % (dirname,QAC.label(i)))
 
         fx = []
         if i==1: fn = []
@@ -3327,14 +3328,22 @@ class QAC(object):
         return nofiles
      
     @staticmethod
-    def select(thisone,sellist=0,label=None):
+    def select(thisone,sellist=[0],label=None):
         """
+        Convenience method to ease selecting if an option (an integer) is selected
+        Typical usage:
+        
+        if QAC.select(5,select,'Produce fig5.png with flux check'):
+            qac_flux(....)
+        
         thisone     the current one that needs to be checked
         sellist     list that user entered via command line, or 0 if always true
+        label       If present, label is shows with a True/False on the selection
         
         """
         retval = False
-        if sellist==0:
+        if type(sellist) != type([]): sellist = [sellist]
+        if sellist[0]==0:
             retval = True
         elif thisone in sellist:
             retval = True
