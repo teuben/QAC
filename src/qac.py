@@ -1286,10 +1286,12 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
         old_pixel = h0['cdelt2']   # radians
         print("Model has pixel=%g arcsec" % (old_pixel * apr))
         print("Making new model with pixel=%g arcsec" % pixel)
-        imagename2 = project + '/skymodel.im'
+        imagename2 = project + '/skymodel.orig.im'
+        imagename3 = project + '/skymodel.im'
         imsubimage(imagename,imagename2)
-        imhead(imagename2,mode='put',hdkey='cdelt1',hdvalue='-%garcsec' % pixel)
-        imhead(imagename2,mode='put',hdkey='cdelt2',hdvalue='+%garcsec' % pixel)
+        imtrans(imagename2,imagename3,order=['r','d','s','f'])
+        imhead(imagename3,mode='put',hdkey='cdelt1',hdvalue='-%garcsec' % pixel)
+        imhead(imagename3,mode='put',hdkey='cdelt2',hdvalue='+%garcsec' % pixel)
     else:
         imagename2 = imagename
 
@@ -2947,7 +2949,6 @@ def qac_niter_flux(dirname, box=None, plot=None):
     a=glob.glob("%s/*.model" % dirname)
     n = len(a) + 1
     print("Found %d niter results" % n)
-    fn = []
     for i in range(n):
         fi = []
         if True:
