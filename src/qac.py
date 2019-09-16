@@ -675,7 +675,9 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
 
     im:           image representing the beam (usually a .psf file)
     normalized:   if True, axes are arcsec and normalized flux
-                  otherwise pixels
+                  otherwise pixels. Normalized to the volume
+                  of the clean beam from the header.
+                  1.133 * Beam_x * Beam_x
     chan:         which channel to use [-1 means halfway cube]
     plot:         if set, this is the plot created, usually a png
 
@@ -756,7 +758,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
         if normalized:
             pl.title("%s : Normalized cumulative flux" % im)
             pl.xlabel("Radius (arcsec)")
-            pl.ylabel("Flux")
+            pl.ylabel("Flux [beam %g x %g]" % (bmaj,bmin))
             size = size * pix
             r1   = r1   * pix
         else:
@@ -1983,7 +1985,7 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
         
 def qac_mac(project, **kwargs):
     """
-    Model Assisted Cleaning
+    Model Assisted Cleaning (Kauffmann)
     """
     #-end of qac_mac()    
 
@@ -2942,12 +2944,19 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
 
     #-end of qac_flux()
 
-def qac_niter_flux(dirname, box=None, plot=None):
+def qac_niter_flux(dirname, box=None, flux=True, plot=None):
     """
-    basename:        trigger to find .model files, this will set the niter counter.
+    dirname:        directory to find .model files, this will set the niter counter.
+    box             'xmin,ymin,xmax,ymax' in 0-based pixels
+    flux            if False, it will grab max value, instead of flux
+    plot            if given, plot filename
+    
     """
     a=glob.glob("%s/*.model" % dirname)
-    n = len(a) + 1
+    print(a)
+    n = len(a)
+    f = []
+    fn = []
     print("Found %d niter results" % n)
     for i in range(n):
         fi = []
@@ -2969,14 +2978,19 @@ def qac_niter_flux(dirname, box=None, plot=None):
         if i==1: fn = []
         for ff in fi:
             if not QAC.exists(ff): continue
-            if i==1: fn.append(ff) 
-            if ff.find(".model") > 0:
-                fx0 = imstat(ff,box=box)['sum'][0]
+            if i==1: fn.append(ff)
+            if flux:
+                if ff.find(".model") > 0:
+                    fx0 = imstat(ff,box=box)['sum'][0]
+                else:
+                    fx0 = imstat(ff,box=box)['flux'][0]
             else:
-                fx0 = imstat(ff,box=box)['flux'][0]            
+                fx0 = imstat(ff,box=box)['max'][0]
             fx.append(fx0)
         print(fx)
+        f.append(fx)
     print(fn)
+    return f
     
     #-end of qac_niter_flux()
     
