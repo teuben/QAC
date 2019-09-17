@@ -3,7 +3,7 @@
 #    including a CASA install if it's not present yet
 #
 
-.PHONY:  tp2vis.git distribute.git install test casa
+.PHONY:  tp2vis tp2vis.git distribute distribute.git install test casa
 
 
 # should just be an ID, e.g. 0.5 or 0.5a, or 0.5.1, in one single line.
@@ -17,6 +17,9 @@ URL2     = https://github.com/tp2vis/distribute.git
 
 # data url
 URL3     = http://admit.astro.umd.edu/~teuben/QAC/
+
+# Urvashi's url
+URL4     = https://github.com/urvashirau/WidebandSDINT
 
 CASA     = `which casa`
 
@@ -79,41 +82,52 @@ data:
 	mkdir -p data
 	(cd data; wget $(URL3)/skymodel.fits)
 	(cd data; wget $(URL3)/skymodel.ptg)
-	(cd data; wget $(URL3)/qac_bench.tar.gz -O - | tar zxf -)
+	(cd data; wget $(URL3)/qac_bench5.tar.gz -O - | tar zxf -)
 
 data2:
 	mkdir -p data
 	(cd data; curl -O $(URL3)/skymodel.fits)
 	(cd data; curl -O $(URL3)/skymodel.ptg)
-	(cd data; curl $(URL3)/qac_bench.tar.gz | tar zxf -)
+	(cd data; curl $(URL3)/qac_bench5.tar.gz | tar zxf -)
 
-# the public release is in a directory 'distribute', or 'distribute.git'
-# do not modify this, it gets updated from the developers release 
+# the public release is in a directory 'distribute.git'
+# do not modify this, it gets updated from the public release
+# and we use a symlink to activate loading this tp2vis.py
 tp2vis: distribute.git
 
 distribute.git:
 	if [ ! -d distribute.git ]; then \
 	  git clone $(URL2) ;\
 	else \
-	  (cd distribute.git; git status; git pull)\
+	  (cd distribute.git; git status -uno; git pull)\
 	fi
-	@echo Done with the public release distribute.git
+	@echo Done with the public release distribute.git - creating symlink now
+	ln -sf distribute.git distribute
 
-# private developers version is in a directory 'tp2vis', or 'tp2vis.git'
+# private developers version is in a directory 'tp2vis.git'
+# do not modify this, it gets updated from the developers release
+# and we use a symlink to activate loading this tp2vis.py
 dev: tp2vis.git
 	if [ ! -d tp2vis.git ]; then \
 	  git clone $(URL1) ;\
 	else \
-	  (cd tp2vis.git; git status; git pull)\
+	  (cd tp2vis.git; git status -uno; git pull)\
 	fi
-	@echo Done with the developer release tp2vis.git
+	@echo Done with the developer release tp2vis.git - creating symlink now
+	ln -sf tp2vis.git tp2vis
+
+# Urvashi's direct link
+sdint: contrib/sdint
+
+contrib/sdint:
+	(cd contrib; git clone $(URL4) sdint)
 
 clean:
 	rm -rf distribute tp2vis
 
 
 
-### below are reminders how to do some mundane things #########################################
+### below some reminders how to do some mundane things #########################################
 
 
 
