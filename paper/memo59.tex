@@ -3,29 +3,87 @@
 %  http://ngvla.nrao.edu/page/memos
 %  https://library.nrao.edu/ngvla.shtml
 
-\documentclass[11pt,twoside]{article}
-\usepackage{asp2014}
-\usepackage{graphicx}
-\usepackage{float}
-\usepackage{siunitx}
+% Template credit: Jan-Willem Steeb, NRAO
+% small additions by us
+
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{graphics,graphicx}
+\usepackage[%
+    font={small,sf},
+    labelfont=bf,
+    format=hang,    
+    format=plain,
+    margin=0pt,
+    width=0.8\textwidth,
+]{caption}
+\usepackage[list=true]{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{lmodern}  
+\usepackage{amsmath}  
+\usepackage{xcolor}
+
+\usepackage{natbib} 
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
 
 
-\aspSuppressVolSlug
-\resetcounters
 
-\bibliographystyle{asp2014}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
 
-\markboth{Teuben}{QAC}
+\textheight=247mm
+\textwidth=180mm
+\topmargin=-7mm
+\oddsidemargin=-10mm
+\evensidemargin=-10mm
+\parindent 10pt
+
+%%%%%%%%%%%%%%%%%%%%%
+%%%%% Custom Commands %%%%
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\vb}[1]{\text{\textbf{#1}}} %make non special characters bold in math mode, used for vectors and matrices
+\newcommand{\n}[1]{\text{{#1}}} %removes math styling, useful for subscripts
+
+%Mathematic Functions
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\mmid}{mid}
+\DeclareMathOperator*{\at}{arctan2}
+
+%%%%%%%%%%%%%%%%%%%%%
+%%%%% Start of document %%%%% 
+%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
+\pagestyle{plain}
+\pagenumbering{arabic}
+ 
+%%%%%%%%%%%%%
+%%%%% Title  %%%%%
+%%%%%%%%%%%%%%
 
-\title{ngVLA Memo No. 59: \\ QAC: Quick Array Combinations with CASA}
-\author{Peter Teuben}
-\affil{Astronomy Department, University of Maryland, College Park, MD, USA \email{teuben@astro.umd.edu}}
+\begin{center}
+  {\Large{\bf{ngVLA Memo No. 59: \\ QAC: Quick Array Combinations with CASA}}}
+\end{center}
 
-\paperauthor{Teuben~Peter}{teuben@astro.umd.edu}{0000-0003-1774-3436}{Astronomy Department}{University of Maryland}{College Park}{MD}{20742}{USA}
+\bigskip
 
-%\aindex{Teuben,~P.~J.}
+\centerline{Peter Teuben (University of Maryland, College Park, MD)}
+\centerline{{\tt teuben@astro.umd.edu}}
+
+\centerline{\today}
+\bigskip
+
 
 \begin{abstract}
 
@@ -35,11 +93,14 @@ simulations. Although initially developed for TP2VIS, running
 simulations and comparing with other array combination methods, this
 package turned out to be useful for array design studies as well. Both
 ALMA and ngVLA simulations are already supported, but extending
-to more generic array are planned. This memo complements ngVLA memo
-54, where QAC\footnote{this memo describes QAC v0.3 as of March 2019,
-  please update as versions change}
-was used for an array design study. QAC is less useful for
-real data, where more CASA flexibility might be needed.
+to more generic arrays is straightforward.
+This memo complements ngVLA memo 54,
+where QAC V0.3\footnote{this memo describes QAC v0.6 as of September 2019,
+please update as versions change}
+was used for an array design study. QAC is probably less useful for
+real data, where more CASA flexibility might be needed,
+but does contain some useful functions that do not depend on the
+simulation environment.
 
 
 \end{abstract}
@@ -53,10 +114,10 @@ real data, where more CASA flexibility might be needed.
 
 \section{Introduction}
 
-CASA (\citet{casa1}, \citet{casa2}) 
+CASA (\cite{casa1}, \cite{casa2}) 
 is a general purpose python interface to radio
 astronomy software. It handles interferometric as well as single dish
-data, all the way from ingestion, calibration and mapping to
+data, all the way from ingestion, calibration and imaging to
 analysis. Most ALMA and VLA data are now routinely processed with CASA
 using a custom built pipeline.  CASA uses object oriented
 ``tools'', as well as the more classic python functions, called
@@ -77,7 +138,7 @@ more easily programmable interface, orchestrate simulations and provide a
 reproducable baseline using regressions. It can be obtained from \url{https://github.com/teuben/QAC}.
 
 We first summarize the different methods how CASA can be extended by using your own
-custum built python code, then how QAC is installed, and a typical usage. We also give a short
+custom built python code, then how QAC is installed, and a typical usage. We also give a short
 summary of the API, and publish a benchmark in the Appendix. Given that QAC is available
 in github, you will likely find updates to QAC (and this memo) in this repository.
 
@@ -94,8 +155,8 @@ pipelines for ALMA and VLA
 \section{Running python code in CASA}
 
 CASA interacts with the user in an interactive python (ipython) session. For most users adding 
-C++ code is a complex operation, but installing new python interfaces to ease writing CASA scripts
-is usually fairly straightforward, and nowadays most users are familiar with this.
+C++ code to CASA is a complex operation, but installing new python interfaces to ease writing CASA scripts
+is usually fairly straightforward, and nowadays most users are familiar with this language.
 Several methods (and hybrid between these) exist
 for CASA:\footnote{some of these methods are expected to become more common in CASA6}
 
@@ -119,8 +180,8 @@ at the right place inside the CASA tree. Users can then run this task with the C
 \end{verbatim}
 \normalsize
 
-Note again, in this example \verb+foo()+
-is a true CASA task, with its
+Note that in this example \verb+foo()+
+is now a true CASA task, with its
 \verb+default /+
 \verb+inp /+
 \verb+go /+
@@ -204,13 +265,13 @@ without the need for a parser.
                            
 \item[5.]   \verb+%run -m foo+
 
-Runs the foo module (from sys.path). In the current CASA manipulating
+Runs the foo module (from {\tt sys.path}). In the current CASA manipulating
 {\tt sys.path} is not recommended, the arguments similar to those of not
 using \verb+$PYTHONPATH+
 
 \end{itemize}
 
-Miles Lucas made his summer-2019 toolkit Radio Imaging Combination Analysis (RIKA)
+Miles Lucas made his summer-2018 toolkit Radio Imaging Combination Analysis (RIKA)
 available\footnote{\url{https://gitlab.com/mileslucas/RICA}}. He uses the 4th ({\tt run}) method.
 In QAC we decided to use the 3rd ({\tt execfile}) method.
 
@@ -223,17 +284,20 @@ is a existing command called ``casa''. Since CASA startup can be controlled by
 \verb+~/.casa/init.py+ we choose this file to {\tt execfile} the correct startup script,
 aptly named {\tt casa.init.py} in the QAC distribution:
 
-
-\begin{verbatim}
+\begin{lstlisting}[language=python]
     execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')
-\end{verbatim}
+\end{lstlisting}
+
+in this example QAC was installed inside the \verb+~/.casa+ directory (or as a symlink
+to another location).
 
 \noindent
-There are a few examples of common packages loaded by CASA in {\tt casa.init.py}
+In our {\tt casa.init.py} you will find a few examples of common packages loaded by CASA in {\tt casa.init.py}.
+
 
 \section{Design Issues}
 
-QAC needs to be lightweight, easy to install,
+QAC needs to be lightweight, and easy to install,
 
 \begin{itemize}
 
@@ -253,7 +317,7 @@ QAC needs to be lightweight, easy to install,
 
 \item
   clean vs. tclean. Although clean is formally not supported anymore, occasionally the two are compared, and
-  this gives that option. See \verb+qac_clean1(t=True,t=False)+
+  this gives that option. See \verb+qac_clean1(t=False)+ to run the old clean.
 
 \item
   QAC works similar to CASA's \verb+simobserve+, where all the work is done inside a designated directory. This is
@@ -261,7 +325,7 @@ QAC needs to be lightweight, easy to install,
   
 \end{itemize}
 
-The use of a script with parameters is very useful for re-use, especially if the script also defines defaults. A huge
+The use of a script with parameters is very useful for re-use, especially if the script also defines defaults. A 
 drawback of the execfile approach is the lack to change these parameters. Add to this that execfile is not supported
 in python3, is a no-brainer not to use it, or at least switch to ``run''. There is another important difference,
 as was remarked before:  {\tt execfile()} causes code and variables to be shared (potentially overwritten), whereas
@@ -270,54 +334,56 @@ as was remarked before:  {\tt execfile()} causes code and variables to be shared
 
 \section{Example}
 
-A typical usage would be
+A typical command line usage would be
 
-\begin{verbatim}
-    % casa --nogui -c 
-\end{verbatim}
+\begin{lstlisting}[language=bash]
+    % casa --nogui -c myscript.py scale=2.0 nants=46 niter='[0,1000,10000]'
+\end{lstlisting}
 
 
-\section{docs}
+\section{Scripts}
 
-A typical simulation script might look as follows. Explanations follow later:
+A typical simulation script might look as follows.
 
-\footnotesize
-\begin{verbatim}
+\begin{lstlisting}[language=python]
     qac_ptr(phasecenter,"test123.ptg")
 
-    qac_vla("test123","skymodel.fits", 4096, 0.01,
-            ptg="test123.ptg",
-            phasecenter=phasecenter)
+    qac_vla("test123","skymodel.fits", 4096, 0.01,ptg="test123.ptg",phasecenter=phasecenter)
 
     qac_clean1("test123/clean1",phasecenter=phasecenter)
-\end{verbatim}
-\normalsize
+\end{lstlisting}
 
 \section{Timing and Regression}
 
-Because QAC deal almost exclusively with image type data, the regression test is invoked automatically
-with the statistics report, if a regression string (!) is given, viz.
+Because QAC deal almost exclusively with image type data, a regression test can be invoked automatically
+with the statistics report, if a regression string is given, viz.
 
-\footnotesize
-\begin{verbatim}
-r = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624
-     0.41929447650909424 383.60327838373536"
-qac_stats(test+'/clean/tpint.image')
-qac_stats(test+'/clean/tpint_4.tweak.image', r)
-\end{verbatim}
-\normalsize
 
-where in the first instance only the statistics are reported, the second instance will also flag any deviations.
-The numbers represent the mean, std, min, max and total flux of the image.   One of the options
-is to regress these values within a relative accuracy of \verb+eps+.
+\begin{lstlisting}[language=python]
+    r = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624 0.41929447650909424 383.60327838373536"
+    qac_stats(test+'/clean/tpint.image')
+    qac_stats(test+'/clean/tpint_4.tweak.image', r)
+    qac_stats(test+'/clean/tpint_4.tweak.image', r, eps=1e-6)    
+\end{lstlisting}
+
+where in the first instance only the statistics are reported, the second instance will also flag any deviations
+from the expected string.
+The numbers represent the mean, std, min, max and total flux of the image.   The last example
+regresses these values within a relative accuracy of \verb+eps+.
+
+For measurement set data it will use statistics on the amplitudes, but
+the flux is reported at 0 (which technically is correct for most
+interferometers).
 
 \section{Benchmarks}
 
-A better supported show of QAC functionality is currently in the **test/bench.py, bench0.py** and **sky1.py** routines [March 2018]
-as those were used in the
-[SD2018](\url{https://github.com/teuben/sd2018}) workshop. Please note the software in that repo is not maintained anymore,
-and updated versions can be found
-within QAC.
+In QAC/test the command ``make bench'' will activate a benchmark, which should last about 2-3 mins. It uses a subset of the M100
+casaguide data, but due to a variety of CASA problems, we don't expect the regression to be accurate until we release QAC V1.0.
+
+% A better supported show of QAC functionality is currently in the **test/bench.py, bench0.py** and **sky1.py** routines [March 2018]
+% as those were used in the
+% [SD2018](\url{https://github.com/teuben/sd2018}) workshop. Please note the software in that repo is not maintained anymore,
+% and updated versions can be found within QAC.
 
 \section{API}
 
@@ -326,42 +392,57 @@ further details except for arguably descriptive parameter names and
 defaults. The full and updated documentation can be seen online on
 \url{https://github.com/teuben/QAC/blob/master/docs/qac.md}.
 
-\footnotesize
-\begin{verbatim}
+\begin{lstlisting}[language=python]
+  ## Adminstrativia
 
-## Adminstrativia
-
-  qac_log(message, verbose=True)
-
-  qac_version()
+  qac_argv(sysargv)
 
   qac_begin(label='QAC', log=True, plot=False)
 
   qac_end()
 
+  qac_log(message, verbose=True)
+
+  qac_project(projectdir, chdir=False)
+
+  qac_version()
+\end{lstlisting}
+  
+\begin{lstlisting}[language=python]
 ## Simulation routines
 
   qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, ptg, noise)
 
   qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
 
+  qac_carma(project, skymodel, imsize, pixel, phasecenter, cfg, ptg, times)
+
   qac_noise(noise, *args, **kwargs)
 
-  qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, **line)
+  qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, t, do_concat, **kwargs)
+  
+  qac_clean(project, tpms, mslist, imsize, pixel, weighting, startmodel, phasecenter, niter, do_concat, do_int, do_cleanup, **kwargs)  
 
   qac_tp_otf(project, skymodel, dish, label, freq, template)
+  
+  qac_smooth(project, skymodel, label, niteridx)
 
-  qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix,
-             deconv, **line)
+  qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix,  deconv, **kwargs)
 
-  qac_feather(project, highres, lowres, label, niteridx)
+  qac_tweak(project, name = "dirtymap", niter = [0], **kwargs)
+
+  qac_vp(vp=False, schwab=False)
+
+  qac_tpdish(name, size=None)
+
+  qac_feather(project, highres, lowres, label, niteridx, name="dirtymap")
 
   qac_ssc(project, highres, lowres)
 
-  qac_smooth(project, skymodel, label, niteridx)
+\end{lstlisting}
 
-
-## Helper routines
+\begin{lstlisting}[language=python]
+## Analysis and Plotting routines
 
   qac_stats(image, test=None, eps=None, box=None, pb=None, pbcut=0.8, edge=False)
 
@@ -375,6 +456,8 @@ defaults. The full and updated documentation can be seen online on
 
   qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None)
 
+  qac_ms_ptg(msfile, outfile=None, uniq=True):  
+
   qac_summary(tp, ms=None, source=None, line=False)
 
   qac_math(outfile, infile1, oper, infile2)
@@ -385,16 +468,28 @@ defaults. The full and updated documentation can be seen online on
 
   qac_flux(image, box=None, dv=1.0, plot='qac_flux.png')
 
-  qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None,
-               absmodelim=None, interactive=False)
+  qac_niter_flux(dirname, box=None, flux=True, plot=None)
+  
+  qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False)
 
-\end{verbatim}
-\normalsize
+  qac_psd(image, plot='qac_psd.png', fit=False, pixel_s=None)
+
+  qac_line(im)
+
+  qac_fits(image,outfile=None,overwrite=True)
+
+  qac_ds9(image, cleanup=False)
+
+  qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None)
+  
+\end{lstlisting}
+
 
 \section{Pros and Cons}
 
 % What are now the pros and cons of a layer such as QAC?
-As was outlined above, using QAC writes for simpler scripts, that can also easily orchestrate large sets of simulations
+As was outlined above, using QAC should result in shorter and simpler scripts,
+but can easily orchestrate large sets of simulations
 from the commandline or inside another python script.
 However, users would have to install QAC and learn to use this interface.  With the complexity
 of CASA this is another hurdle. Also, we found CASA bugs that show up in QAC can be harder to
@@ -404,48 +499,49 @@ that full CASA tasks have.
 
 \section{Future}
 
-CASA is a development project, the next release (V6) will have a major overhaul how python and the C++ libraries
+CASA is a development project, with frequent updates.
+The next release (V6) will have a major overhaul how python and the C++ libraries
 are integrated, and this will likely have some effect how QAC is installed, although less on its API. Ideally
-we like to switch to the {\tt import} or {\tt run} method once the CASA imports are standardized.
+we like to switch to the {\tt import} or {\tt run} method once the CASA imports are standardized.  I expect
+QAC will avoid software rot and adopt the new style. Look out for QAC V2.0 
 
-\acknowledgements Jordan Turner and Sara Negussie have been patient contributers and users.
+\bigskip
+\noindent
+{\bf Acknowledgements:} Jordan Turner and Sara Negussie have been patient contributers and users.
 Part of QAC was developed under the ALMA development study ``TP2VIS''  (PI: Jin Koda) and
 the ``ngVLA'' array combination study (ngVLA memo 54).
 
+\bibliographystyle{unsrt}
 \bibliography{qac}
 
 \newpage
 \section*{Appendix A: Sample Code}
 
-
 To run a large suite of simulations, it can be very useful to call CASA from the Unix command line,
-and loop over many parameters, e.g.
+and loop over many parameters, or organize them in a Makefile (see e.g. {\tt QAC/test/Makefile}).
+For example:
 
-\footnotesize
-\begin{verbatim}
-  casa --nogui -c vla1.py pixel_m=0.05 niter='[0,5000,15000]' dish=45 pdir='"exp102"' 
-\end{verbatim}
-\normalsize
+\begin{lstlisting}[language=bash]
+  casa --nogui -c vla1.py pixel_m=0.05 niter='[0,5000,15000]' dish=45 pdir='"exp102"'
+\end{lstlisting}
 
-As one of the products of the ``tp2vis'' ALMA development study (\citet{tp2vis})
+As one of the products of the ``tp2vis'' ALMA development study (\cite{tp2vis})
 we continued the development of the
-Quick Array Combination (QAC) toolkit that simplifies writing some of these complex scripts. It also allow us
+QAC toolkit that simplifies writing some of these complex scripts. It also allow us
 to use a different combination
 method (feather, tp2vis, ssc etc.) with minimal changes to the simulations scripts.
 
-As an example, consider the {\tt simplenoise} procedure to add a given noise to a simulation.
+As an example, consider the {\tt simplenoise} procedure\footnote{See {\tt simulator.setnoise}}
+to add a given noise to a simulation.
 Here is the example calling {\tt qac\_vla()} twice, in the end generating a Measurement Set with
 the correct 1 mJy/beam noise:
 
-\footnotesize
-\begin{verbatim}
-
+\begin{lstlisting}[language=bash]
  rms = 0.002                               #  request 2 mJy/beam RMS noise (NA)
  ms1 = qac_vla(pdir,model, noise=-rms)     #  noise<0 triggers it to compute the rms
  sn0 = qac_noise(noise,pdir+'/noise', ms1) #  get scaling factor from rms in ms1
  ms2 = qac_vla(pdir,model, noise=sn0)      #  MS that with correct "rms" in Jy/beam
-\end{verbatim}
-\normalsize
+\end{lstlisting}
 
 In the first Measurement Set a noise level is computed for a fixed 1 Jy noise per visiblity on a
 zero model. The noise in the resulting dirty map, computed in {\tt qac\_noise()}, is then the scaling factor ({\tt sn0}
@@ -460,7 +556,7 @@ that needs to be applied to get the correct requested noise level in the second 
 
 Here we show how Figure~\ref{fig:fidelity} was made. Using a complex molecular cloud structure,
 what is the fidelity of the combined image when a single dish measurement was feathered into
-the interferomteric array data
+the interferometric array data
 
 
 
@@ -479,17 +575,12 @@ the interferomteric array data
 \end{figure}
 
 
-\footnotesize
-\begin{verbatim}
-
-casa -c mapping2.py niter='range(0,25000,500)' dish=50 pixel_m=.02  grid=15 pdir='"exp37"' > exp37.log 2>&1
-casa -c mapping2.py niter='range(0,25000,500)' dish=50 pixel_m=.01  grid=15 pdir='"exp48"' > exp48.log 2>&1
-casa -c mapping2.py niter='range(0,25000,500)' dish=50 pixel_m=.015 grid=15 pdir='"exp59"' > exp59.log 2>&1
-casa -c mapping2.py niter='range(0,25000,500)' dish=50 pixel_m=.026 grid=15 pdir='"exp70"' > exp70.log 2>&1
-
-\end{verbatim}
-\normalsize
-
+\begin{lstlisting}[language=bash]
+casa -c mapping2.py niter='[0,10000,20000]' dish=50 pixel_m=.02  pdir='"exp1"' > exp1.log 2>&1
+casa -c mapping2.py niter='[0,10000,20000]' dish=50 pixel_m=.01  pdir='"exp2"' > exp2.log 2>&1
+casa -c mapping2.py niter='[0,10000,20000]' dish=50 pixel_m=.015 pdir='"exp3"' > exp3.log 2>&1
+casa -c mapping2.py niter='[0,10000,20000]' dish=50 pixel_m=.026 pdir='"exp4"' > exp4.log 2>&1
+\end{lstlisting}
 
 \newpage
 \section*{Appendix C: Installing QAC}
@@ -497,16 +588,14 @@ casa -c mapping2.py niter='range(0,25000,500)' dish=50 pixel_m=.026 grid=15 pdir
 Here is a step-by-step example of installing QAC, but assuming CASA has been installed before.
 The file \verb+QAC/docs/install.md+ contains an example how to install CASA within QAC, and in the
 directory \verb+QAC/casa/+ several examples exist how to install CASA plugins from other groups
-(e.g. SD2VIS, TP2VIS, au)
+(e.g. SD2VIS, SDINT, TP2VIS, au)
 
-\footnotesize
-\begin{verbatim}
+\begin{lstlisting}[language=bash]
     git clone https://github.com/teuben/QAC
     cd QAC
     make install
     casa
-\end{verbatim}
-\normalsize
+\end{lstlisting}
 
 \noindent
 you should now see (amongst) in the screen logs:
@@ -527,8 +616,34 @@ data:/home/teuben/QAC/casa/casa-release-5.4.1-32.el7/data
 \end{verbatim}
 \normalsize
 
-notice that the experimental {\tt contrib/tp2vis} is loaded here. See below how to
-activate the formal public release of {\tt tp2vis}.
+notice that only the experimental {\tt contrib/tp2vis} is loaded here. To
+activate the formal public release of {\tt tp2vis}, the following
+step are needed:
+
+\begin{lstlisting}[language=bash]
+    cd QAC
+    make tp2vis
+    casa
+\end{lstlisting}
+
+and now you should see that {\tt distribute/tp2vis.py} is loaded.   if you are a developer, you can also
+load the latest developers release via QAC:
+
+\begin{lstlisting}[language=bash]
+    cd QAC
+    make dev
+    casa
+\end{lstlisting}
+
+These versions are clumsily maintained via a symlink to the existing {\tt .git} repos. Break the symlink
+by removing the version which you don't want to see:
+
+\begin{lstlisting}[language=bash]
+    cd QAC
+    rm distribute
+    rm tp2vis
+\end{lstlisting}
+
 
 
 \newpage
@@ -540,18 +655,17 @@ also provides a regression test, although it should be noted within CASA they of
 vary in small values.
 
 The standard benchmark should take about 2-3 minutes to finish and produce about 300MB of
-data in the \verb+QAC/test/bench/+ directory. The \verb+bench.log+ 
+data in the \verb+QAC/test/bench/+ directory. The \verb+bench.log+
 
-\footnotesize
-\begin{verbatim}
+\begin{lstlisting}[language=bash]
     cd QAC
     make data tp2vis
     make bench
-\end{verbatim}
-\normalsize
+\end{lstlisting}
 
 \noindent
-and you should now see:
+and you should now see something like this:
+\footnote{ignore ``FAILED regression'' until QAC is at version 1.0}
 
 \footnotesize
 \begin{verbatim}
@@ -569,6 +683,33 @@ QAC_STATS: bench/clean/tpint_2.tweak.image 0.003761955025079131 0.02140640741119
 \end{verbatim}
 \normalsize
 
+
+\newpage
+\section*{Appendix E: Data Naming Conventions}
+
+Although the user is free to choose a naming convention,
+there is some structure imposed on certain QAC commands. As a result of using
+\verb+tclean()+ the extensions are also often normalized (i.e. not needed)
+
+\begin{verbatim}
+  M100/
+       clean0/dirtymap.model
+              dirtymap.image
+              dirtymap.image.pbcor
+              dirtymap.psf
+              dirtymap.pb
+              dirtymap_2.image
+              dirtymap_2.image.pbcor
+       clean1/int.image.pbcor
+              int_2.image.pbcor
+              tpint.image.pbcor
+              tpint.image.psf
+              tpint.image.pb
+              skymodel.smooth.image
+             
+
+       
+\end{verbatim}
 
 
 \end{document}
