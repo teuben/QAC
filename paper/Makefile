@@ -15,4 +15,3 @@ qac:
 	latex memo59.tex
 	latex memo59.tex
 	dvipdfm memo59
-
