@@ -448,8 +448,6 @@ defaults. The full and updated documentation can be seen online on
 
   qac_beam(im, normalized=True, chan=-1, plot=None)
 
-  qac_tpdish(ptg, ptgfile=None)
-
   qac_phasecenter(im)
 
   qac_ptg(ptg, ptgfile=None)
@@ -691,20 +689,37 @@ Although the user is free to choose a naming convention,
 there is some structure imposed on certain QAC commands. As a result of using
 \verb+tclean()+ the extensions are also often normalized (i.e. not needed)
 
+The typical order is first running {\tt tp2vis}, then optionally running
+a {\tt qac\_clean1}, creating the {\tt clean0} hierarchy. Then
+{\tt qac\_clean} in a Joint Deconvolution, creating the {\tt clean1} hierarchy.
+Once INT and TPINT images have been produced, feather images can be
+created via {\tt qac\_feather} etc. This includes multiple iterations
+if the {\tt niter} keyword was given as a python list of niter values,
+e.g. {\tt niter='[0,10000,20000]'}.\footnote{this is one of the QAC
+  features. Not to be confused with the major and minor cycles of clean,
+  this uses the last model as startmodel in the next entry for the
+  niter list. Thus it runs {\tt tclean} 3 times in this example.}
+
+
 \begin{verbatim}
   M100/
-       clean0/dirtymap.model
+       tp.ms                                 # default name of qac_tp_vis()
+       clean0/dirtymap.model                 # default name of qac_clean1()
               dirtymap.image
               dirtymap.image.pbcor
               dirtymap.psf
               dirtymap.pb
               dirtymap_2.image
               dirtymap_2.image.pbcor
-       clean1/int.image.pbcor
+       clean1/int.image.pbcor                # default names in qac_clean()
               int_2.image.pbcor
               tpint.image.pbcor
               tpint.image.psf
               tpint.image.pb
+              otf.image                      # see qac_tp_otf
+              otf.image.pbcor
+              feather.image                  # see qac_feather()
+              feather_2.image.pbcor
               skymodel.smooth.image
              
 
