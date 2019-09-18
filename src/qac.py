@@ -17,6 +17,7 @@ import matplotlib.pyplot as pl
 
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
 # one should definitely avoid using 2 letter variables, as CASA uses these a lot
+# @todo:   wrap them inside the QAC class
 cqa  = qa.constants('c')                  # (turns out to be in m/s)
 cms  = qa.convert(cqa,"m/s")['value']     # speed of light, forced in m/s (299792458.0)
 apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
@@ -59,17 +60,17 @@ def qac_par(par):
     #-end of qac_par()
     
 
-def qac_project(project, chdir=False):
+def qac_project(projectdir, chdir=False):
     """
         start a new project in given project directory name
 
-        project:      directory name. it will be created (and removed if present)
+        projectdir:   directory name. it will be created (and removed if present)
         chdir:        also change directory into this project directory
     """
-    print("QAC_PROJECT %s" % project)
-    os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+    print("QAC_PROJECT %s" % projectdir)
+    os.system('rm -rf %s ; mkdir -p %s' % (projectdir,projectdir))
     if chdir:
-        os.chdir(project)
+        os.chdir(projectdir)
     
     #-end of qac_project()
     
@@ -330,6 +331,8 @@ def qac_line(im):
     start = str(start) + 'km/s'
     return {'start' : start, 'width' : width, 'nchan' : nchan, 'restfreq' : restfreq}
 
+    #-end of qac_line()
+
 def qac_fits(image,outfile=None,overwrite=True):
     """ exportfits shortcut, appends the extension ".fits" to a casa image
         also handles a list of images
@@ -352,7 +355,9 @@ def qac_fits(image,outfile=None,overwrite=True):
         print("Wrote " + fi)
     return fi
 
-def qac_ds9(image):
+    #-end of qac_fits()
+
+def qac_ds9(image, cleanup=False):
     """
     poor man's ds9. assumes you have ds9 and xpatools installed in your $PATH
     ds9 must also be running already, or you must have the "tods9" script
@@ -364,6 +369,10 @@ def qac_ds9(image):
         fi = image
     print("Sending %s to ds9" % fi)
     os.system("tods9 %s" % fi)
+    if cleanup:
+        os.system("rm %s" % fi)
+
+    #-end of qac_ds9()
     
 
 def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
@@ -978,6 +987,9 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=7
     fix         - fix=1   remove pointing table
 
     NOTE: each (cycle,cfg) pair will append its data to any existing data for that same pair
+
+    NOTE: the integration time per field is tricky in a mosaic. If the total integration time
+    is not an integral times that per field, the pb will not be evenly distributed.
     
     See CASA/data/alma/simmos/ for the allowed (cycle,cfg) pairs
 
@@ -1542,7 +1554,7 @@ def qac_noise(noise, *args, **kwargs):
 
     #-end of qac_noise()
 
-def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, do_concat=False, **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="",  t=True, do_concat=False, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
 
@@ -1700,7 +1712,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural",
     
     #-end of qac_clean1()
 
-def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  t=True, **line):
+def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS) - faster niterlist version using 
 
@@ -1840,13 +1852,13 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural"
     
     #-end of qac_clean1f()
     
-def qac_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", startmodel="", phasecenter="", niter=0, do_concat = False, do_int = False, do_cleanup = True, **line):
+def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
     """
     Simple interface to do a tclean() joint deconvolution of one TP and one or more MS
     
     project - new directory for this operation (it is removed before starting)
     tp      - the TP MS (needs to be a single MS)
-    ms      - the int array MS (can be a list of MS)
+    ms      - the INT MS (can be a list of MS)
     imsize  - size of the maps (list of 2 is allowed if you need rectangular)
     pixel   - pixelsize in arcsec, pixels are forced square
     niter   - list of niter for (t)clean
@@ -3122,7 +3134,10 @@ def qac_combine(project, TPdata, INTdata, **kwargs):
         
 def qac_argv(sysargv):
     """
-    safe argument parser from CASA, removing the CASA dependant ones, including the script name
+    Safe argument parser from CASA, removing the CASA dependant ones, including the script name
+    
+    If you call casa using "casa --nogui -c myscript.py arg1 arg2..."   this function will prepare
+    a new sys.argv[] style list for you 
     
     Typical usage:
 
@@ -3132,6 +3147,7 @@ def qac_argv(sysargv):
          exec(arg)
 
     """
+    print("PJT: ",sysargv)
     return sysargv[3:]
 
 def qac_initkeys(keys, argv=[]):
@@ -3183,18 +3199,11 @@ def qac_begin(label="QAC", log=True, plot=False, local=False):
         print('sys.stderr:', sys.stderr)
         QAC.dt = Dtime.Dtime(label)
 
-def qac_tag(label):
-    """
-    Create a time/memory tag for the logger using  Dtime.tag()
-    
-    See also qac_begin()
-    """
-    if QAC.hasdt(): 
-        QAC.dt.tag(label)
-
 def qac_end():
     """
-    Stop logging. Calls    Dtime.end()
+    Ending your QAC script.
+    
+    Stops logging and calls Dtime.end()
     
     See also qac_begin()
     """
@@ -3202,7 +3211,17 @@ def qac_end():
         QAC.dt.tag("done")
         QAC.dt.end()
         
+def qac_tag(label):
+    """
+    Create a time/memory tag for the logger using  Dtime.tag()
+    Usually called by QAC routines, not by user scripts.
     
+    See also qac_begin()
+    """
+    if QAC.hasdt(): 
+        QAC.dt.tag(label)
+
+# Now a convenience class to contain some static methods    
 
 class QAC(object):
     """ Static class to hide some local helper functions
