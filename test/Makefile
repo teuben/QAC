@@ -66,6 +66,7 @@ bench:
 
 benchplot:
 	$(CASA) bench.py alma=1 plot=1 > bench.log 2>&1
+	cp bench.log bench
 	tail -4 bench.log
 
 bench0:
@@ -77,6 +78,11 @@ bench1:
 	$(CASA) bench1.py > bench1.log 2>&1
 	cp bench1.log bench1
 	tail -8 bench1.log
+
+bench70:
+	$(CASA) bench70.py > bench70.log 2>&1
+	cp bench70.log bench70
+	tail -8 bench70.log
 
 #       Slides to show off some examples features
 
@@ -102,14 +108,28 @@ sky1b:
 
 # 1093.91user 74.43system 6:45.86elapsed 287%CPU
 sky1c:
-	$(CASA) sky1.py pdir='"sky1c"' conf='[0,1,2]'  > sky1c.log 2>&1
+	$(CASA) sky1.py pdir='"sky1c"' cfg='[0,1,2]'  > sky1c.log 2>&1
 	cp sky1.py sky1c.log sky1c
 
-# Adele's problem?
+# Adele's polkadot problem?
 sky1d:
-	$(CASA) sky1.py pdir='"sky1d"' conf='[0,1,2]' grid=60 > sky1d.log 2>&1
+	$(CASA) sky1.py pdir='"sky1d"' cfg='[0,1,2]' grid=60 > sky1d.log 2>&1
 	cp sky1.py sky1d.log sky1d
 
+# make viewing portion smaller: 100" sky (inner 1/4) but the mapsize is 400"
+sky1e:
+	$(CASA) sky1.py pdir='"sky1e"' imsize_m=1024 pixel_m=0.1   > sky1e.log 2>&1
+	cp sky1.py sky1e.log sky1e
+
+# more configs
+sky1f:
+	$(CASA) sky1.py pdir='"sky1f"' cfg='[0,1,2,3,4,5,6]'   > sky1f.log 2>&1
+	cp sky1.py sky1f.log sky1f
+
+# try a bigger SD
+sky1g:
+	$(CASA) sky1.py pdir='"sky1g"' cfg='[0,1]' niter='[0,1000]' dish=48 > sky1g.log 2>&1
+	cp sky1.py sky1g.log sky1g
 
 
 #  sky2 is the generic TP2VIS-only mapping testsuite, the "sky2_all" runs a variety of tests
@@ -433,9 +453,12 @@ slide7:
 
 
 #  big dish and big grid spacing see the different pointings (27 pointings)    37.4 kJy   42.6 kJy (pbcor)
+#  big dish and big grid spacing see the different pointings (now 203 pointings) 
+#  aug 17: (old one was wrong)   10' each on cpu
+#
 slide8:
-	$(CASA) sky3.py pdir='"slide8a"' dish=211 grid=40 VP=0 > slide8a.log  2>&1
-	$(CASA) sky3.py pdir='"slide8b"' dish=211 grid=40 VP=1 > slide8b.log  2>&1
+	$(CASA) sky3.py pdir='"slide8a"' dish=24 grid=15 VP=0 > slide8a.log  2>&1
+	$(CASA) sky3.py pdir='"slide8b"' dish=24 grid=15 VP=1 > slide8b.log  2>&1
 
 #  big dish and big grid spacing see the different pointings (7 pointings)
 #  37" with no bug028 "fix", 11' wiht the bug028 'fix'
@@ -456,3 +479,148 @@ slide10:
 	$(CASA) sky2.py pdir='"slide10b"'  dish=211         maxuv=50 > slide10b.log  2>&1
 	$(CASA) sky2.py pdir='"slide10c"'  dish=211 minuv=5 maxuv=50 > slide10c.log  2>&1
 
+
+#   show that picking a new dish is the same as picking a new pixel-size with the 12m dish
+slide11:
+	$(CASA) sky3.py pdir='"slide11a"'  dish=24 grid=15  imsize_m=2048 VP=1 > slide11a.log  2>&1
+
+#   check convergence of the PSF of the tp.ms imaged 
+slide12:
+	$(CASA) sky3.py pdir='"slide12a"'           > slide12a.log  2>&1
+	$(CASA) sky3.py pdir='"slide12b"'  nvgrp=32 > slide12b.log  2>&1
+	$(CASA) sky3.py pdir='"slide12c"'  maxuv=12 > slide12c.log  2>&1
+
+# check flux two ways with smaller beams
+# ? use box region in inner quarter to prevent edge effects ?
+slide13:
+	$(CASA) sky3.py pdir='"slide13a"'  dish=24 grid=15 VP=0 > slide13a.log  2>&1
+	$(CASA) sky3.py pdir='"slide13b"'  dish=24 grid=15 VP=1 > slide13b.log  2>&1
+
+# check niter convergence, even niter=100 shows divergence
+slide14:
+	$(CASA) sky3.py pdir='"slide14a"' niter='[0,100]' VP=0 cycleniter=10 > slide14a.log  2>&1
+	$(CASA) sky3.py pdir='"slide14b"' niter='[0,100]' VP=1 cycleniter=10 > slide14b.log  2>&1
+
+
+# comparing sky2 and sky3
+slide15:
+	$(CASA) sky2.py pdir='"slide15a"' grid=0 niter='[0,100]' cycleniter=10 > slide15a.log  2>&1
+	$(CASA) sky3.py pdir='"slide15b"' grid=0 niter='[0,100]' cycleniter=10 > slide15b.log  2>&1
+
+#   slide16a:  45 pointings  skymodel->97.7  clean0,1=> 60.4 , 61.4
+#   slide16b:  45                                       73.0   80.7
+#   slide16c: 203 pointings                             60.1   -
+slide16:
+	#	$(CASA) sky3.py pdir='"slide16a"' grid=30 niter='[0,100]' > slide16a.log  2>&1
+	#	$(CASA) sky3.py pdir='"slide16b"' grid=30 pixel_s=1.0 niter='[0,100]' > slide16b.log  2>&1
+	#	$(CASA) sky3.py pdir='"slide16c"' grid=30 pixel_m=0.1 pixel_s=1.6 niter='[0,100]' > slide16c.log  2>&1
+	#	$(CASA) sky3.py pdir='"slide16d"' grid=30 pixel_m=0.1 pixel_s=1.6 niter='[0,100,200,400,800,1600,3200,6400,128000]' > slide16d.log  2>&1
+	$(CASA) sky3.py pdir='"slide16e"' grid=30 pixel_m=0.1 pixel_s=1.6 VP=1 niter='[0,100,200,400,800,1600,3200,6400,128000]' > slide16e.log  2>&1
+
+#  experiment with cycleniter to get better flux recovery
+slide17:
+	#$(CASA) sky2.py pdir='"slide17a"' grid=30 niter='[0,100,1000]' cycleniter=10 > slide17a.log  2>&1
+	$(CASA) sky2.py pdir='"slide17b"' grid=30 niter='[0,100,1000,3000]' cycleniter=100 > slide17b.log  2>&1
+	#$(CASA) sky2.py pdir='"slide17a0"' grid=30 niter='[0,100,1000]' > slide17a0.log  2>&1
+	#$(CASA) sky2.py pdir='"slide17c"' grid=30 niter='[0,100,1000,3000,10000]' cycleniter=10 > slide17c.log  2>&1
+
+slide18:
+	$(CASA) sky2.py pdir='"slide18b"' VP=1 grid=0  dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18b.log  2>&1
+	$(CASA) sky2.py pdir='"slide18a"' VP=1 grid=15 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18a.log  2>&1
+	#$(CASA) sky2.py pdir='"slide18c"' VP=1 grid=0 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18c.log  2>&1
+
+# how does the PSF depend on the UV distribution and why is single pointing vs. mosaic so different?
+# minuv only works with VP=0
+slide19:
+	$(CASA) sky2.py pdir='"slide19a"' grid=0  minuv=0 niter='[0]' > slide19a.log  2>&1
+	$(CASA) sky2.py pdir='"slide19b"' grid=0  minuv=1 niter='[0]' > slide19b.log  2>&1
+	$(CASA) sky2.py pdir='"slide19c"' grid=0  minuv=2 niter='[0]' > slide19c.log  2>&1
+	$(CASA) sky2.py pdir='"slide19d"' grid=30 minuv=0 niter='[0]' > slide19d.log  2>&1
+	$(CASA) sky2.py pdir='"slide19e"' grid=30 minuv=1 niter='[0]' > slide19e.log  2>&1
+	$(CASA) sky2.py pdir='"slide19f"' grid=30 minuv=2 niter='[0]' > slide19f.log  2>&1
+
+# how does the PSF depens on maxuv ?  the default is 5/6dish
+slide20:
+	$(CASA) sky2.py pdir='"slide20a"' grid=0  maxuv=10 niter='[0]' > slide20a.log  2>&1
+	$(CASA) sky2.py pdir='"slide20b"' grid=0  maxuv=12 niter='[0]' > slide20b.log  2>&1
+	$(CASA) sky2.py pdir='"slide20c"' grid=0  maxuv=14 niter='[0]' > slide20c.log  2>&1
+	$(CASA) sky2.py pdir='"slide20d"' grid=30 maxuv=10 niter='[0]' > slide20d.log  2>&1
+	$(CASA) sky2.py pdir='"slide20e"' grid=30 maxuv=12 niter='[0]' > slide20e.log  2>&1
+	$(CASA) sky2.py pdir='"slide20f"' grid=30 maxuv=14 niter='[0]' > slide20f.log  2>&1
+
+# does the PSF get smaller in a mosaic when beams don't overlap
+slide20-1:
+	$(CASA) sky2.py pdir='"slide20g"' grid=40 niter='[0]' > slide20g.log  2>&1
+	$(CASA) sky2.py pdir='"slide20h"' grid=50 niter='[0]' > slide20h.log  2>&1
+	$(CASA) sky2.py pdir='"slide20i"' grid=60 niter='[0]' > slide20i.log  2>&1
+	$(CASA) sky2.py pdir='"slide20j"' grid=70 niter='[0]' > slide20j.log  2>&1
+	$(CASA) sky2.py pdir='"slide20k"' grid=80 niter='[0]' > slide20k.log  2>&1
+	$(CASA) sky2.py pdir='"slide20l"' grid=90 niter='[0]' > slide20l.log  2>&1
+
+# shape of single pointing beam;
+#    - does it get rounding as nvgrp goes up
+#    - do the sidelobes go down
+slide21:
+	$(CASA) sky2.py pdir='"slide21a"' grid=0 niter='[0]' nvgrp=4             > slide21a.log  2>&1
+	$(CASA) sky2.py pdir='"slide21b"' grid=0 niter='[0]' nvgrp=16            > slide21b.log  2>&1
+	$(CASA) sky2.py pdir='"slide21c"' grid=0 niter='[0]' nvgrp=64            > slide21c.log  2>&1
+	$(CASA) sky2.py pdir='"slide21d"' grid=0 niter='[0]' nvgrp=64  maxuv=12  > slide21d.log  2>&1
+	$(CASA) sky2.py pdir='"slide21e"' grid=0 niter='[0]' nvgrp=64  maxuv=14  > slide21e.log  2>&1
+
+# convergence of mosaic'd PSF as function of nvgrp
+slide22:
+	$(CASA) sky2.py pdir='"slide22a"' grid=30 niter='[0]' nvgrp=4             > slide22a.log  2>&1
+	$(CASA) sky2.py pdir='"slide22b"' grid=30 niter='[0]' nvgrp=16            > slide22b.log  2>&1
+	$(CASA) sky2.py pdir='"slide22c"' grid=30 niter='[0]' nvgrp=64            > slide22c.log  2>&1
+	$(CASA) sky2.py pdir='"slide22d"' grid=30 niter='[0]' nvgrp=256           > slide22d.log  2>&1
+
+# what really is dish3 doing?
+slide23:
+	$(CASA) sky2.py pdir='"slide23a"' grid=0 niter='[0]' VP=0           > slide23a.log  2>&1
+	$(CASA) sky2.py pdir='"slide23b"' grid=0 niter='[0]' VP=0 dish3=24  > slide23b.log  2>&1
+	$(CASA) sky2.py pdir='"slide23c"' grid=0 niter='[0]' VP=1 dish3=24  > slide23c.log  2>&1
+
+# PSF size for INT and TPINT single  vs. mosaic - 12m only
+# also carefully setting the weights in both the same by picking nvgrp= and times=
+# in this case all configurations get 1800 secs.
+slide24:
+	$(CASA) sky1.py pdir='"slide24a"' grid=0  niter='[0]' cfg='[0,1]' nvgrp=1800 times='[0.5,30]'      > slide24a.log 2>&1
+	$(CASA) sky1.py pdir='"slide24b"' grid=30 niter='[0]' cfg='[0,1]' nvgrp=40   times='[0.5,4.0/6.0]' > slide24b.log 2>&1
+
+
+# need to test a pure gauss beam, since tp2vis has gauss beam
+
+# lgm homework; default is clark
+
+point1:
+	$(CASA) sky1.py pdir='"point1"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[1]' wfactor=1 > point1.log 2>&1
+
+
+point2:
+	# at niter=100 start dotting the beam
+	$(CASA) sky2.py pdir='"point2"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,10,20,30,100,200,300,1000]' VP=1 > point2.log 2>&1
+	#$(CASA) sky2.py pdir='"point2"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' > point2.log 2>&1
+	cp sky2.py point2.log point2
+
+point3:
+	#$(CASA) sky1.py pdir='"point3"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1]' > point3.log 2>&1
+	$(CASA) sky1.py pdir='"point3"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1]' wfactor=1 > point3.log 2>&1
+
+point4:
+	$(CASA) sky1.py pdir='"point4"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1,2]' wfactor=1 > point4.log 2>&1
+
+point5:
+	$(CASA) sky1.py pdir='"point5"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1,2]' wfactor=1 > point5.log 2>&1
+
+point6:
+	$(CASA) sky1.py pdir='"point6"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1,2,3]' wfactor=1 > point6.log 2>&1
+
+point7:
+	$(CASA) sky1.py pdir='"point7"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1,2,3]' wfactor=100 > point7.log 2>&1
+
+
+#       see if beamsize difference between single pointing and mosaic differ?
+#       and how does flux converge - needs cycleniter=1
+point8:
+	$(CASA) sky2.py pdir='"point8a"' model='"pointmodel.fits"' grid=0  niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cycleniter=1 > point8a.log 2>&1
+	$(CASA) sky2.py pdir='"point8b"' model='"pointmodel.fits"' grid=30 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cycleniter=1 > point8b.log 2>&1
