@@ -26,7 +26,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 9-sep-2019")
+    print("qac: version 19-sep-2019")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -1230,6 +1230,8 @@ def qac_tpdish(name, size=None):
 
     qac_tpdish('ALMATP',100.0)
     qac_tpdish('VIRTUAL',100.0)
+
+    Note that ALMATP and VIRTUAL need to already exist.
     """
     qac_tag("tpdish")    
     if size == None:
@@ -1243,7 +1245,7 @@ def qac_tpdish(name, size=None):
     r = size/old_size
     t2v_arrays[name]['dish']   = size
     t2v_arrays[name]['fwhm100']= old_fwhm / r
-    print("QAC_DISH: %g %g -> %g %g" % (old_size, old_fwhm, size, old_fwhm/r))
+    print("QAC_DISH: %s %g %g -> %g %g" % (name,old_size, old_fwhm, size, old_fwhm/r))
 
 def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, winpix=0, **line):    
            
