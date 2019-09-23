@@ -4,13 +4,17 @@
 #  the first time you can do:
 #       cat casa.init.py >> ~/.casa/init.py
 #
-#  Even better, you can directly execfile this
-#       execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')
+#  Probably better, you can directly execfile this
+#       execfile( os.environ['HOME'] + '/.casa/QAC/casa.init.py' )
 #  assuming you have placed QAC (or a symlink) in ~/.casa
 #
 #  A few other common examples of enhancing your CASA have been given
-#  but not activated since you will need to install them and put in
-#  the correct paths for you.
+#  here, but are not activated since you will need to install them and
+#  put in the correct paths for you.
+#
+#  Note that another startup file ~/.casa/prelude.py is first read, early
+#  in the CASA startup. Most likely you will need to tinker in the init.py
+#  since that's being read just before the CASA prompt appears.
 #
 
 import os, sys
