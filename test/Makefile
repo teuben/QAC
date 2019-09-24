@@ -59,6 +59,10 @@ $(DATA4):P
 
 # a few benchmarks
 
+zero:
+	$(CASA) zero.py > zero.log 2>&1
+	tail -4 zero.log
+
 bench:
 	$(CASA) bench.py > bench.log 2>&1
 	cp bench.log bench
@@ -525,8 +529,9 @@ slide17:
 	#$(CASA) sky2.py pdir='"slide17c"' grid=30 niter='[0,100,1000,3000,10000]' cycleniter=10 > slide17c.log  2>&1
 
 slide18:
+	#$(CASA) sky2.py pdir='"slide18b"' VP=0 grid=0  dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18b.log  2>&1
 	$(CASA) sky2.py pdir='"slide18b"' VP=1 grid=0  dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18b.log  2>&1
-	$(CASA) sky2.py pdir='"slide18a"' VP=1 grid=15 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18a.log  2>&1
+	#$(CASA) sky2.py pdir='"slide18a"' VP=1 grid=15 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18a.log  2>&1
 	#$(CASA) sky2.py pdir='"slide18c"' VP=1 grid=0 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18c.log  2>&1
 
 # how does the PSF depend on the UV distribution and why is single pointing vs. mosaic so different?
@@ -550,12 +555,13 @@ slide20:
 
 # does the PSF get smaller in a mosaic when beams don't overlap
 slide20-1:
-	$(CASA) sky2.py pdir='"slide20g"' grid=40 niter='[0]' > slide20g.log  2>&1
-	$(CASA) sky2.py pdir='"slide20h"' grid=50 niter='[0]' > slide20h.log  2>&1
-	$(CASA) sky2.py pdir='"slide20i"' grid=60 niter='[0]' > slide20i.log  2>&1
-	$(CASA) sky2.py pdir='"slide20j"' grid=70 niter='[0]' > slide20j.log  2>&1
-	$(CASA) sky2.py pdir='"slide20k"' grid=80 niter='[0]' > slide20k.log  2>&1
-	$(CASA) sky2.py pdir='"slide20l"' grid=90 niter='[0]' > slide20l.log  2>&1
+	$(CASA) sky2.py pdir='"slide20g"' grid=40  niter='[0]' > slide20g.log  2>&1
+	$(CASA) sky2.py pdir='"slide20h"' grid=50  niter='[0]' > slide20h.log  2>&1
+	$(CASA) sky2.py pdir='"slide20i"' grid=60  niter='[0]' > slide20i.log  2>&1
+	$(CASA) sky2.py pdir='"slide20j"' grid=70  niter='[0]' > slide20j.log  2>&1
+	$(CASA) sky2.py pdir='"slide20k"' grid=80  niter='[0]' > slide20k.log  2>&1
+	$(CASA) sky2.py pdir='"slide20l"' grid=90  niter='[0]' > slide20l.log  2>&1
+	$(CASA) sky2.py pdir='"slide20m"' grid=100 niter='[0]' > slide20m.log  2>&1
 
 # shape of single pointing beam;
 #    - does it get rounding as nvgrp goes up
@@ -587,6 +593,32 @@ slide24:
 	$(CASA) sky1.py pdir='"slide24a"' grid=0  niter='[0]' cfg='[0,1]' nvgrp=1800 times='[0.5,30]'      > slide24a.log 2>&1
 	$(CASA) sky1.py pdir='"slide24b"' grid=30 niter='[0]' cfg='[0,1]' nvgrp=40   times='[0.5,4.0/6.0]' > slide24b.log 2>&1
 
+# flux recovery; including a test to check the heisen-"bug"
+# -> PB is < 1 when dish > 12
+slide25:
+	$(CASA) sky2.py pdir='"slide25a"' VP=1 grid=30  dish=12 niter='[0,100,300,1000,3000,10000]'  > slide25a.log  2>&1
+	$(CASA) sky2.py pdir='"slide25b"' VP=1 grid=15  dish=25 niter='[0,100,300,1000,3000,10000]'  > slide25b.log  2>&1
+	$(CASA) sky2.py pdir='"slide25c"' VP=1 grid=7.5 dish=50 niter='[0,100,300,1000,3000,10000]'  > slide25c.log  2>&1
+	$(CASA) sky2.py pdir='"slide25d"' VP=1 grid=30  dish=12 niter='[0,1000,3000,10000]'          > slide25d.log  2>&1
+	$(CASA) sky2.py pdir='"slide25e"' VP=1 grid=30  dish=12 niter='[0,1,2,4,8,10,20,1000,10000]' > slide25e.log  2>&1
+
+slide26:
+	$(CASA) sky2.py pdir='"slide26a"' VP=1 grid=30  dish=12 niter='[0,100,300,1000,3000,10000]'  cycleniter=100 > slide26a.log  2>&1
+	$(CASA) sky2.py pdir='"slide26b"' VP=1 grid=15  dish=25 niter='[0,100,300,1000,3000,10000]'  cycleniter=100 > slide26b.log  2>&1
+	$(CASA) sky2.py pdir='"slide26c"' VP=1 grid=7.5 dish=50 niter='[0,100,300,1000,3000,10000]'  cycleniter=100 > slide26c.log  2>&1
+	$(CASA) sky2.py pdir='"slide26d"' VP=1 grid=30  dish=12 niter='[0,1000,3000,10000]'          cycleniter=100 > slide26d.log  2>&1
+	$(CASA) sky2.py pdir='"slide26e"' VP=1 grid=30  dish=12 niter='[0,1,2,4,8,10,20,1000,10000]' cycleniter=100 > slide26e.log  2>&1
+
+#   what does the PB do for different single pointings ?
+slide27:
+	$(CASA) sky2.py pdir='"slide27a"' VP=1 grid=0  dish=12 niter='[0]' > slide27a.log  2>&1
+	$(CASA) sky2.py pdir='"slide27b"' VP=1 grid=0  dish=25 niter='[0]' > slide27b.log  2>&1
+	$(CASA) sky2.py pdir='"slide27c"' VP=1 grid=0  dish=50 niter='[0]' > slide27c.log  2>&1
+
+# hacked sky2.py with ALMA12 = 25m
+slide27-1:
+	#$(CASA) sky2.py pdir='"slide27x"' VP=1 grid=15  dish=25 niter='[0]'  > slide27x.log  2>&1
+	$(CASA) sky2.py pdir='"slide27x"' VP=1 grid=30  dish=15 niter='[0]'  > slide27x.log  2>&1
 
 # need to test a pure gauss beam, since tp2vis has gauss beam
 
