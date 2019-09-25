@@ -1,0 +1,76 @@
+QAC(casa) benchmark:
+--------------------
+
+CAVEAT:  benchmarking can be a frustrating black art.
+	 CASA comes in a compiled tar file, the user has no control over compile options.
+	 In addition, disk I/O and amount of memory also play a role in
+	 determining the speed.
+	 In the QAC benchmark we keep the program small in memory, but will have a variety of disks
+	 and CPUs listed below. 
+	 In addition, benchmarks can vary in speed, if you run it again, it will be different,
+	 and more than you like to understand.
+	 Oh, lets not forget CASA versions....
+	 Commands in /dev/shm have the advantage that all "space" will be freed
+	 automagically when you logoff.
+	 This benchmark includes the CASA startup time ("make zero" will tell you this is about 2")
+
+# shell commands (linux)
+
+astroload casa
+astroload -v casa-release-5.6.0-60.el7 casa
+
+cd /dev/shm
+make -f ~/.casa/QAC/Makefile data
+cd data
+cp ~/.casa/QAC/test/bench.py  .
+cp ~/.casa/QAC/test/Makefile .
+make bench
+
+machine   mem     disk       iospeed   CPU
+           
+# oldish machines
+
+galaxy    8GB    many 1TB      -       Intel(R) Core(TM)2 Quad CPU    Q6600  @ 2.40GHz
+ricci   128GB    many 1TB      100     Intel(R) Xeon(R) CPU           X5647  @ 2.93GHz (8CPU)
+horizon  32GB    80TB-raid     350     Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz
+dante    64GB                          Intel(R) Core(TM) i7-3820 CPU @ 3.60GHz (8CPU)
+inferno  48GB                          Intel(R) Core(TM) i7-3820 CPU @ 3.60GHz (8CPU)
+sdp      96GB                          Intel(R) Xeon(R) CPU           X5550  @ 2.67GHz (16CPU)
+chara    16GB                          Intel(R) Xeon(R) CPU E31280 @ 3.50GHz
+t480     16GB    2TB           450     Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz (8CPU)
+t530     16GB    2TB                   Intel(R) Core(TM) i7-3630QM CPU @ 2.40GHz (8CPU)
+
+# newer machines
+kraken  128GB                          Intel(R) Xeon(R) CPU E5-2623 v4 @ 2.60GHz (16CPU)
+geminid  32GB                          Intel(R) Core(TM) i9-9900X CPU @ 3.50GHz (20CPU)
+
+
+# results
+                      user   cpu  sys
+ricci:/dev/shm        2m51s  511   33  EL6
+
+horizon:/dev/shm      2m47s  538"  44  shared memory
+horizon:/horizon      2m50s  539   44  350 MB/sec disk 
+horizon:/tmp          3m23s  539"  48  100 MB/sec disk
+
+dante:/dev/shm        2m18s  445   23  339%CPU
+inferno:/dev/shm      2m31s  484   32           (should be same as dante)
+sdp:/dev/shm          3m24s 1081   93  575%CPU
+chara:/dev/shm        2m48s  613   31
+
+dante:/dev/shm        2m18s  445   23  339%CPU casa 5.6.0
+dante:/dev/shm        2m13s  445   23          casa 5.5.0
+dante:/dev/shm        2m27s  490   26          casa 5.4.1
+dante:/dev/shm        2m37s  490   25          casa 5.4.0
+
+
+t480:/home/teuben     3m59s 1302   25
+t480:/dev/shm         4m18s 1439   23            (need to redo when laptop isn't busy)
+t480:/dev/shm         2m06s  731   17   600%CPU  (quiet machine)
+t480:/dev/shm         6m28s 2209   68   586%CPU  (on battery, in default low power consumption mode)
+
+kraken:/dev/shm       6m35s 4299   88           EL6
+kraken:/dev/shm       2m36s  940   45   630%CPU EL7
+geminid:/dev/shm      2m23s 1301  182           EL6
+geminid:/dev/shm      2m18s 1379  119  1090%CPU EL7
+
