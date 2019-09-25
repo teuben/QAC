@@ -5,14 +5,16 @@ CAVEAT:  benchmarking can be a frustrating black art.
 	 CASA comes in a compiled tar file, the user has no control over compile options.
 	 In addition, disk I/O and amount of memory also play a role in
 	 determining the speed.
-	 In the QAC benchmark we keep the program small in memory, but will have a variety of disks
-	 and CPUs listed below. 
+	 In the QAC benchmark we keep the program small in memory (~2.5GB needed), but will
+	 have a variety of disks and CPUs listed below. 
 	 In addition, benchmarks can vary in speed, if you run it again, it will be different,
-	 and more than you like to understand.
-	 Oh, lets not forget CASA versions....
-	 Commands in /dev/shm have the advantage that all "space" will be freed
-	 automagically when you logoff.
+	 and sometimes more than you like to understand.
+	 Oh, lets not forget CASA versions.... they do improve the software!
+	 Commands that run via /dev/shm have the advantage that all "space" will be freed
+	 automagically when you logoff. It's about 500MB that is needed.
 	 This benchmark includes the CASA startup time ("make zero" will tell you this is about 2")
+
+	 Some useful comments on https://casa.nrao.edu/casadocs/latest/introduction/hardware-requirements
 
 # shell commands (linux)
 
