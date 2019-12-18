@@ -37,7 +37,7 @@ if False:
     sm = smtool()
 
 # casa6
-if True:
+if False:
     from casatasks import imhead
     from casatasks import immath
     
