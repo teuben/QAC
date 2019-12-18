@@ -22,8 +22,44 @@ import os, sys, shutil, re, time, datetime
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-import pyfits
 from scipy.ndimage import distance_transform_edt
+
+# casa5
+if False:
+    from tasks import imhead, immath
+    from taskinit import msmdtool, casalog, qatool, tbtool, mstool, iatool, vptool, smtool
+    vp = vptool()
+    msmd = msmdtool()
+    ms = mstool()
+    qa = qatool()
+    tb = tbtool()
+    ia = iatool()
+    sm = smtool()
+
+# casa6
+if True:
+    from casatasks import imhead
+    from casatasks import immath
+    
+    from casatools import msmetadata as msmdtool
+    from casatools import ms as mstool
+    from casatools import vpmanager as vptool
+    from casatools import quanta as qatool
+    from casatools import table as tbtool
+    from casatools import image as iatool
+    from casatools import simulator as smtool
+    from casatools import measures as metool
+    
+    vp = vptool()
+    msmd = msmdtool()
+    ms = mstool()
+    qa = qatool()
+    tb = tbtool()
+    ia = iatool()
+    sm = smtool()
+    me = metool()
+
+
 
 ## ===========================================
 ## Global parameters: observatory & telescopes
@@ -65,6 +101,7 @@ if use_vp:
              'antList':    ['VIRTUAL'],         # virtual interferometer
              'dish':        12.0,               # should be defined here.
              'fwhm100':     65.2,
+#             'fwhm100':     58.3,
              'maxRad':     150.0}
     vp.reset()                                  # reset vpmanager
     vp.setpbgauss(telescope='OTHER',
@@ -79,7 +116,8 @@ else:                                           # without vpmanager working,
     apara = {'observatory':'ALMA',              # use ALMA for now
              'antList':    ['ALMA'],            # experiment with 'DV01' (an Airy function)
              'dish':        12.0,
-             'fwhm100':     65.2,
+#             'fwhm100':     65.2,
+             'fwhm100':     58.3,
              'maxRad':     999.0}
 t2v_arrays['VIRTUAL']    = apara.copy()
 
@@ -95,7 +133,7 @@ use_schwab = False
 ## =================
     
 def tp2vis_version():
-    print("tp2vis: 7-aug-2019 PJT")
+    print("tp2vis: 17-dec-2019 PJT")
 
    
 def axinorder(image):
@@ -107,8 +145,8 @@ def axinorder(image):
     h0 = ia.summary()
     ia.done()
     axname = h0['axisnames']
-    print "AXIS NAMES:",axname
-    print "AXIS SHAPES:",list(h0['shape'])
+    print("AXIS NAMES:",axname)
+    print("AXIS SHAPES:",list(h0['shape']))
 
     order = ''
     for ax in ['Right Ascension','Declination','Stokes','Frequency']:
@@ -148,13 +186,13 @@ def arangeax(image):
     if len(order) == 4:                         # all axes exist
         # on older CASA before 5.0 you will loose beam and
         # object name (bugs.txt #017)
-        print "transpose order=%s" % order
+        print("transpose order=%s" % order)
         ia2 = ia.transpose(outfile=imageout,order=order)
         ia2.done()
         ia.done()
-        print "Written transposed ",imageout
+        print("Written transposed ",imageout)
     else:
-        print "bad transpose order=%d" % order
+        print("bad transpose order=%d" % order)
         return None
 
     return imageout
@@ -189,7 +227,7 @@ def guessarray(msfile):
 
     # Read antenna names in MS
     if not os.path.exists(msfile):              # make sure MS exists
-        print "GUESSARRAY ERROR: no %s exists" % (msfile)
+        print("GUESSARRAY ERROR: no %s exists" % (msfile))
         return None
     tb.open(msfile+'/ANTENNA')                  # open MS
     antnames = tb.getcol('NAME')                # read ant names
@@ -211,16 +249,16 @@ def guessarray(msfile):
     if antnames[0] == 'A00':                    # special case for simobserve()
         if sizes[0] ==  7.0: mostlikelyarray = 'ALMA07'
         if sizes[0] == 12.0: mostlikelyarray = 'ALMA12'
-        print "guessarray %s %g -> %s" % (antnames[0],sizes[0],mostlikelyarray)
+        print("guessarray %s %g -> %s" % (antnames[0],sizes[0],mostlikelyarray))
 
     return mostlikelyarray
 
 def schwab_spheroidal(alpha,m,rscale,dist2d):
     """ return 2d kernel image of schwab's spheroidal function (Schwab 1984)
     
-    CASA's sdimaging() uses the tabulated approx. of spheroidal funciton
-    in Schwab 1984. The schwab's definition is different from the common
-    definition as used in scipy. Within Schwab, the defition of
+    CASA's sdimaging() uses the tabulated approx. of spheroidal function
+    in Schwab 1984. Schwab's definition is different from the common
+    definition as used in scipy. Within Schwab, the definition of
     key parameters (e.g., alpha, m) are not consistent in text and in table.
     Using the definition in the Schwab's table, the Schwab's spheroidal
     function is related to the scipy's as:
@@ -274,8 +312,8 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
               See also tp2viswt(mode=3)
     nvgrp     Number of visibility group (nvis = 1035*nvgrp)
               The number of antenna is hardcoded as 46
-    deconv    Use deconvolution as input model (True) -
-              almost never want to change this - useful for Jy/pixel maps
+    deconv    Use deconvolution as input model? (True)
+              When you have a Jy/pixel map, you want to set deconv=False
     winpix    Width of the Tukey window to reduce aliasing [=0 for no window],
               Number of pixels from each edge
 
@@ -298,13 +336,19 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # ==========
 
     seed  = 123                                 # for random number
+    seed  = 987                                 # for random number
+    seed  = 1
+    seed  = 2
+    seed  = 3
+    seed  = 123
 
     # Query the input image
     # =====================
 
-    # Check if exists
+    # Check if exists - do we really mean this? file and directory or os.path.isdir
+    # if os.path.isfile(outfile) or os.path.isdir(outfile):
     if os.path.isfile(outfile):
-        print "Cannot overwrite",outfile
+        print("Cannot overwrite",outfile)
         return
 
     # Ensure RA-DEC-POL-FREQ axis order (CASA simulator needs it)
@@ -351,7 +395,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     tp_beamFWHM  = fwhm100*(100.0/cb_reffreq)   # at obs freq [arcsec]
     tp_beamSigma = tp_beamFWHM/stof/apr         # sigma of TP beam [rad]
     tp_beamSigFT = 1.0/(twopi*tp_beamSigma)     # sigma in fourier [lambda]
-    print "tp_sigma [rad], tp_sigmaFT [lambda]: ",tp_beamSigma,tp_beamSigFT
+    print("tp_sigma [rad], tp_sigmaFT [lambda]: ",tp_beamSigma,tp_beamSigFT)
 
     # VI beam
     vi_antname   = t2v_arrays['VIRTUAL']['observatory'] # VI observatory
@@ -361,12 +405,12 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     vi_beamFWHM  = fwhm100*(100.0/cb_reffreq)   # at reffreq [arcsec]
     vi_beamSigma = vi_beamFWHM/stof/apr         # sigma of VI beam [rad]
     vi_beamSigFT = 1.0/(twopi*vi_beamSigma)     # sigma in fourier [lambda]
-    print "vi_sigma [rad], vi_sigmaFT [lambda]: ",vi_beamSigma,vi_beamSigFT
+    print("vi_sigma [rad], vi_sigmaFT [lambda]: ",vi_beamSigma,vi_beamSigFT)
 
     # Obtain pointing coordinates
     # ===========================
 
-    print "Using ptg = ",ptg
+    print("Using ptg = ",ptg)
     if type(ptg) == type([]):
         pointings = ptg                         # list of J2000/RA/DEC strings
     else:
@@ -379,12 +423,12 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Check unit of TP cube
     if deconv:
         if cb_bunit != 'JY/BEAM':
-            print "ERROR: unit should be 'Jy/beam' when deconv=True",cb_bunit
-	    return
+            print("ERROR: unit should be 'Jy/beam' when deconv=True",cb_bunit)
+            return
     else:
         if cb_bunit != 'JY/PIXEL':
-            print "ERROR: unit should be 'Jy/pixel' when deconv=False",cb_bunit
-	    return
+            print("ERROR: unit should be 'Jy/pixel' when deconv=False",cb_bunit)
+            return
 
     # Constants
     apr    = qa.convert('1.0rad','arcsec')['value'] # arcsec per radian
@@ -394,24 +438,24 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     apixel = np.abs((cb_dx*apr)*(cb_dy*apr))    # area in pixel [arcsec2]
     abeam  = cbm*tp_beamFWHM**2                 # area of TP beam [arcsec2]
     nppb   = abeam/apixel                       # To convert Jy/bm to Jy/pix
-    print "Number of pixels per beam:",nppb
+    print("Number of pixels per beam:",nppb)
 
     # Cutoff length of TP's gaussian beam tail
     eps    = 0.01                               # cutoff amp of gauss tail
     uvcut  = np.sqrt(-2.0*tp_beamSigFT**2*np.log(eps)) # uvdist there
     uvcut  = np.minimum(maxuv/cb_refwave,uvcut) # compare with maxuv
-    print "UVCUT:", uvcut/1000.0,"kLambda"
+    print("UVCUT:", uvcut/1000.0,"kLambda")
 
     # Generate uvdist^2 image [notice: x-axis runs vertically] 
     frqx      = np.fft.fftfreq(cb_nx,cb_dx)     # frequency in x
     frqy      = np.fft.fftfreq(cb_ny,cb_dy)     # frequency in y
-    vgrd,ugrd = np.meshgrid(frqy,frqx)          # make grid
+    vgrd,ugrd = np.meshgrid(frqy,frqx)          # make grids
     uvgrd2    = ugrd**2+vgrd**2                 # uvdist^2 image
 
     del frqx,frqy,vgrd,ugrd
 
 
-    # Open TP cube
+    # Open TP cube (@todo:  this can go inside the if deconv)
     ia.open(imagename)
 
     # Output deconvolved cube
@@ -423,6 +467,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         if use_schwab:
             print("Using Schwab's spheroidal function in TP deconvolution")
             # Schwab's spheroidal function [pixel unit]
+            # @todo  make sure we can use /, or do we need // in python3
             x0        = np.arange(-int(cb_nx/2),-int(cb_nx/2)+cb_nx) # get cb_nx pix
             y0        = np.arange(-int(cb_ny/2),-int(cb_ny/2)+cb_ny) # get cb_ny pix
             xx,yy     = np.meshgrid(x0,y0)
@@ -433,7 +478,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
             del x0,y0,xx,yy,xygrid,schwab
 
         # Loop over channels
-        print "Deconvolution loop starts"
+        print("Deconvolution loop starts")
         for iz in range(cb_nchan):
 
             # Beam in Fourier domain
@@ -492,7 +537,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # pairs, ttot=total integ time, and tint=integ time per vis.
 
     nant            = 46                        # # of fake antennas
-    npair           = nant*(nant-1)/2           # # of baselines
+    npair           = (nant*(nant-1))//2        # # of baselines
     nvis            = npair * nvgrp             # # of vis per point
     source          = cb_objname                # object name
     npnt            = len(pointings)
@@ -532,7 +577,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     tel_antname     = t2v_arrays['VIRTUAL']['antList'][0]
     tel_dish        = t2v_arrays['VIRTUAL']['dish']
     if dish3 != None:
-        print "WARNING: using non-standard tel_dish = %g for antname = " % (dish3,tel_antname)
+        print("WARNING: using non-standard tel_dish = %g for antname = %s" % (dish3,tel_antname))
         tel_dish = dish3
 
     # Fake antenna parms
@@ -552,25 +597,25 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Print parameters
     # ================
 
-    print "TP2VIS Parameters"
-    print "   input image name:                    %s" % (imagename)
-    print "   image shape:                         %s" % (repr(cb_shape))
-    print "   output measurement set name:         %s" % (outfile)
-    print "   number of pointings:                 %d" % (npnt)
-    print "   number of visibilities per pointing: %d" % (tpnt*npair)
-    print "   start frequency [GHz]:               %f" % (spw_fstart)
-    print "   frequency width [GHz]:               %f" % (spw_fwidth)
-    print "   frequency resolution [GHz]:          %f" % (spw_fresolution)
-    print "   freq channels:                       %d" % (spw_nchan)
-    print "   polarizations:                       %s" % (spw_stokes)
-    print "   antenna name:                        %s" % (tel_antname)
-    print "   VI primary beam fwhm [arcsec]:       %f" % (tel_pbFWHM)
-    print "   VI primary beam sigmaFT [m]:         %f" % (vi_beamSigFT*cb_refwave)
-    print "   ttot                                 %f" % (ttot)
-    print "   frame:                               %s" % (spw_refcode)
-    print "   seed:                                %d" % (seed)
-    print "   use_vp:                              %s" % (repr(use_vp))
-    print "   use_schwab:                          %s" % (repr(use_schwab))
+    print( "TP2VIS Parameters")
+    print( "   input image name:                    %s" % (imagename))
+    print( "   image shape:                         %s" % (repr(cb_shape)))
+    print( "   output measurement set name:         %s" % (outfile))
+    print( "   number of pointings:                 %d" % (npnt))
+    print( "   number of visibilities per pointing: %d" % (tpnt*npair))
+    print( "   start frequency [GHz]:               %f" % (spw_fstart))
+    print( "   frequency width [GHz]:               %f" % (spw_fwidth))
+    print( "   frequency resolution [GHz]:          %f" % (spw_fresolution))
+    print( "   freq channels:                       %d" % (spw_nchan))
+    print( "   polarizations:                       %s" % (spw_stokes))
+    print( "   antenna name:                        %s" % (tel_antname))
+    print( "   VI primary beam fwhm [arcsec]:       %f" % (tel_pbFWHM))
+    print( "   VI primary beam sigmaFT [m]:         %f" % (vi_beamSigFT*cb_refwave))
+    print( "   ttot                                 %f" % (ttot))
+    print( "   frame:                               %s" % (spw_refcode))
+    print( "   seed:                                %d" % (seed))
+    print( "   use_vp:                              %s" % (repr(use_vp)))
+    print( "   use_schwab:                          %s" % (repr(use_schwab)))
 
     # Set parameters in CASA
     # ======================
@@ -590,7 +635,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     else:
         vptable = None
 
-    print "OBS/TEL:",obs_obsname, obs_obspos, tel_antname, tel_mounttype, tel_coordsystem, tel_antdiam
+    print("OBS/TEL:",obs_obsname, obs_obspos, tel_antname, tel_mounttype, tel_coordsystem, tel_antdiam)
 
     sm.setconfig(telescopename=obs_obsname,
                 referencelocation=obs_obspos,
@@ -611,9 +656,10 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     sm.setfeed(mode=fed_mode,
                 pol=fed_pol)
 
-    for k in xrange(0,npnt):
+    for k in range(0,npnt):
         this_pointing = pointings[k]
         src = source + '_%d' % (k)
+        # src = source                                     # uniq field ID's are not neeed (Petry 2019)        
         sm.setfield(sourcename=src,
                 sourcedirection=this_pointing,
                 calcode=fld_calcode,
@@ -635,7 +681,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # following current CASA implementation, but (u,v,w) will be
     # replaced in the next step.
     
-    print "Running sm.observemany"
+    print("Running sm.observemany")
     sources    = []
     starttimes = []
     stoptimes  = []
@@ -643,7 +689,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     tstart_src = tstart
     tend_src   = tstart_src + tpnt
     
-    for k in xrange(npnt):
+    for k in range(npnt):
         src = source + '_%d' % (k)
         sources.append(src)
         starttimes.append(str(tstart_src)+'s')
@@ -692,17 +738,17 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     nuvw = uu.shape[0]
     tb.open(outfile,nomodify=False)
     uvw  = tb.getcol('UVW')
-    print "UVW shape",uvw.shape,nuvw,uvw[:,1]
+    print("UVW shape",uvw.shape,nuvw,uvw[:,1])     # IndexError: too many indices for array
     if len(np.ravel(uvw)) > 0:
         nrow = uvw.shape[1]
         if nrow == nuvw:
             uvw = np.array([uu,vv,ww])
             tb.putcol('UVW',uvw)
-            print "UVW0",uu[1],vv[1],ww[1]
+            print("UVW0",uu[1],vv[1],ww[1])
         else:
-            print "Bad UVW",nrow,nuvw
+            print("Bad UVW",nrow,nuvw)
     else:
-        print "WARNING: no uvw?"
+        print("WARNING: no uvw?")
 
 
     # Set WEIGHT and SIGMA columns temporarily
@@ -713,17 +759,17 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     #   after natural wtg --> sqrt(nvis)*rmsJy / sqrt(nvis) = rmsJy
 
     if rms != None:
-        print "Adjusting the weights using rms = %g  nvis=%d" % (rms,nvis)
+        print("Adjusting the weights using rms = %g  nvis=%d" % (rms,nvis))
         weight = tb.getcol('WEIGHT')
         w = rms * np.sqrt(nvis)
         w = 1.0/(w*w)
-        print "WEIGHT: Old=%s New=%g Nvis=%d" % (weight[0,0],w,nvis)
+        print("WEIGHT: Old=%s New=%g Nvis=%d" % (weight[0,0],w,nvis))
         weight[:,:] = w                         # weight[npol,nvis*npnt]
         tb.putcol('WEIGHT',weight)              # set WEIGHT
         sigma = 1/np.sqrt(weight)               # SIGMA
         tb.putcol('SIGMA',sigma)                # set SIGMA
     else:
-        print "The WEIGHT column is not filled, all 1.0"
+        print("The WEIGHT column is not filled, all 1.0")
     tb.close()
 
     del uvw
@@ -738,7 +784,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     else:
         sm.setvp(dovp=True,usedefaultvp=False)
 
-    print "Running sm.predict"                  # Replace amp/pha - key task
+    print("Running sm.predict")                 # Replace amp/pha - key task
     if deconv:
         sm.predict(imagename=imagedecname)      # deconvolved cube
         os.system('rm -rf %s' % imagedecname)   # remove the temp file
@@ -767,7 +813,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # ==============================================================
 
     if not bug001_Fixed:
-        print "Correcting CASA header inconsistencies [due to CASA bugs]"
+        print("Correcting CASA header inconsistencies [bug001]")
         # REST_FREQUENCY in /SOURCE
         #    Having REST_FREQUENCY in header does not make sense (since
         #    multiple lines, but CASA MS does have it. So, put it in.
@@ -783,8 +829,8 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
             elif h0['cunit4'] == 'GHz':
                 restfreq = h0['crval4'] * 1.0e9
 
-        print "SET RESTFREQ:::",restfreq/1e9," GHz"
-        print "   Set restfreq= in (t)clean manually if this restfreq is incorrect"
+        print("SET RESTFREQ:::",restfreq/1e9," GHz")
+        print("   Set restfreq= in (t)clean manually if this restfreq is incorrect")
 
         tb.open(outfile + '/SOURCE',nomodify=False)
         rf = tb.getcol('REST_FREQUENCY')
@@ -802,7 +848,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         tb.close()
 
     if not bug028_Fixed:
-        print "Set offset time stamps between fields"
+        print("Set offset time stamps between fields [bug028]")
         # clean task requires different time stamps for different fields
         tb.open(outfile,nomodify=False)
         time0 = tb.getcol("TIME")
@@ -893,9 +939,9 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
     # Define stat outputs
     # -------------------
     def wtstat(mslist,comment=''):
-        print "%-4s%18s %4s %4s %4s %8s %8s %12s %12s %12s %12s" \
+        print("%-4s%18s %4s %4s %4s %8s %8s %12s %12s %12s %12s" \
             % (comment,'name','spw#','npnt','npol','nvis',\
-                   'fwidth','min','max','mean','std')
+                   'fwidth','min','max','mean','std'))
 
         for ims in mslist:
 
@@ -929,10 +975,10 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
                 wmean1GHz = wmean / np.abs(chanwidth)
                 wstd1GHz  = wstd  / np.abs(chanwidth)
 
-                print "%22s %4d %4d %4d %8d %8s %12.6f %12.6f %12.6f %12.6f" \
-                    % (ims,spwid,npnt,npol,nvis,'/chanw',wmin,wmax,wmean,wstd)
-                print "%46s %8s %12.6f %12.6f %12.6f %12.6f" \
-                    % ('','/1GHz',wmin1GHz,wmax1GHz,wmean1GHz,wstd1GHz)
+                print("%22s %4d %4d %4d %8d %8s %12.6f %12.6f %12.6f %12.6f" \
+                    % (ims,spwid,npnt,npol,nvis,'/chanw',wmin,wmax,wmean,wstd))
+                print("%46s %8s %12.6f %12.6f %12.6f %12.6f" \
+                    % ('','/1GHz',wmin1GHz,wmax1GHz,wmean1GHz,wstd1GHz))
 
 
             ms.close()
@@ -941,7 +987,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
     # --------------------------
     if oper == 'statistics':
 
-        print "TP2VISWT: statistics of weights"
+        print("TP2VISWT: statistics of weights")
         wtstat(mslist)                          # print stat of WEIGHT
 
         return
@@ -951,11 +997,11 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
     elif oper == 'constant':
 
         if value == None:
-            print "TP2VISWT ERROR: constant weight value not given."
+            print("TP2VISWT ERROR: constant weight value not given.")
             return
         else:
-            print "TP2VISWT: set the weights = %g, sigmas = %g" \
-                % (value,1/np.sqrt(value))
+            print("TP2VISWT: set the weights = %g, sigmas = %g" \
+                % (value,1/np.sqrt(value)))
 
         wtstat(mslist,comment="Old:")           # stat before operation
         for ims in mslist:                      # loop over MSs
@@ -975,10 +1021,10 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
     elif oper == 'multiply':
 
         if value == None:
-            print "TP2VISWT ERROR: multiplication value not given."
+            print("TP2VISWT ERROR: multiplication value not given.")
             return
         else:
-            print "TP2VISWT: multiply the weights by %g" % (value)
+            print("TP2VISWT: multiply the weights by %g" % (value))
 
         wtstat(mslist,comment="Old:")           # stat before operation
         for ims in mslist:                      # loop over MSs
@@ -998,12 +1044,12 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
     elif oper == 'rms':
 
         if value == None:
-            print "TP2VISWT ERROR: rms value not given. set value=rms"
+            print("TP2VISWT ERROR: rms value not given. set value=rms")
             return
         else:
-            print "TP2VISWT: adjust weights using RMS = %g" % (value)
-            print "  Assumption: MS has only (mosaic) pointings of ONE science"
-            print "  target, and they are arranged under the Nyquist sampling."
+            print("TP2VISWT: adjust weights using RMS = %g" % (value))
+            print("  Assumption: MS has only (mosaic) pointings of ONE science")
+            print("  target, and they are arranged under the Nyquist sampling.")
 
         wtstat(mslist,comment="Old:")           # stat before operation
         for ims in mslist:                      # loop over MSs
@@ -1032,20 +1078,20 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
         # Check relevant MSs in input
         # ---------------------------
         if msINT == []:
-            print "TP2VISWT ERROR: no interferometer (12m or 7m) MS in input."
+            print("TP2VISWT ERROR: no interferometer (12m or 7m) MS in input.")
             return
         else:
             line = "Measurement set (INT): "
             for ims in msINT: line = line +  ", %s" % (ims)
-            print line
+            print(line)
 
         if msTP == []:
-            print "TP2VISWT ERROR: no TP MS in input."
+            print("TP2VISWT ERROR: no TP MS in input.")
             return
         else:
             line = "Measurement set (TP) : "
             for ims in msTP: line = line +  ", %s" % (ims)
-            print line
+            print(line)
 
         wtstat(mslist,comment="Old:")               # stat before operation
 
@@ -1078,10 +1124,10 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             csize  = angmin / 5.0                   # sample 1/5 min angle
             imsize = int(120.0/csize)               # PSF images cover 120"
 
-            print "Generating PSF image for TP"     # tclean for TP PSF
+            print("Generating PSF image for TP")    # tclean for TP PSF
             tclean(vis=msTP, imagename=dirname+'/'+baseTP,niter=0, \
                   weighting='natural',cell=str(csize)+'arcsec',imsize=imsize)
-            print "Generating PSF image for 7m+12m" # tclean for INT PSF
+            print("Generating PSF image for 7m+12m")# tclean for INT PSF
             tclean(vis=msINT,imagename=dirname+'/'+baseINT,niter=0, \
                   weighting='natural',cell=str(csize)+'arcsec',imsize=imsize)
 
@@ -1109,12 +1155,12 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
         # --------------------------------------------------
         beta = omega_clean / (omega_tp - omega_clean)
 
-        print "Omega_clean [strad] = ",omega_clean
-        print "Omega_TP    [strad] = ",omega_tp
-        print "Beta               = ",beta
+        print("Omega_clean [strad] = ",omega_clean)
+        print("Omega_TP    [strad] = ",omega_tp)
+        print("Beta               = ",beta)
     
         if beta < 0:
-            print "ERROR: TP beam smaller than INT beam"
+            print("ERROR: TP beam smaller than INT beam")
             return
 
         # Adjust weights of TP visibilities
@@ -1146,7 +1192,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             ms.close()                              # close MS
     
         del weight
-        print "INT sumw [/GHz/pnt/arcmin2]   = ",sumw
+        print("INT sumw [/GHz/pnt/arcmin2]   = ",sumw)
 
         # Number of TP visibilities [/pnt]
         # --------------------------------
@@ -1165,13 +1211,13 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             ms.close()                              # close MS
 
         del weight
-        print "Num of TP vis [per pointing]  = ",nvis
+        print("Num of TP vis [per pointing]  = ",nvis)
 
         # Calcuate weight [/GHz/pointing/arcmin2]
         # ---------------------------------------
 
         w = beta * sumw / nvis                      # weight to be set
-        print "TP nvis,weight [/GHz/pointing/arcmin2] =",nvis,w
+        print("TP nvis,weight [/GHz/pointing/arcmin2] =",nvis,w)
 
         # set TP weights with respect to INT weights
         # ------------------------------------------
@@ -1203,7 +1249,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
 
     else:
 
-        print "WEIGHT: Unknown mode ",mode
+        print("WEIGHT: Unknown mode ",mode)
 
     #-end of tp2viswt()
 
@@ -1244,8 +1290,8 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
       
     """
 
-    print "TP2VISTWEAK: scale residual image and re-generate cleaned image"
-    print "  assumes the same shape for dirty and clean images in input"
+    print("TP2VISTWEAK: scale residual image and re-generate cleaned image")
+    print("  assumes the same shape for dirty and clean images in input")
 
     # Files
     # -----
@@ -1261,15 +1307,16 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
     # New File names
     newclean = cleanname + '.tweak.image'
     newresid = cleanname + '.tweak.residual'
+    newpbcor = cleanname + '.tweak.image.pbcor'
 
     # Check if they exist
     ok = True
     for f in [dirty,clean,resid,pbmap]:
         if not os.path.exists(f): 
             ok = False
-            print "%s does not exist" % (f)
+            print("%s does not exist" % (f))
     if not ok:
-        print "TP2VISTWEAK ERROR: need the above files"
+        print("TP2VISTWEAK ERROR: need the above files")
         return
 
     for f in [newclean,newresid]:               # if output files
@@ -1279,7 +1326,7 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
     # Temporary files
     dd = ''.join(re.findall('[0-9]',str(datetime.datetime.now())))
     dirname = 'tmp_tp2vistweak_' + dd           # temp directory for PSFs  
-    os.makedirs(dirname)                        # make scratc directory
+    os.makedirs(dirname)                        # make scratch directory
 
     diff_dirty = dirname + '/image_diff_dirty.im' 
     diff_clean = dirname + '/image_diff_clean.im' 
@@ -1326,8 +1373,7 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
     sum_clean = imstat(diff_clean,mask=maskarea)['sum'][0]
     sum_dirty = sum_dirty * np.abs(dx_dirty*dy_dirty) / (cbm*bmaj_dirty*bmin_dirty)
     sum_clean = sum_clean * np.abs(dx_clean*dy_clean) / (cbm*bmaj_clean*bmin_clean)
-
-
+    
     # Calculate beam ratio
     #    Omega_dirty/Omega_clean = sum_clean/sum_dirty
     # ------------------------------------------------
@@ -1337,6 +1383,7 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
     # ---------------------------------------------------
     immath(imagename=[resid],expr='IM0*'+str(omegarat),outfile=newresid)
     immath(imagename=[diff_clean,newresid],expr='IM0+IM1',outfile=newclean)
+    immath(imagename=[newclean,pbmap],expr='IM0/IM1',outfile=newpbcor)    
 
 
     # Remove temp scratch directory
@@ -1346,20 +1393,23 @@ def tp2vistweak(dirtyname, cleanname, pbcut=0.8, mask=''):
     # Put missing header key in new maps
     imhead(newresid,mode='put',hdkey='bunit',hdvalue='Jy/beam')
     imhead(newclean,mode='put',hdkey='bunit',hdvalue='Jy/beam')
+    imhead(newpbcor,mode='put',hdkey='bunit',hdvalue='Jy/beam')    
 
     # Print
     # -----
 
-    print "\nTP2VISTWEAK: 'ImageExprCalculator::compute+' warning is harmless - ignore."
-    print "Stat: %8s %8s %10s %10s %10s" % \
-        ("Bmaj","Bmin","Sum(dirty)","Sum(clean)", "dirty/clean")
-    print "      %8.3f %8.3f %10.4f %10.4f %10.4f" % \
-        (bmaj_clean,bmin_clean,sum_dirty,sum_clean,omegarat)
+    print("\nTP2VISTWEAK: 'ImageExprCalculator::compute+' warning is harmless - ignore.")
+    print("Stat: %8s %8s %10s %10s %10s" % \
+        ("Bmaj","Bmin","Sum(dirty)","Sum(clean)", "dirty/clean"))
+    print("      %8.3f %8.3f %10.4f %10.4f %10.4f" % \
+        (bmaj_clean,bmin_clean,sum_dirty,sum_clean,omegarat))
+    print("      %8.3f %8.3f" % \
+        (bmaj_dirty,bmin_dirty))
 
-    print "Scale residual image %s - multiply %f" % (resid,omegarat)
-    print "     New residual image: %s" % (newresid)
-    print "Re-compute cleaned image"
-    print "     New clean image: %s" % (newclean)
+    print("Scale residual image %s - multiply %f" % (resid,omegarat))
+    print("     New residual image: %s" % (newresid))
+    print("Re-compute cleaned image")
+    print("     New clean image: %s" % (newclean))
 
     return
 
@@ -1386,7 +1436,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
     outfig    file name of output figure
     """
 
-    print "TP2VISPL: Plot MSs - ignores flags"
+    print("TP2VISPL: Plot MSs - ignores flags")
 
     # Parameters
     # ----------
@@ -1429,7 +1479,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
     ms.open(msfile)                             # open MS
     ms.selectinit(reset=True)                   # all SPWs
 
-    print "Pick up max flux channel in %s" % (msfile)
+    print("Pick up max flux channel in %s" % (msfile))
     cfreq  = ms.getdata('axis_info')['axis_info']['freq_axis']['chan_freq']
                                                 # (freq,spw)
     cfreq  = np.transpose(cfreq[:,0]) / 1.0e9   # pick first spw
@@ -1439,7 +1489,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
     targetfreq = cfreq[maxc]                    # target freq for plot
     ms.close()
 
-    print "   (chan,freq) = (%d, %f GHz)" % (maxc,targetfreq)
+    print("   (chan,freq) = (%d, %f GHz)" % (maxc,targetfreq))
 
     del asum,maxc
 
@@ -1502,15 +1552,15 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
             cfreq  = c1freq + np.arange(nchan)*cwidth  # chan freqs [GHz]
             fwhm   = fwhm0*(100.0/c1freq)/60.0         # FWHM at freq [arcmin]
             barea  = np.pi*(fwhm/2.0)**2               # beam area [amin2]
-            ichan = np.argmin(np.abs(cfreq - targetfreq)) # closest to target
+            ichan  = np.argmin(np.abs(cfreq - targetfreq)) # closest to target
 
             # Limit data to load
-            ms.selectinit(reset=True)                  # needed since 5.3.0-97
+            ms.selectinit(reset=True)                  # needed since casa 5.3.0-97
             if not ms.selectinit(datadescid=spwid):    # this SPW only
-                print "MS.SELECTINIT bad selection for spwid=%d - CASA bug?" % spwid
+                print("MS.SELECTINIT bad selection for spwid=%d - CASA bug?" % spwid)
                 continue
             if not ms.select({'uvdist':[0.0,uvMax]}):  # limit uv range
-                print "MS.SELECT nothing returned for spwid=%d - CASA bug?" % spwid
+                print("MS.SELECT nothing returned for spwid=%d - CASA bug?" % spwid)
                 continue
 
             # Read parameters [note: wt(pol,vis)]
@@ -1536,8 +1586,8 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
             del wtemp, amp0
 
             # print
-            print "%30s: (spw,chan,freq,fwid) = (%3d, %5d, %10.6f, %10.6f)" \
-                % (msfile,spwid,ichan,cfreq[ichan],cwidth)
+            print("%30s: (spw,chan,freq,fwid) = (%3d, %5d, %10.6f, %10.6f)" \
+                % (msfile,spwid,ichan,cfreq[ichan],cwidth))
 
         ms.close()                              # Close MS
 
@@ -1587,7 +1637,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
         axbl.plot(uvbins,wtbins,c=color,drawstyle='steps-mid',label=ms)
 
         wtbins = wtbins[wtbins>0]
-        print "weight min/max ",wtbins.min(),wtbins.max()
+        print("weight min/max ",wtbins.min(),wtbins.max())
         del uu,vv,uvdist,wt,uvbins,wtbins
 
     # Plot frames, scales, etc
@@ -1628,7 +1678,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
     # Draw
     # ----
     plt.savefig(outfig)
-    print "Output fig in %s" % (outfig)
+    print("Output fig in %s" % (outfig))
     if show:
         plt.show()
     else:
