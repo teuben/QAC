@@ -480,3 +480,50 @@ def plot7(basename, idx=0, channel=0, box=None, range=None, plot='plot7.png', re
     
     plt.savefig(plot)
     plt.show()
+
+def plot8(im1, im2, box=None, range=None, plot='plot8.png', verbose=False):
+    """
+    overlay two histograms
+    im1
+    im2
+
+    """
+    #
+    tb.open(im1)
+    d1 = tb.getcol("map").squeeze()
+    tb.close()
+    nx1 = d1.shape[0]
+    ny1 = d1.shape[1]
+    #
+    tb.open(im2)
+    d2 = tb.getcol("map").squeeze()
+    tb.close()
+    nx2 = d1.shape[0]
+    ny2 = d1.shape[1]
+
+    dmin = dmax = None
+    for i in [im1,im2]:
+        if verbose: qac_stats(i)
+        h = imstat(i)
+        if dmin == None:
+            dmin = h['min']
+            dmax = h['max']
+        else:
+            if h['min'] < dmin: dmin = h['min']
+            if h['max'] > dmax: dmax = h['max']
+    if range == None:
+        print("Global data min/max = %g %g " % (dmin,dmax))
+        drange = [dmin,dmax]
+    else:
+        drange = range
+
+    bins = 100
+
+    fig = plt.figure()
+    plt.hist(d1.ravel(),bins=bins,range=drange,log=True)   # alpha=a
+    plt.hist(d2.ravel(),bins=bins,range=drange,log=True)   # alpha=a
+
+    
+    plt.savefig(plot)
+    plt.show()
+    
