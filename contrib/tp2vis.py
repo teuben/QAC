@@ -133,7 +133,7 @@ use_schwab = False
 ## =================
     
 def tp2vis_version():
-    print("tp2vis: 17-dec-2019 PJT")
+    print("tp2vis: 11-jun-2020 PJT")
 
    
 def axinorder(image):
@@ -236,7 +236,7 @@ def guessarray(msfile):
 
     # Calculate likelihood of each array type
     probs = {}
-    for iarray in t2v_arrays.keys():            # loop over known arrays
+    for iarray in list(t2v_arrays.keys()):      # loop over known arrays
         nant = 0                                # reset counter
         for iant in t2v_arrays[iarray]['antList']:  # how many ants of each
             nant += sum([(iant in x) for x in antnames]) # known array in MS
@@ -777,7 +777,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Fill vis amp/phase based on deconvolved TP image
     # ================================================
 
-    sm.setdata(fieldid=range(0,npnt))           # set all fields
+    sm.setdata(fieldid=list(range(0,npnt)))     # set all fields
     if use_vp:                                  # set primary beam
         # according to Kumar
         sm.setvp(dovp=True,usedefaultvp=False, vptable=vptable)
@@ -799,7 +799,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
 
     f = open(outfile + '/TP2VIS.ascii','w')            # save VP/PB info
     f.write('TP2VIS definition of VIRTUAL interferometer\n')
-    for key in t2v_arrays['VIRTUAL'].keys():
+    for key in list(t2v_arrays['VIRTUAL'].keys()):
         f.write('%s:%s\n' % (key, str(t2v_arrays['VIRTUAL'][key])))
     f.close()
 
@@ -819,7 +819,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
         #    multiple lines, but CASA MS does have it. So, put it in.
         h0       = imhead(imagename,mode='list')
 
-        if 'restfreq' in h0.keys():
+        if 'restfreq' in list(h0.keys()):
             restfreq = h0['restfreq'][0]        # restfreq from image header
         else:
             if h0['cunit4'] == 'Hz':            # set it to ref freq [Hz]
@@ -948,7 +948,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             ms.open(ims,nomodify=True)          # open MS
             ms.selectinit(reset=True)           # all spws
             spwinfo= ms.getspectralwindowinfo() # get spw info
-            spwlist= spwinfo.keys()             # list of SPWs
+            spwlist= list(spwinfo.keys())       # list of SPWs
 
             for ispw in spwlist:                # get SPW info and WEIGHT
                 spwid     = spwinfo[ispw]['SpectralWindowId']
@@ -1112,7 +1112,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             for ims in msINT:                       # that MSs contain
                 ms.open(ims)                        # open MS
                 spwinfo = ms.getspectralwindowinfo()# SPW info
-                spwlist = spwinfo.keys()            # list of SPWs
+                spwlist = list(spwinfo.keys())      # list of SPWs
                 for ispw in spwlist:
                     freq0 = spwinfo[ispw]['Chan1Freq']           # ref frq [Hz]
                     uvmax = ms.getdata('uvdist')['uvdist'].max() # max bl [m]
@@ -1174,7 +1174,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             ms.open(ims,nomodify=True)              # open MS
             ms.selectinit(reset=True)               # all spws
             spwinfo   = ms.getspectralwindowinfo()  # get spw info
-            spwlist   = spwinfo.keys()              # list of SPWs
+            spwlist   = list(spwinfo.keys())        # list of SPWs
             iarray    = guessarray(ims)             # array name [e.g. ALMA12]
             fwhm0 = t2v_arrays[iarray]['fwhm100']   # beam FHWM @100GHz[arcsec]
             for ispw in spwlist:                    # loop over SPWs
@@ -1226,7 +1226,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             ms.open(ims,nomodify=False)             # open MS
             ms.selectinit(reset=True)               # all spws
             spwinfo = ms.getspectralwindowinfo()    # get spw info
-            spwlist = spwinfo.keys()                # list of SPWs
+            spwlist = list(spwinfo.keys())          # list of SPWs
             iarray  = guessarray(ims)               # array name [e.g. ALMA12]
             fwhm0   = t2v_arrays[iarray]['fwhm100'] # beam FHWM @100GHz [arcsec]
             for ispw in spwlist:                    # loop over SPWs
@@ -1520,7 +1520,7 @@ def tp2vispl(mslist, ampPlot=True, uvmax = 150.0, uvzoom=50.0, uvbin=0.5, show=F
         ms.selectinit(reset=True)               # all spws
         spwinfo  = ms.getspectralwindowinfo()   # spw info
         spwlist  = []
-        for ispw in spwinfo.keys():             # loop over SPWs
+        for ispw in list(spwinfo.keys()):       # loop over SPWs
             nchan  = spwinfo[ispw]['NumChan']   # num of chan
             c1freq = spwinfo[ispw]['Chan1Freq']/1.0e9  # 1st chan freq [GHz]
             cwidth = spwinfo[ispw]['ChanWidth']/1.0e9  # chan width [GHz]
