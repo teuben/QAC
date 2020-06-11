@@ -24,8 +24,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 from scipy.ndimage import distance_transform_edt
 
-# casa5
-if False:
+try:
+    # casa5
     from tasks import imhead, immath
     from taskinit import msmdtool, casalog, qatool, tbtool, mstool, iatool, vptool, smtool
     vp = vptool()
@@ -35,30 +35,33 @@ if False:
     tb = tbtool()
     ia = iatool()
     sm = smtool()
+    print("tp2vis for CASA5")
+except:
+    try:
+        # casa6
+        from casatasks import imhead
+        from casatasks import immath
 
-# casa6
-if False:
-    from casatasks import imhead
-    from casatasks import immath
-    
-    from casatools import msmetadata as msmdtool
-    from casatools import ms as mstool
-    from casatools import vpmanager as vptool
-    from casatools import quanta as qatool
-    from casatools import table as tbtool
-    from casatools import image as iatool
-    from casatools import simulator as smtool
-    from casatools import measures as metool
-    
-    vp = vptool()
-    msmd = msmdtool()
-    ms = mstool()
-    qa = qatool()
-    tb = tbtool()
-    ia = iatool()
-    sm = smtool()
-    me = metool()
+        from casatools import msmetadata as msmdtool
+        from casatools import ms as mstool
+        from casatools import vpmanager as vptool
+        from casatools import quanta as qatool
+        from casatools import table as tbtool
+        from casatools import image as iatool
+        from casatools import simulator as smtool
+        from casatools import measures as metool
 
+        vp = vptool()
+        msmd = msmdtool()
+        ms = mstool()
+        qa = qatool()
+        tb = tbtool()
+        ia = iatool()
+        sm = smtool()
+        me = metool()
+        print("tp2vis for CASA6")
+    except:
+        print("WARNING: tp2vis will not function")
 
 
 ## ===========================================
