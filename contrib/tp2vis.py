@@ -1,11 +1,12 @@
 # A collection of TP2VIS functions to aid in combining ALMA
 # Total Power and Visibilities in a Joint Deconvolution
 #
-# Authors: Jin Koda & Peter Teuben
+# Authors: Peter Teuben & Jin Koda (hacked version)
 #
 # Public functions:
 #    tp2vis_version()
 #    tp2vis(imagename, msname, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True)
+#    tp2visbl(imagename, ptg, maxuv=10.0, nvgrp=4, deconv=True)
 #    tp2viswt(mslist,mode='stat',value=0.5)
 #    tp2vistweak(dirtyname,cleanname,pbcut=0.8)
 #    tp2vispl(mslist,ampPlot=True,show=False)
@@ -24,6 +25,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 from scipy.ndimage import distance_transform_edt
 
+__version__ = "18-jun-2020 PJT"
+
 try:
     # casa5
     from tasks import imhead, immath
@@ -35,7 +38,7 @@ try:
     tb = tbtool()
     ia = iatool()
     sm = smtool()
-    print("tp2vis for CASA5")
+    print("tp2vis for CASA5 [%s]" % __version__)
 except:
     try:
         # casa6
@@ -59,7 +62,7 @@ except:
         ia = iatool()
         sm = smtool()
         me = metool()
-        print("tp2vis for CASA6")
+        print("tp2vis for CASA6 [%s]" % __version__)        
     except:
         print("WARNING: tp2vis will not function")
 
@@ -136,7 +139,7 @@ use_schwab = False
 ## =================
     
 def tp2vis_version():
-    print("tp2vis: 11-jun-2020 PJT")
+    print("tp2vis: %s" % __version__)
 
    
 def axinorder(image):
@@ -471,8 +474,9 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
             print("Using Schwab's spheroidal function in TP deconvolution")
             # Schwab's spheroidal function [pixel unit]
             # @todo  make sure we can use /, or do we need // in python3
-            x0        = np.arange(-int(cb_nx/2),-int(cb_nx/2)+cb_nx) # get cb_nx pix
-            y0        = np.arange(-int(cb_ny/2),-int(cb_ny/2)+cb_ny) # get cb_ny pix
+            #        make sure odd numbers work
+            x0        = np.arange(-cb_nx//2,-cb_nx//2+cb_nx)  # get cb_nx pix
+            y0        = np.arange(-cb_ny//2,-cb_ny//2+cb_ny)  # get cb_ny pix
             xx,yy     = np.meshgrid(x0,y0)
             xygrid    = np.sqrt(xx*xx + yy*yy)
             schwab    = schwab_spheroidal(1.0,6.0,3.0,xygrid) # alpha=1, m=6
@@ -868,7 +872,326 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
 
     #-end of tp2vis()
 
+## =======================================================
+## TP2VISBL: Return baselines (a primitive of tp2vis)
+## =======================================================
+           
+def tp2visbl(infile, ptg=None, dish=12.0, maxuv=10.0, nvgrp=4, seed=123):
+    """
+    Return just a set of baselines from a single pointing TP2VIS, a hacked version of tp2vis()
+    
+    Required:
+    ---------
+    infile    Input IM filename. The WCS of this file is used to set the RA,DEC and spectral
+              axis of the MS.
+    
+    Optional:
+    ---------
+    ptg       string:   the RA,DEC of the source to be observed, if to override from infile
 
+    dish      Dish size (12m for ALMA)
+    
+    maxuv     maximum uv distance of TP vis distribution (in m)
+              default=10m for 12m ALMA dish
+    
+    nvgrp     Number of visibility group (nvis = 1035*nvgrp)
+              The number of antenna is hardcoded as 46
+    
+    """
+
+    def qac_tpdish(name, size=None):
+        """
+        A patch to work with dishes that are not 12m (currently hardcoded in tp2vis.py)
+        
+        @todo   explain relationship to qac_vp()
+
+        E.g. for GBT (a 100m dish) you would need to do:
+        
+        qac_tpdish('ALMATP',100.0)
+        qac_tpdish('VIRTUAL',100.0)
+        
+        Note that ALMATP and VIRTUAL need to already exist.
+        """
+        if size == None:
+            if name in t2v_arrays.keys():
+                print(t2v_arrays[name])
+            else:
+                print("'%s' not a valid dish name, valid are : %s" % (name,str(t2v_arrays.keys())))
+                return
+        old_size = t2v_arrays[name]['dish']
+        old_fwhm = t2v_arrays[name]['fwhm100']
+        r = size/old_size
+        t2v_arrays[name]['dish']   = size
+        t2v_arrays[name]['fwhm100']= old_fwhm / r
+        print("QAC_DISH: %s %g %g -> %g %g" % (name,old_size, old_fwhm, size, old_fwhm/r))
+
+    
+    # Parameters
+    # ==========
+
+    seed  = 123                                 # for random number
+
+    # Dish cheat
+    # ==========
+    qac_tpdish('ALMATP',dish)
+    qac_tpdish('VIRTUAL',dish)
+
+    # Query the input image
+    # =====================
+
+    # Ensure RA-DEC-POL-FREQ axis order (CASA simulator needs it)
+    if axinorder(infile):                       # if 4 axes in order
+        imagename = infile                      # use original file
+        delimage  = False
+    else:                                       # if not, rearrange
+        imagename = arangeax(infile)            # and use re-aranged data
+        delimage  = True        
+
+    # Parameters from TP cube header
+    # ==============================
+
+    cms    = qa.constants('c')['value']         # speed of light in m/s
+
+    h0         = imhead(imagename,mode='list')
+    cb_shape   = h0['shape']                    # cube shape
+    cb_nx      = h0['shape'][0]                 # num of pixels, RA
+    cb_ny      = h0['shape'][1]                 #              , DEC
+    cb_dx      = np.abs(h0['cdelt1'])           # pixel size [radian]!
+    cb_dy      = np.abs(h0['cdelt2'])
+    cb_objname = h0['object']                   # object name
+    cb_nchan   = h0['shape'][3]                 # num of channels
+    cb_fstart  = h0['crval4']-h0['crpix4']*h0['cdelt4'] # start freq [Hz]
+    cb_fwidth  = h0['cdelt4']                   # chan width [Hz]
+    cb_reffreq = cb_fstart + 0.5*cb_fwidth      # chan central freq [Hz]
+    cb_refwave = cms / (cb_reffreq)             # wavelength [m]
+    cb_refcode = h0['reffreqtype']              # e.g. 'LSRK'
+    cb_bunit   = h0['bunit'].upper()            # JY/BEAM or JY/PIXEL
+
+    cb_fstart  = cb_fstart /1.0e9               # Hz -> GHz
+    cb_fwidth  = cb_fwidth /1.0e9
+    cb_reffreq = cb_reffreq/1.0e9
+
+    # Parameters for TP and virtual interferometer (VI) primary beams
+    # ===============================================================
+
+    twopi  = 2.0*np.pi
+    apr    = qa.convert('1.0rad','arcsec')['value'] # arcsec per radian
+    stof   = 2.0*np.sqrt(2.0*np.log(2.0))           # FWHM=stof*sigma
+
+    # TP beam
+    fwhm100   = t2v_arrays['ALMATP']['fwhm100'] # FWHM at 100GHz [arcsec]
+    tp_beamFWHM  = fwhm100*(100.0/cb_reffreq)   # at obs freq [arcsec]
+    tp_beamSigma = tp_beamFWHM/stof/apr         # sigma of TP beam [rad]
+    tp_beamSigFT = 1.0/(twopi*tp_beamSigma)     # sigma in fourier [lambda]
+    print("tp_sigma [rad], tp_sigmaFT [lambda]: ",tp_beamSigma,tp_beamSigFT)
+
+    # VI beam
+    vi_antname   = t2v_arrays['VIRTUAL']['observatory'] # VI observatory
+    vi_dish      = t2v_arrays['VIRTUAL']['dish']# VI dish size [m]
+
+    fwhm100  = t2v_arrays['VIRTUAL']['fwhm100'] # FWHM at 100GHz [arcsec]
+    vi_beamFWHM  = fwhm100*(100.0/cb_reffreq)   # at reffreq [arcsec]
+    vi_beamSigma = vi_beamFWHM/stof/apr         # sigma of VI beam [rad]
+    vi_beamSigFT = 1.0/(twopi*vi_beamSigma)     # sigma in fourier [lambda]
+    print("vi_sigma [rad], vi_sigmaFT [lambda]: ",vi_beamSigma,vi_beamSigFT)
+
+    # Obtain pointing coordinates    (@todo fix this so it uses crval1,crval2)
+    # ===========================
+
+    if ptg == None:
+        ptg = '%gdeg %gdeg' % (h0['crval1']*360/twopi,h0['crval2']*360/twopi)
+    print("Using ptg = ",ptg)
+
+    # Deconvolution of TP cube (images) by TP beam
+    #   (if deconv=False the input image will be used instead)
+    # ========================================================
+    
+    # Constants
+    apr    = qa.convert('1.0rad','arcsec')['value'] # arcsec per radian
+    cbm    = np.pi/(4.0*np.log(2.0))                # beamarea=cbm*bmaj*bmin
+
+    # Number of pixels per TP beam
+    apixel = np.abs((cb_dx*apr)*(cb_dy*apr))    # area in pixel [arcsec2]
+    abeam  = cbm*tp_beamFWHM**2                 # area of TP beam [arcsec2]
+    nppb   = abeam/apixel                       # To convert Jy/bm to Jy/pix
+    print("Number of pixels per beam:",nppb)
+
+    # Cutoff length of TP's gaussian beam tail
+    eps    = 0.01                               # cutoff amp of gauss tail
+    uvcut  = np.sqrt(-2.0*tp_beamSigFT**2*np.log(eps)) # uvdist there
+    uvcut  = np.minimum(maxuv/cb_refwave,uvcut) # compare with maxuv
+    print("UVCUT:", uvcut/1000.0,"kLambda")
+
+    # Generate uvdist^2 image [notice: x-axis runs vertically] 
+    frqx      = np.fft.fftfreq(cb_nx,cb_dx)     # frequency in x
+    frqy      = np.fft.fftfreq(cb_ny,cb_dy)     # frequency in y
+    vgrd,ugrd = np.meshgrid(frqy,frqx)          # make grids
+    uvgrd2    = ugrd**2+vgrd**2                 # uvdist^2 image
+
+    del frqx,frqy,vgrd,ugrd
+
+    # List parameters for virtual interferometric obs
+    # ===============================================
+
+    # Due to CASA construction, we cannot set some params directly
+    # and have to define many indirect params. E.g., Nvis cannot be set,
+    # but is calculated as Nvis=npair*(ttot/tint), where npair=num of ant
+    # pairs, ttot=total integ time, and tint=integ time per vis.
+
+    nant            = 46                        # # of fake antennas
+    npair           = (nant*(nant-1))//2        # # of baselines
+    nvis            = npair * nvgrp             # # of vis per point
+    source          = cb_objname                # object name
+    npnt            = 1
+
+    # Spectral windows
+    spw_nchan       = cb_nchan                  # # of channels
+    spw_fstart      = cb_fstart                 # start freq [GHz]
+    spw_fwidth      = cb_fwidth                 # freq width [GHz]
+    spw_fresolution = cb_fwidth
+   
+    spw_fband       = 'bandtp'                  # fake name
+    spw_stokes      = 'I'                       # 1 pol axis (or e.g. 'XX YY')
+    spw_refcode     = cb_refcode                # e.g. 'LSRK'
+
+    # Feed
+    fed_mode        = 'perfect X Y'    
+    fed_pol         = ['']
+  
+    # Fields
+    fld_calcode     = 'OBJ'
+    fld_distance    = '0m'                      # infinite distance
+
+    # Observatory
+    if use_vp:
+        obs_obsname     = 'WSRT'      # picking this results in no data in pure tp2vis even
+        obs_obsname     = 'ALMA'
+        obs_obspos      = me.observatory(obs_obsname)          # coordinate
+        obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory        
+    else:
+        obs_obsname     = t2v_arrays['VIRTUAL']['observatory'] # observatory
+        obs_obspos      = me.observatory(obs_obsname)          # coordinate
+
+    # Telescopes
+    tel_pbFWHM      = t2v_arrays['VIRTUAL']['fwhm100']*(100./spw_fstart) # asec
+    tel_mounttype   = 'alt-az'
+    tel_coordsystem = 'local'                   # coordinate of antpos
+    tel_antname     = t2v_arrays['VIRTUAL']['antList'][0]
+    tel_dish        = t2v_arrays['VIRTUAL']['dish']
+    if dish3 != None:
+        print("WARNING: using non-standard tel_dish = %g for antname = %s" % (dish3,tel_antname))
+        tel_dish = dish3
+
+    # Fake antenna parms
+    tel_antposx     = np.arange(nant)*1000.0    # fake ant positions
+    tel_antposy     = np.arange(nant)*1000.0    # the UV's will be random
+    tel_antposz     = np.arange(nant)*1000.0    # later one
+    tel_antdiam     = [tel_dish] * nant         # all dish sizes the same
+
+    # Numbers of vis per pointing and for all pointings
+    tvis            = 1.0                       # integ time per vis
+    tpnt            = tvis * nvgrp              # integ time per ptgs
+    ttot            = tpnt * npnt               # tot int time for all pnt
+    tstart          = -ttot/2                   # set start/end time of obs,
+    tend            = +ttot/2                   # so that (tend-tstart)/tvis
+                                                # = num of vis per point
+
+    # Print parameters
+    # ================
+
+    print( "TP2VISBL Parameters")
+    print( "   input image name:                    %s" % (imagename))
+    print( "   image shape:                         %s" % (repr(cb_shape)))
+    print( "   number of pointings:                 %d" % (npnt))
+    print( "   number of visibilities per pointing: %d" % (tpnt*npair))
+    print( "   start frequency [GHz]:               %f" % (spw_fstart))
+    print( "   frequency width [GHz]:               %f" % (spw_fwidth))
+    print( "   frequency resolution [GHz]:          %f" % (spw_fresolution))
+    print( "   freq channels:                       %d" % (spw_nchan))
+    print( "   polarizations:                       %s" % (spw_stokes))
+    print( "   antenna name:                        %s" % (tel_antname))
+    print( "   VI primary beam fwhm [arcsec]:       %f" % (tel_pbFWHM))
+    print( "   VI primary beam sigmaFT [m]:         %f" % (vi_beamSigFT*cb_refwave))
+    print( "   ttot                                 %f" % (ttot))
+    print( "   frame:                               %s" % (spw_refcode))
+    print( "   seed:                                %d" % (seed))
+    print( "   use_vp:                              %s" % (repr(use_vp)))
+    print( "   use_schwab:                          %s" % (repr(use_schwab)))
+
+    # Set parameters in CASA
+    # ======================
+
+    spw_fstart        = str(spw_fstart)      + 'GHz'
+    spw_fwidth        = str(spw_fwidth)      + 'GHz'
+    spw_fresolution   = str(spw_fresolution) + 'GHz'
+
+    if seed >= 0:
+        np.random.seed(seed)
+
+    # Generate (empty) visibilities
+    # =============================
+
+    # This step generates (u,v,w), based on target coord and antpos
+    # following current CASA implementation, but (u,v,w) will be
+    # replaced in the next step.
+    
+    print("Running sm.observemany")
+    sources    = []
+    starttimes = []
+    stoptimes  = []
+
+    tstart_src = tstart
+    tend_src   = tstart_src + tpnt
+    
+    for k in range(npnt):
+        src = source + '_%d' % (k)
+        sources.append(src)
+        starttimes.append(str(tstart_src)+'s')
+        stoptimes.append(str(tend_src)+'s')
+        tstart_src = tstart_src + tpnt
+        tend_src   = tstart_src + tpnt
+
+    sm.observemany(sourcenames=sources,
+            spwname=spw_fband,
+            starttimes=starttimes,
+            stoptimes=stoptimes)
+
+    # Genarate (replace) (u,v,w) to follow Gaussian
+    # =============================================
+
+    # Beam size in uv [m]
+    beamSigFT = vi_beamSigFT*cb_refwave         # sigmaF=D/lambda -> D [m]
+
+    # Include (u,v) = (0,0)
+    uu = np.array([0.0])
+    vv = np.array([0.0])
+
+    # Rest follows Gaussian distribution with < uvcut^2
+    nuv = 1                                     # (0,0) exists already
+    uvcut2 = (uvcut*cb_refwave)**2              # 1/lambda -> meter
+    while (nuv<nvis):                           # loop until enough
+        nrest = nvis-nuv
+        utmp,vtmp = np.random.normal(scale=beamSigFT,size=(2,nrest))
+        ok    = utmp**2+vtmp**2 < uvcut2        # generate gauss and
+        uu    = np.append(uu,utmp[ok])          # ok for uvdist<uvcut
+        vv    = np.append(vv,vtmp[ok])
+        nuv   = uu.size
+
+    uu = uu[:nvis]
+    vv = vv[:nvis]
+    ww = np.zeros(nvis)
+
+    return (uu,vv)
+
+
+    # Close measurement set
+    # =====================
+    sm.done()
+
+    # return the baselines....
+    return uvw
+    
+    
 ## =======================================================
 ## TP2VISWT: Explore different weights for TP visibilities
 ## =======================================================
