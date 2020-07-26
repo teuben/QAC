@@ -9,6 +9,9 @@
 # should just be an ID, e.g. 0.5 or 0.5a, or 0.5.1, in one single line.
 VERSION = `cat VERSION`
 
+# if you have our "wgetc" it will use a cached version
+WGET     = wget
+
 # the master git repo
 URL1     = https://github.com/kodajn/tp2vis.git
 
@@ -80,9 +83,9 @@ test:
 
 data:
 	mkdir -p data
-	(cd data; wget $(URL3)/skymodel.fits)
-	(cd data; wget $(URL3)/skymodel.ptg)
-	(cd data; wget $(URL3)/qac_bench5.tar.gz -O - | tar zxf -)
+	(cd data; $(WGET) $(URL3)/skymodel.fits)
+	(cd data; $(WGET) $(URL3)/skymodel.ptg)
+	(cd data; $(WGET) $(URL3)/qac_bench5.tar.gz; tar zxf qac_bench5.tar.gz; rm qac_bench5.tar.gz)
 
 data2:
 	mkdir -p data
