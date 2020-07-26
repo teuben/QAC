@@ -365,6 +365,7 @@ def qac_ds9(image, cleanup=False):
     # check if it's a directory, if so, we'll need a fits file
     if os.path.isdir(image):
         fi = qac_fits(image)
+        # fi = qac_fits(image, image+'/'+image+'.fits'    # ???
     else:
         fi = image
     print("Sending %s to ds9" % fi)
@@ -3386,7 +3387,7 @@ class QAC(object):
         else:
             retval = False
         if label != None:
-            print("QAC.select %s %s" % (str(retval),label))
+            print("QAC.select %d %s %s" % (thisone,str(retval),label))
         return retval
         
     
