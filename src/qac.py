@@ -2905,12 +2905,13 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
     #-end of qac_plot_grid()
     
-def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
+def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, rmsfac=3.0, plot='qac_flux.png'):
     """ Plotting min,max,rms as function of channel
     
         box     'xmin,ymin,xmax,ymax'       defaults to whole area
         border  take off a border 
         edge    if > 0, mean the two channel edges for rms
+        rmsfac  source flux estimated from signal above rmsfac*rms
 
         Also plotting a "diff", (max+min) which should be 0 at the edges.
 
@@ -2923,15 +2924,6 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
     """
     qac_tag("flux")
 
-    # report ratio of positive to negative flux
-    tb.open(image)
-    d1 = tb.getcol("map").squeeze()
-    tb.close()
-    d1 = ma.masked_invalid(d1)
-    fp = ma.where(d1 > 0, d1, 0).sum()
-    fn = ma.where(d1 < 0, d1, 0).sum()
-    print('Flux+/Flux- = %g' % (-fp/fn))
-    
     
     pl.figure()
     h    = imhead(image)
@@ -2944,10 +2936,13 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
     fmax = _tmp['max']
     frms = _tmp['rms']
     diff = fmax+fmin
+    npp = _tmp['sum'][0]/_tmp['flux'][0]
     if edge > 0:
         rms1 = frms[:edge].mean()
         rms2 = frms[-edge:].mean()
         rms = 0.5 * (rms1+rms2)
+    else:
+        rms = frms
     chan = np.arange(len(fmin))
     f = 0.5 * (fmax - fmin) / frms
     pl.plot(chan,fmin,c='r',label='min')
@@ -2963,6 +2958,18 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
     pl.legend()
     pl.savefig(plot)
     pl.show()
+
+    # report ratio of positive to negative flux
+    tb.open(image)
+    d1 = tb.getcol("map").squeeze()
+    tb.close()
+    d1 = ma.masked_invalid(d1)
+    fp = ma.where(d1 > 0, d1, 0).sum()
+    fn = ma.where(d1 < 0, d1, 0).sum()
+    fs = ma.where(d1 > rmsfac*rms, d1, 0).sum()
+    print('Flux+/Flux- = %g  %g %g %g' % (-fn/fp, (fp+fn)/npp,fp/npp,fs/npp))
+
+    
     if edge > 0:
         print("Sum: %g Jy km/s (%g km/s)  %d x %d -%d rms(%d): %g" % (fmax.sum() * dv,dv,nx,ny,border,edge,rms))
     else:
