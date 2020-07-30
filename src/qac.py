@@ -13,6 +13,7 @@ import os.path
 from utils import constutils as const
 from utils import radialProfile
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as pl
 
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
@@ -26,7 +27,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 19-sep-2019")
+    print("qac: version 29-jul-2020")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -2921,6 +2922,16 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, plot='qac_flux.png'):
     
     """
     qac_tag("flux")
+
+    # report ratio of positive to negative flux
+    tb.open(image)
+    d1 = tb.getcol("map").squeeze()
+    tb.close()
+    d1 = ma.masked_invalid(d1)
+    fp = ma.where(d1 > 0, d1, 0).sum()
+    fn = ma.where(d1 < 0, d1, 0).sum()
+    print('Flux+/Flux- = %g' % (-fp/fn))
+    
     
     pl.figure()
     h    = imhead(image)
