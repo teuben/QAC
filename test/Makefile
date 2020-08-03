@@ -304,6 +304,10 @@ sky0:
 	grep QAC_STATS sky0.log
 
 # new aug2020
+sky0a:
+	$(CASA) sky0.py test='"sky0a"' model='"skymodel-a.fits"' > sky0a.log 2>&1
+	grep QAC_STATS sky0a.log
+
 sky0c:
 	$(CASA) sky0.py test='"sky0c"' niter='[0,1000,3000,10000]'  > sky0c.log 2>&1
 	grep QAC_STATS sky0c.log
