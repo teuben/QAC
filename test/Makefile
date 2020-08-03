@@ -308,9 +308,15 @@ sky0c:
 	$(CASA) sky0.py test='"sky0c"' niter='[0,1000,3000,10000]'  > sky0c.log 2>&1
 	grep QAC_STATS sky0c.log
 
+
 sky0d:
 	$(CASA) sky0.py test='"sky0d"' niter='[0,1000,3000,10000]' vrange='[-300,300]' > sky0d.log 2>&1
 	grep QAC_STATS sky0d.log
+
+sky4:
+	$(CASA) sky4.py test='"sky4"' > sky4.log 2>&1
+	grep QAC_STATS sky4.log
+
 
 # this will show that Amp(uv=0,0) is indeed approaches the full flux, 113100.572 Jy
 sky2_000:
