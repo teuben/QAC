@@ -1,7 +1,7 @@
 #    Various tests for tp2vis and other QAC methods
 
 TESTS = bench bench0 bench1 \
-        sky0a sky0b sky1 sky2 \
+        sky0 sky1 sky2 \
 	cas_11271a cas_11271b \
         test1 test2 test3 test4 test5
 
@@ -11,7 +11,7 @@ SLIDES = slide1 slide2 slide3 slide4 slide6 slide7 slide8 slide9 slide10
 SLIDES = slide6 slide7 slide8 slide9 slide10
 
 TESTS = bench bench0 bench1 \
-        sky0a sky0b \
+        sky0 \
 	sky1 sky1a sky1b sky1c sky1d \
 	sky2 \
         test1 test2 test3 test4 test5 \
@@ -24,7 +24,7 @@ TESTS = bench bench0 bench1 \
 #  example on Mac:
 CASA  = time /Applications/CASA.app/Contents/MacOS/casa --nogui -c 
 #  example on Linux: (assuming it's in your $PATH - the portable solution)
-CASA  = time casa --nogui -c
+CASA  = casa-config --version; time casa --nogui -c
 
 
 help:
@@ -32,7 +32,7 @@ help:
 
 all:	$(TESTS)
 
-#  benchmark data are in the QAC/data directory
+#  benchmark data are in the QAC/data directory, but need to be symlinked locally
 DATA1   = M100_TP_CO_cube.bl.image
 DATA2   = M100_aver_7.ms
 DATA3   = M100_aver_12.ms
@@ -136,7 +136,7 @@ sky1g:
 	cp sky1.py sky1g.log sky1g
 
 
-#  sky2 is the generic TP2VIS-only mapping testsuite, the "sky2_all" runs a variety of tests
+#  sky2 is the generic TP2VIS-only mapping testsuite, the "sky2_all" runs a variety of sky2 tests
 sky2:
 	$(CASA) sky2.py > sky2.log 2>&1
 	cp sky2.py sky2.log sky2.ptg sky2
@@ -299,18 +299,14 @@ sky2_1i:
 
 
 
-# older version of cas_11271
-sky0:   sky0a sky0b
-	@echo vi1 results:
-	grep QAC_STATS sky0a.log
-	@echo vi2 results:
-	grep QAC_STATS sky0b.log
+sky0:
+	$(CASA) sky0.py test='"sky0"' > sky0.log 2>&1
+	grep QAC_STATS sky0.log
 
-sky0a:
-	VI1=1 $(CASA) sky0.py test='"sky0a"' > sky0a.log 2>&1
-
-sky0b:
-	$(CASA)       sky0.py test='"sky0b"' > sky0b.log 2>&1
+# new aug2020
+sky0c:
+	$(CASA) sky0.py test='"sky0c"' niter='[0,1000,3000,10000]'  > sky0c.log 2>&1
+	grep QAC_STATS sky0c.log
 
 
 # this will show that Amp(uv=0,0) is indeed approaches the full flux, 113100.572 Jy
