@@ -41,6 +41,9 @@ grid         = 30
 mosaic       = 1
 mosaic       = 0
 
+# plotting [min:max] if override autoscaling
+vrange       = None
+
 # scaling factors
 wfactor      = 0.01
 
@@ -97,8 +100,12 @@ if len(cfg) > 0:
         im2 = test+'/clean3/int%s.image.pbcor'   % QAC.label(idx)
         im3 = test+'/clean3/tpint%s.image'       % QAC.label(idx)
         im4 = test+'/clean3/tpint%s.image.pbcor' % QAC.label(idx)
-        qac_plot(im1,mode=1)      # casa based plot w/ colorbar
-        qac_plot(im3,mode=1)      # casa based plot w/ colorbar
+        if vrange == None:
+            qac_plot(im1,mode=1)      # casa based plot w/ colorbar
+            qac_plot(im3,mode=1)      # casa based plot w/ colorbar
+        else:
+            qac_plot(im1,mode=2,range=vrange)
+            qac_plot(im3,mode=2,range=vrange)
         qac_stats(im2)            # noise flat
         qac_stats(im4)            # noise flat
 
