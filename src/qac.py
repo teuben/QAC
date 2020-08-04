@@ -751,7 +751,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
 
     if plot == None:
         return (bmaj,bmin)    # @todo bpa        
-
+    
     tb.open(im)
     d1 = tb.getcol("map").squeeze()
     tb.close()
@@ -2643,14 +2643,15 @@ def qac_math(outfile, infile1, oper, infile2):
 
     #-end of qac_math()
     
-def qac_plot(image, channel=0, box=None, range=None, mode=0, title=None, plot=None):
+def qac_plot(image, channel=0, box=None, range=None, cmap=None, mode=0, title=None, plot=None):
     """
     image      CASA image (fits file should also work)
     channel    which channel (0=first) in case it's a cube
     box        None or [xmin,ymin,xmax,ymax]
     range      None or [vmin,vmax]
+    cmap       pick a colormap (only for mode=2)
 
-    mode=0     pick the default
+    mode=0     pick the default (mode=2)
     mode=1     force casa
     mode=2     force numpy/imshow
 
@@ -2688,7 +2689,8 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title=None, plot=No
         print("QAC_PLOT: %s range=%s" % (image,str(range)))
         imview(raster=raster, zoom=zoom, out=out)
     elif mode == 2:
-        cmap = 'nipy_spectral'
+        if cmap == None:
+            cmap = 'nipy_spectral'
         
         tb.open(image)
         d1 = tb.getcol("map").squeeze()
@@ -2710,7 +2712,7 @@ def qac_plot(image, channel=0, box=None, range=None, mode=0, title=None, plot=No
 
         pl.ioff()    # not interactive
         pl.figure()
-        alplot = pl.imshow(data, origin='lower', vmin = range[0], vmax = range[1])
+        alplot = pl.imshow(data, origin='lower', vmin = range[0], vmax = range[1], cmap=cmap)
         #alplot = pl.imshow(data, origin='lower')
         #pl.set_cmap(cmap)
         #alplot.set_cmap(cmap)
