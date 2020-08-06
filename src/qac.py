@@ -1387,9 +1387,11 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
     #-end of qac_tp()
 
+    # def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
+
 def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
     """
-    QAC interface to sdint
+    QAC interface to sdintimaging
 
     Note for 1D a different calling scheme is needed: 
       set deconvolver='mtmfs', specmode='mfs', nterms=1, and refreq=''.
@@ -1399,11 +1401,17 @@ def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
         print("SDINT experimental version not yet enabled")
         return
         
-    jointim = SDINT_imager(vis=vis,
+    jointim = sdintimaging(vis=vis,
                            sdimage=sdimage,
                            sdpsf=sdpsf,
                            sdgain=1.0,
                            dishdia=dishdia,
+                           #
+                           imsize = imsize,
+                           cell = '%garcsec' % pixel,
+                           
+                           phasecenter = phasecenter,
+                           **kwargs,
                            )
 
 def qac_sd_vis(**kwargs):
