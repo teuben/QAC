@@ -38,8 +38,8 @@ nvgrp        = 4
 
 # pick a few niter values for tclean to check flux convergence 
 niter        = [0,500,1000,2000]
-niter        = [0,1000,4000]
 niter        = [0]
+niter        = [0,1000,4000]
 
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
@@ -70,7 +70,7 @@ VP           = 0
 SCHWAB       = 0
 
 # scaling factors
-wfactor      = 1
+wfactor      = 0.1
 afactor      = 1      # not implemented yet
 
 # -- do not change parameters below this ---
@@ -118,27 +118,21 @@ if True:
 # we do the INT first, so we get a better sized startmodel for tp2vis, in case we rescale the model
 qac_log("ALMA 7m/12m")
 
+# time ratio between 12m : 7m : TP should be 1 : 3 : 4
+
 ms1={}
 for c in cfg:
-    ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+    if c==0:
+        # 3 times integration time in 7m array
+        ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[3*times[0],times[1]])
+    else:
+        ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
 # startmodel for later
 startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 psd.append(startmodel)
 
 # get a list of MS we got for the INT
 intms = ms1.values()
-
-
-if True:
-    # generate OTF
-    qac_log('OTF')
-    #qac_tp_otf(test+'/clean1', startmodel, 24.0, label='24')
-    qac_tp_otf(test+'/clean1', startmodel, 12.0, label='12')
-
-    # smooth the skymodel with the feather beam so we can compare when they are in Jy/beam
-    qac_log('SMOOTH')
-    #qac_smooth(test+'/clean1', startmodel, label='24', niteridx=0)
-    qac_smooth(test+'/clean1', startmodel, label='12', niteridx=0)
 
 qac_log("TP2VIS")
 if otf == 0:
@@ -214,24 +208,33 @@ for idx in range(len(niter)):
     qac_smooth (test+'/clean3', startmodel, niteridx=idx, name="tpint")
 
 
-# the real flux
-qac_stats(model)
-
 qac_log("REGRESSION")
 
 qac_stats(model)
 qac_stats(test+'/clean0/dirtymap.image')
 qac_stats(test+'/clean0/dirtymap.image.pbcor')
 qac_stats(test+'/clean3/int.image')
+
 qac_stats(test+'/clean3/tpint.image')
 qac_stats(test+'/clean3/tpint_2.image')
 qac_stats(test+'/clean3/tpint_3.image')
+
 qac_stats(test+'/clean3/tpint.image.pbcor')
 qac_stats(test+'/clean3/tpint_2.image.pbcor')
 qac_stats(test+'/clean3/tpint_3.image.pbcor')
+
+qac_stats(test+'/clean3/feather.image.pbcor')
+qac_stats(test+'/clean3/feather_2.image.pbcor')
+qac_stats(test+'/clean3/feather_3.image.pbcor')
+
+qac_stats(test+'/clean3/ssc.image')
+qac_stats(test+'/clean3/ssc_2.image')
+qac_stats(test+'/clean3/ssc_3.image')
+
 qac_stats(test+'/clean3/skymodel.smooth.image')
 qac_stats(test+'/clean3/skymodel_2.smooth.image')
 qac_stats(test+'/clean3/skymodel_3.smooth.image')
+
 qac_stats(test+'/clean3/otf.image')
 qac_stats(test+'/clean3/otf.image.pbcor')
 
