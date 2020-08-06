@@ -2130,7 +2130,8 @@ def qac_smooth(project, skymodel, name="feather", label="", niteridx=0, do_flux 
     # qac_math(out_resid, out_smoo, '-', feather)
 
     # remove the temporary image that was created
-    os.system('rm -fr %s'%out_tmp)
+    QAC.rmcasa(out_tmp)
+    QAC.rmcasa(out_resid)
 
     return out_smoo
 
