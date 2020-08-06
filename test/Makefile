@@ -318,8 +318,20 @@ sky0d:
 	grep QAC_STATS sky0d.log
 
 sky4:
-	$(CASA) sky4.py test='"sky4"' > sky4.log 2>&1
+	$(CASA) sky4.py pdir='"sky4"' > sky4.log 2>&1
 	grep QAC_STATS sky4.log
+
+sky4a:
+	$(CASA) sky4.py pdir='"sky4a"' wfactor=1 > sky4a.log 2>&1
+	grep QAC_STATS sky4a.log
+
+sky4b:
+	$(CASA) sky4.py pdir='"sky4b"' wfactor=0.1 > sky4b.log 2>&1
+	grep QAC_STATS sky4b.log
+
+sky4c:
+	$(CASA) sky4.py pdir='"sky4c"' wfactor=0.01 > sky4c.log 2>&1
+	grep QAC_STATS sky4c.log
 
 
 # this will show that Amp(uv=0,0) is indeed approaches the full flux, 113100.572 Jy
