@@ -90,6 +90,9 @@ args = {}
 args['usemask'] = 'pb'
 args['pbmask']  = 0.5
 args['deconvolver']= 'hogbom'
+
+# hardcoded
+Qhybrid = True     # this generates /clean4/
     
 
 # report, add Dtime
@@ -175,7 +178,7 @@ psd.append(test+'/clean3/tpint.image.pbcor')
 psd.append(test+'/clean3/skymodel.smooth.image')        
 
 
-if False:
+if Qhybrid:
     qac_clean(test+'/clean4',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False,startmodel=startmodel)
     qac_tweak(test+'/clean4','int',niter)
     qac_tweak(test+'/clean4','tpint',niter)
@@ -189,7 +192,7 @@ if False:
 qac_log("OTF")
 # create an OTF TP map using a [12m] dish
 qac_tp_otf(test+'/clean3', startmodel, dish, template=test+'/clean3/tpint.image')
-if False:
+if Qhybrid:
     qac_tp_otf(test+'/clean4', startmodel, dish,template=test+'/clean4/tpint.image')
 
 if True:
@@ -199,7 +202,7 @@ if True:
         qac_feather(test+'/clean3',             niteridx=idx, name="int")
         qac_ssc    (test+'/clean3',             niteridx=idx, name="int")
         qac_smooth (test+'/clean3', startmodel, niteridx=idx, name="int")
-        if False:
+        if Qhybrid:
             qac_feather(test+'/clean4',             niteridx=idx, name="int")
             qac_ssc    (test+'/clean4',             niteridx=idx, name="int")
             qac_smooth (test+'/clean4', startmodel, niteridx=idx, name="int")
@@ -240,7 +243,7 @@ qac_stats(test+'/clean3/otf.image.pbcor')
 
 
 
-if False:
+if True:
     qac_log("PLOT_GRID plot2/3")    
     a1 = test+'/clean1/dirtymap.image'       # INT
     a2 = test+'/clean1/dirtymap_2.image'
@@ -249,17 +252,17 @@ if False:
     a4 = test+'/clean2/dirtymap_2.image'
 
     a31 = test+'/clean3/int.image'           # INT/TPINT
-    a32 = test+'/clean3/int_2.image'
+    a32 = test+'/clean3/int_3.image'
     a33 = test+'/clean3/tpint.image'
-    a34 = test+'/clean3/tpint_2.image'
+    a34 = test+'/clean3/tpint_3.image'
 
     a41 = test+'/clean4/int.image'           # INT/TPINT w/ startmodel
-    a42 = test+'/clean4/int_2.image'
+    a42 = test+'/clean4/int_3.image'
     a43 = test+'/clean4/tpint.image'
-    a44 = test+'/clean4/tpint_2.image'
+    a44 = test+'/clean4/tpint_3.image'
 
 
-    qac_tp_otf(test+'/clean1', startmodel, 12.0)
+    #qac_tp_otf(test+'/clean1', startmodel, 12.0)
 
     # nitering
     qac_plot_grid([a31,a32,a41,a42,a31,a32,a33,a34],diff=10, plot=test+'/plot1.cmp.png')
