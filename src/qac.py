@@ -1401,9 +1401,11 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
     #-end of qac_tp()
 
+    # def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
+
 def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
     """
-    QAC interface to sdint
+    QAC interface to sdintimaging
 
     Note for 1D a different calling scheme is needed: 
       set deconvolver='mtmfs', specmode='mfs', nterms=1, and refreq=''.
@@ -1413,11 +1415,17 @@ def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
         print("SDINT experimental version not yet enabled")
         return
         
-    jointim = SDINT_imager(vis=vis,
+    jointim = sdintimaging(vis=vis,
                            sdimage=sdimage,
                            sdpsf=sdpsf,
                            sdgain=1.0,
                            dishdia=dishdia,
+                           #
+                           imsize = imsize,
+                           cell = '%garcsec' % pixel,
+                           
+                           phasecenter = phasecenter,
+                           **kwargs
                            )
 
 def qac_sd_vis(**kwargs):
@@ -2726,7 +2734,7 @@ def qac_plot(image, channel=0, box=None, range=None, cmap=None, mode=0, title=No
             range = [data.min(), data.max()]
 
         pl.ioff()    # not interactive
-        pl.figure()
+        pl.figure(figsize=QAC.figsize())
         alplot = pl.imshow(data, origin='lower', vmin = range[0], vmax = range[1], cmap=cmap)
         #alplot = pl.imshow(data, origin='lower')
         #pl.set_cmap(cmap)
@@ -2891,11 +2899,11 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
 
             # try out putting naming in the plots
             if labels:
-                if i % 3 == 2:
+                if diff != 0 and i % 3 == 2:
                     f1.set_title('diff*%g' % diff)
                 else:
                     f1.set_title(images[j][images[j].rfind('/')+1:])
-                    j += 1
+                    j = j + 1
 
             f1.set_xticklabels([])
             f1.set_yticklabels([])
@@ -3278,6 +3286,12 @@ class QAC(object):
         """  set plot mode to interactive or not
         """
         return True
+    
+    @staticmethod
+    def figsize():
+        """  set plot figsize
+        """
+        return (8,8)
     
     @staticmethod
     def hasdt():

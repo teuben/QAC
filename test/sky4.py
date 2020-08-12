@@ -39,12 +39,12 @@ nvgrp        = 4
 # pick a few niter values for tclean to check flux convergence 
 niter        = [0,500,1000,2000]
 niter        = [0]
-niter        = [0,1000,4000]
+niter        = [0,1000,10000]
 
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
 cfg          = [0]
-cfg          = [0,1]
+cfg          = [0,1,2]
 
 
 # pick integration times
@@ -62,16 +62,15 @@ maxuv        = None
 grid         = 30  
 
 
-# OTF: if selected, tp2vis will get an OTF, instead of the model jy/pixel map
+# OTF: if selected, tp2vis will get an OTF Jy/beam, instead of the model Jy/pixel map
 otf          = 0
 
 # advanced features (0 or 1)
 VP           = 0
 SCHWAB       = 0
 
-# scaling factors
-wfactor      = 0.1
-afactor      = 1      # not implemented yet
+# scaling factor of TP to match the INT
+wfactor      = 0.01
 
 # -- do not change parameters below this ---
 import sys
@@ -255,6 +254,37 @@ if True:
     a32 = test+'/clean3/int_3.image'
     a33 = test+'/clean3/tpint.image'
     a34 = test+'/clean3/tpint_3.image'
+    a35 = test+'/clean3/feather.image'    
+    a36 = test+'/clean3/feather_3.image'
+    a37 = test+'/clean3/ssc.image'    
+    a38 = test+'/clean3/ssc_3.image'
+
+    a5 = []
+    a5.append(test+'/clean3/int.image')
+    a5.append(test+'/clean3/int_2.image')
+    a5.append(test+'/clean3/int_3.image')
+    a5.append(test+'/clean3/tpint.image')
+    a5.append(test+'/clean3/tpint_2.image')
+    a5.append(test+'/clean3/tpint_3.image')
+    a5.append(test+'/clean3/feather.image' )   
+    a5.append(test+'/clean3/feather_2.image')
+    a5.append(test+'/clean3/feather_3.image')
+    a5.append(test+'/clean3/ssc.image')
+    a5.append(test+'/clean3/ssc_2.image')
+    a5.append(test+'/clean3/ssc_3.image')
+
+    a6 = []
+    a6.append(test+'/clean3/int_3.image.pbcor')
+    a6.append(test+'/clean3/skymodel.smooth.image')
+    a6.append(test+'/clean3/tpint_3.image.pbcor')
+    a6.append(test+'/clean3/skymodel.smooth.image')
+    a6.append(test+'/clean3/feather_3.image.pbcor')
+    a6.append(test+'/clean3/skymodel.smooth.image')
+    a6.append(test+'/clean3/ssc_3.image')
+    a6.append(test+'/clean3/skymodel.smooth.image')
+    
+    
+    
 
     a41 = test+'/clean4/int.image'           # INT/TPINT w/ startmodel
     a42 = test+'/clean4/int_3.image'
@@ -269,6 +299,12 @@ if True:
     #
     qac_plot_grid([a31,a41,a32,a42],diff=1,  plot=test+'/plot2.cmp.png')
     qac_plot_grid([a33,a43,a34,a44],diff=10, plot=test+'/plot3.cmp.png')
+    #
+    qac_plot_grid(a5, ncol=3, diff=0, plot=test+'/plot5.cmp.png')
+
+    qac_plot_grid(a6, diff=10, plot=test+'/plot6.cmp.png')
+    
+    
 
     # qac_plot_grid([a1,a31,a2,a32,a3,a41,a4,a42],diff=1)     these are all 0, as they should be
 
