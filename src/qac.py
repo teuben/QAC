@@ -27,7 +27,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 29-jul-2020")
+    print("qac: version 12-aug-2020")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -65,8 +65,10 @@ def qac_project(projectdir, chdir=False):
     """
         start a new project in given project directory name
 
-        projectdir:   directory name. it will be created (and removed if present)
-        chdir:        also change directory into this project directory
+        projectdir    directory name. it will be created (and removed if present)
+        chdir         also change directory into this project directory
+        exist ?       should we allow it to exist
+        
     """
     print("QAC_PROJECT %s" % projectdir)
     os.system('rm -rf %s ; mkdir -p %s' % (projectdir,projectdir))
@@ -357,6 +359,18 @@ def qac_fits(image,outfile=None,overwrite=True):
     return fi
 
     #-end of qac_fits()
+
+def qac_import(fits, cim, phasecenter=None, dec=None):
+    """ import a fits, and optionally place it somewhere else
+        ? why is indirection not working in simobserve ?
+    """
+    importfits(fits, cim)
+    if phasecenter != None:
+        print("phasecenter=%s to be applied" % phasecenter)
+    if dec != None:
+        h0 = imhead(cim,mode='put',hdkey='crval2',hdvalue=dec)      
+    h0 = imhead(cim,mode='list')
+    print("crval2 = %g" % h0['crval2'])
 
 def qac_ds9(image, cleanup=False):
     """
