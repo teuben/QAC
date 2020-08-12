@@ -3274,10 +3274,10 @@ class QAC(object):
         return True
     
     @staticmethod
-    def figsize():
-        """  set plot figsize
+    def figsize(x=8,y=8):
+        """  set plot figsize (in inches)
         """
-        return (8,8)
+        return (x,y)
     
     @staticmethod
     def hasdt():
