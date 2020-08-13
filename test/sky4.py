@@ -44,11 +44,11 @@ niter        = [0,1000,10000]
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
 cfg          = [0]
-cfg          = [0,1,2]
+cfg          = [0,1,4]
 
 
 # pick integration times
-times        = [2, 1]     # 2 hrs in 1 min integrations
+times        = [2, 1]     # 2 hrs in 1 min integrations for 12m; 7m is 3x
 
 # TP dish size in m; uvmax will be taken as 5/6 of this
 # @todo   don't change this
@@ -217,6 +217,9 @@ qac_stats(test+'/clean0/dirtymap.image')
 qac_stats(test+'/clean0/dirtymap.image.pbcor')
 qac_stats(test+'/clean3/int.image')
 
+qac_stats(test+'/clean3/int.image.pbcor')
+qac_stats(test+'/clean3/int_3.image.pbcor')
+
 qac_stats(test+'/clean3/tpint.image')
 qac_stats(test+'/clean3/tpint_2.image')
 qac_stats(test+'/clean3/tpint_3.image')
@@ -224,6 +227,9 @@ qac_stats(test+'/clean3/tpint_3.image')
 qac_stats(test+'/clean3/tpint.image.pbcor')
 qac_stats(test+'/clean3/tpint_2.image.pbcor')
 qac_stats(test+'/clean3/tpint_3.image.pbcor')
+
+qac_stats(test+'/clean3/tpint_2.tweak.image.pbcor')
+qac_stats(test+'/clean3/tpint_3.tweak.image.pbcor')
 
 qac_stats(test+'/clean3/feather.image.pbcor')
 qac_stats(test+'/clean3/feather_2.image.pbcor')
@@ -277,6 +283,8 @@ if True:
     a6.append(test+'/clean3/int_3.image.pbcor')
     a6.append(test+'/clean3/skymodel.smooth.image')
     a6.append(test+'/clean3/tpint_3.image.pbcor')
+    a6.append(test+'/clean3/skymodel.smooth.image')
+    a6.append(test+'/clean3/tpint_3.tweak.image.pbcor')
     a6.append(test+'/clean3/skymodel.smooth.image')
     a6.append(test+'/clean3/feather_3.image.pbcor')
     a6.append(test+'/clean3/skymodel.smooth.image')
