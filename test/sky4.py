@@ -5,7 +5,7 @@
 #
 #  Play with the skymodel 
 #     - one or full pointing set
-#     - options for tp2vis, feather, ssc
+#     - options for tp2vis, feather, ssc, sdint
 #
 #  Reminder: at 115 GHz we have:
 #      12m PB is 50" (FWHM)   [FWHM" ~ 600/DishDiam]
@@ -152,6 +152,7 @@ tp2viswt(tpms,wfactor,'multiply')
 if True:
     qac_log("CLEAN1:")
     qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, **args)
+    print("ARGS:",args)
 
 qac_log("PLOT and STATS:")
 for idx in range(1):
@@ -164,6 +165,12 @@ for idx in range(1):
     
 
 tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
+
+qac_log("SDINT")
+if True:
+    sdimage = test + '/clean0/dirtymap.image.pbcor'
+    sdpsf = test + '/clean0/dirtymap.psf'
+    qac_sd_int(test+'/clean5',sdimage,intms,sdpsf, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)    
 
 qac_log("CLEAN with TP2VIS")
 if False:
