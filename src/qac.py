@@ -1403,7 +1403,22 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
     # def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
 
-def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
+if False:
+    pdir = '.'
+    tp = 'clean0/dirtymap.image'
+    psf = 'clean0/dirtymap.psf'
+    ms  = ['sky4.aca.cycle6.ms/','sky4.alma.cycle6.1.ms','sky4.alma.cycle6.2.ms']
+    imsize_s     = 256
+    pixel_s      = 0.8
+    phasecenter  = 'J2000 180.0deg -30.0deg'
+
+    qac_sd_int(pdir + '/clean5', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter)
+
+def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
+               imsize=512, pixel=0.5, niter=[0],  weighting="natural", startmodel=None, phasecenter=None,
+               usedata = 'sdint',     # 'sd', 'int', 'sdint'
+               sdgain = 0.1,
+               **kwargs):
     """
     QAC interface to sdintimaging
 
@@ -1412,25 +1427,39 @@ def qac_sd_int(sdimage, vis, sdpsf, **kwargs):
     This should give a *joint.multiterm.image.tt0 image you can use to compare to the other combination methods.
     """
     if True:
-        print("SDINT experimental version not yet enabled")
-        return
+        print("SDINT experimental version, API may change")
+
+    kwargs['gridder']       = 'mosaic'
+    kwargs['deconvolver']   = 'clark'   
+    kwargs['imsize']        = imsize
+    kwargs['cell']          = '%garcsec' % pixel
+    kwargs['stokes']        = 'I'
+    kwargs['pbcor']         = True
+    kwargs['phasecenter']   = phasecenter
+    # kwargs['vptable']       = vptable
+    kwargs['weighting']     = weighting
+    kwargs['specmode']      = 'cube'
+    kwargs['startmodel']    = startmodel
+    # kwargs['restart']       = True
+    # kwargs['restoringbeam'] = 'common'
+
         
-    jointim = sdintimaging(vis=vis,
-                           sdimage=sdimage,
-                           sdpsf=sdpsf,
+    jointim = sdintimaging(usedata=usedata,
+                           sdimage=tp,
+                           sdpsf=psf,
                            sdgain=1.0,
-                           dishdia=dishdia,
+                           vis=ms,
                            #
-                           imsize = imsize,
-                           cell = '%garcsec' % pixel,
-                           
-                           phasecenter = phasecenter,
+                           imagename = project + '/' + usedata,
+                           #
                            **kwargs
                            )
-
+    
+    #-end of qac_sd_int()
+    
 def qac_sd_vis(**kwargs):
     """
-    SD2vis from the Nordic Tools
+    SD2vis from the Nordic Tools. It can only do single fields.
     
     SDimage='',        
     SDchannels = -1,
