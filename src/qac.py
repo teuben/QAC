@@ -27,7 +27,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 12-aug-2020")
+    print("qac: version 19-aug-2020")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -100,7 +100,7 @@ def qac_tmp(prefix, tmpdir='.'):
     #-end of qac_tmp()
     
 
-def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, outfile=None):
+def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, factor=1.0, outfile=None):
     """
     Generate hex-grid of pointing centers that covers a specified area. 
     Can optionally output in file or as list. Can check for overlap with input image areas
@@ -194,8 +194,8 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, outfile=None)
     cosdec = math.cos(decDeg*math.pi/180.0)
     
     imsize = QAC.imsize2(imsize)
-    xim = imsize[0]
-    yim = imsize[1]
+    xim = imsize[0] * factor
+    yim = imsize[1] * factor
         
     if yim/xim > np.sqrt(3):
         maxim = yim/2.0
@@ -1404,6 +1404,7 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
     # def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
 
 if False:
+    # from sky4
     pdir = '.'
     tp = 'clean0/dirtymap.image'
     psf = 'clean0/dirtymap.psf'
@@ -1413,6 +1414,8 @@ if False:
     phasecenter  = 'J2000 180.0deg -30.0deg'
 
     qac_sd_int(pdir + '/clean5', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter)
+    qac_sd_int(pdir + '/clean6', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter,usedata='sd')
+    qac_sd_int(pdir + '/clean7', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter,usedata='int')
 
 def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
                imsize=512, pixel=0.5, niter=[0],  weighting="natural", startmodel=None, phasecenter=None,
@@ -2695,13 +2698,16 @@ def qac_math(outfile, infile1, oper, infile2):
 
     #-end of qac_math()
     
-def qac_plot(image, channel=0, box=None, range=None, cmap=None, mode=0, title=None, plot=None):
+def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, title=None, plot=None):
     """
     image      CASA image (fits file should also work)
     channel    which channel (0=first) in case it's a cube
     box        None or [xmin,ymin,xmax,ymax]
     range      None or [vmin,vmax]
-    cmap       pick a colormap (only for mode=2)
+    colormap   pick a colormap name
+               mode=1:  Cube Helix, Greyscale 1, Greyscale 2, Hot Metal 1, Hot Metal 2, Misc. 1 Isophotes, Misc. 2 Topography
+                        RGB 1, RGB 2, Rainbow 1, Rainbow 2 [default], Rainbow 3, Rainbow 4, Smooth 1, Smooth 2, Smooth 3, Smooth 4
+               mode=2:  https://cmasher.readthedocs.io/user/cmap_overviews/mpl_cmaps.html
 
     mode=0     pick the default (mode=2)
     mode=1     force casa
@@ -2717,21 +2723,22 @@ def qac_plot(image, channel=0, box=None, range=None, cmap=None, mode=0, title=No
         print("QAC_PLOT: missing %s " % image)
         return
     
-    #
     # zoom={'channel':23,'blc': [200,200], 'trc': [600,600]},
     #'range': [-0.3,25.],'scaling': -1.3,
     if plot==None:
         out = image+'.png'
     else:
         out = plot
-        
+
     if mode == 0: mode=2      # our hardcoded default
         
     if mode == 1:
         if range == None:
             h0 = imstat(image,chans='%d' % channel)
             range = [h0['min'][0],h0['max'][0]]
-        raster =[{'file': image,  'colorwedge' : True, 'range' : range}]    # scaling (numeric), colormap (string)
+        raster ={'file': image,  'colorwedge' : True, 'range' : range}    # scaling (numeric), colormap (string)
+        if colormap != None:
+            raster['colormap'] = colormap
         zoom={'channel' : channel,
               'coord':'pixel'}      # @todo 'blc': [190,150],'trc': [650,610]}
         if box != None:
@@ -2741,9 +2748,6 @@ def qac_plot(image, channel=0, box=None, range=None, cmap=None, mode=0, title=No
         print("QAC_PLOT: %s range=%s" % (image,str(range)))
         imview(raster=raster, zoom=zoom, out=out)
     elif mode == 2:
-        if cmap == None:
-            cmap = 'nipy_spectral'
-        
         tb.open(image)
         d1 = tb.getcol("map").squeeze()
         tb.close()
@@ -2764,8 +2768,14 @@ def qac_plot(image, channel=0, box=None, range=None, cmap=None, mode=0, title=No
 
         pl.ioff()    # not interactive
         pl.figure(figsize=QAC.figsize())
+        
+        if colormap == None:
+            colormap = 'jet'
+        cmap = pl.get_cmap(colormap)
+        if cmap == None:
+            print("QAC_PLOT unknown colormap=%s" % colormap)
+        
         alplot = pl.imshow(data, origin='lower', vmin = range[0], vmax = range[1], cmap=cmap)
-        #alplot = pl.imshow(data, origin='lower')
         #pl.set_cmap(cmap)
         #alplot.set_cmap(cmap)
         pl.colorbar()
