@@ -350,18 +350,18 @@ if False:
     a8 = test+'/clean3/tpint_2.tweak.image'
     qac_plot_grid([a1,a3,a4,a5,a7,a8],plot=test+'/plot1.cmp.png')
 
+# PSD plot comparison of the images we accumulated in psd[]
+if len(psd) > 0:
+    qac_log("QAC_PSD")
+    p2=qac_psd(psd, plot=pdir+'/psd.png')
+
 if True:
+    os.chdir(pdir)
     qac_fits('clean3/skymodel_3.smooth.image',         'sky_model_box1.fits',   box=box)
     qac_fits('clean3/int_3.image.pbcor',               'sky_int_box1.fits',     box=box)
     qac_fits('clean3/tpint_3.image.pbcor',             'sky_tpint_box1.fits',   box=box)
     qac_fits('clean3/tpint_3.tweak.image.pbcor',       'sky_tweak_box1.fits',   box=box)
     qac_fits('clean3/feather_3.image.pbcor',           'sky_feather_box1.fits', box=box)
-
-
-# PSD plot comparison of the images we accumulated in psd[]
-if len(psd) > 0:
-    qac_log("QAC_PSD")
-    p2=qac_psd(psd, plot=pdir+'/psd.png')
 
 qac_log("DONE!")
 qac_end()
