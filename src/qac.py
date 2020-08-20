@@ -336,7 +336,7 @@ def qac_line(im):
 
     #-end of qac_line()
 
-def qac_fits(image,outfile=None,box=None, chans=None):
+def qac_fits(image,outfile=None,box=None, chans=None, stats=False):
     """ exportfits shortcut, appends the extension ".fits" to a casa image
         also handles a list of images
 
@@ -344,6 +344,7 @@ def qac_fits(image,outfile=None,box=None, chans=None):
         outfile   if given, output fits file name, else add ".fits"
         box       if set, use a 'xmin,ymin,xmax,ymax' in 0 based pixels
         chans     if set, use a 'chmin~chmax' in 0 based pixels
+        stats     if set, also make a qac_plot and qac_stats
 
         Returns the (last) fits file  (@todo: should do a list if input is a list)
     """
@@ -367,8 +368,9 @@ def qac_fits(image,outfile=None,box=None, chans=None):
         else:
             exportfits(i,fi,overwrite=True)
         print("Wrote " + fi)
-        qac_stats(fi)
-        qac_plot(fi)
+        if stats:
+            qac_stats(fi)
+            qac_plot(fi,mode=1)
     return fi
 
     #-end of qac_fits()
