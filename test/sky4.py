@@ -180,7 +180,7 @@ for idx in range(1):
 tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
 
 qac_log("SDINT")
-if True:
+if False:
     sdimage = test + '/clean0/dirtymap.image.pbcor'
     sdpsf = test + '/clean0/dirtymap.psf'
     qac_sd_int(test+'/clean5',sdimage,intms,sdpsf, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)    
@@ -357,11 +357,12 @@ if len(psd) > 0:
 
 if True:
     os.chdir(pdir)
-    qac_fits('clean3/skymodel_3.smooth.image',         'sky_model_box1.fits',   box=box)
-    qac_fits('clean3/int_3.image.pbcor',               'sky_int_box1.fits',     box=box)
-    qac_fits('clean3/tpint_3.image.pbcor',             'sky_tpint_box1.fits',   box=box)
-    qac_fits('clean3/tpint_3.tweak.image.pbcor',       'sky_tweak_box1.fits',   box=box)
-    qac_fits('clean3/feather_3.image.pbcor',           'sky_feather_box1.fits', box=box)
+    qac_project('export')
+    qac_fits('clean3/skymodel_3.smooth.image',         'export/sky_model_box1.fits',   box=box, stats=True)
+    qac_fits('clean3/int_3.image.pbcor',               'export/sky_int_box1.fits',     box=box, stats=True)
+    qac_fits('clean3/tpint_3.image.pbcor',             'export/sky_tpint_box1.fits',   box=box, stats=True)
+    qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True)
+    qac_fits('clean3/feather_3.image.pbcor',           'export/sky_feather_box1.fits', box=box, stats=True)
 
 qac_log("DONE!")
 qac_end()
