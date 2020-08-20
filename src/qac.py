@@ -336,13 +336,14 @@ def qac_line(im):
 
     #-end of qac_line()
 
-def qac_fits(image,outfile=None,overwrite=True):
+def qac_fits(image,outfile=None,box=None, chans=None):
     """ exportfits shortcut, appends the extension ".fits" to a casa image
         also handles a list of images
 
         image     casa image, or list of images, to be converted to fits
         outfile   if given, output fits file name, else add ".fits"
-        overwite  remove any existing outfile if present
+        box       if set, use a 'xmin,ymin,xmax,ymax' in 0 based pixels
+        chans     if set, use a 'chmin~chmax' in 0 based pixels
 
         Returns the (last) fits file  (@todo: should do a list if input is a list)
     """
@@ -350,18 +351,28 @@ def qac_fits(image,outfile=None,overwrite=True):
         ii = image
     else:
         ii = [image]
+    if box != None or chans != None:
+        Qsubim = True
+    else:
+        Qsubim = False
     for i in ii:
         fi = i + '.fits'
         if len(ii)==1 and outfile!=None:
             fi = outfile
-        exportfits(i,fi,overwrite=overwrite)
+        if Qsubim:
+            tmpim = i + ".tmp"
+            imsubimage(i,tmpim,box=box,chans=chans)
+            exportfits(tmpim,fi,overwrite=True)
+            QAC.rmcasa(tmpim)
+        else:
+            exportfits(i,fi,overwrite=True)
         print("Wrote " + fi)
     return fi
 
     #-end of qac_fits()
 
 def qac_import(fits, cim, phasecenter=None, dec=None):
-    """ import a fits, and optionally place it somewhere else
+    """ import a fits, and optionally place it somewhere else on the sky
         ? why is indirection not working in simobserve ?
     """
     importfits(fits, cim)
