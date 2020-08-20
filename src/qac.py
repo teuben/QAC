@@ -336,7 +336,7 @@ def qac_line(im):
 
     #-end of qac_line()
 
-def qac_fits(image,outfile=None,box=None, chans=None, stats=False):
+def qac_fits(image,outfile=None,box=None, chans=None, stats=False, channel=0):
     """ exportfits shortcut, appends the extension ".fits" to a casa image
         also handles a list of images
 
@@ -370,7 +370,7 @@ def qac_fits(image,outfile=None,box=None, chans=None, stats=False):
         print("Wrote " + fi)
         if stats:
             qac_stats(fi)
-            qac_plot(fi,mode=1)
+            qac_plot(fi,mode=1,channel=channel)
     return fi
 
     #-end of qac_fits()
