@@ -1,11 +1,7 @@
 # -*- python -*-
 #
 #  Typical usage (see also Makefile)
-#      casa -c sky1.py 
-#
-#  Play with the skymodel 
-#     - one or full pointing set
-#     - options for tp2vis, feather, ssc, sdint
+#      casa -c sky4.py  [optional parameters]
 #
 #  Reminder: at 115 GHz we have:
 #      12m PB is 50" (FWHM)   [FWHM" ~ 600/DishDiam]
@@ -15,12 +11,19 @@
 #     TP               uses (nvgrp * npnt) seconds
 #     INT (per config) uses times[0] hours in total, times[1] minutes per pointing
 #                      thus it is useful to make sure that (times[0]*60) / (times[1]*npnt) is integral
-#                     
 #
+#
+#  - clean0:    mapping the TP.MS: 
+#  - clean3:    mapping the 'int' and 'tpint' from tp2vis
+#  - clean4:    hybrid :
+#                   with or without tp.ms,   with rescaled otf or skymodel (jy/pix)
+#               
+#
+# @todo    set a mask so it only cleans in the original
 
 pdir         = 'sky4'                               # name of directory within which everything will reside
-model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model to be on the sky
+model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
+phasecenter  = 'J2000 180.0deg -35.0deg'            # where we want this model to be on the sky
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
@@ -32,6 +35,13 @@ pixel_m      = 0.05
 # pick the pixel_s based on the largest array configuration (cfg[], see below) choosen
 imsize_s     = 256
 pixel_s      = 0.8
+# slightly bigger to see edge effect
+imsize_s     = 512
+pixel_s      = 0.5
+# Toshi
+imsize_s     = 1120
+pixel_s      = 0.21
+box          = '150,150,970,970'
 
 # number of TP cycles
 nvgrp        = 4
@@ -44,8 +54,8 @@ niter        = [0,1000,10000]
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
 cfg          = [0]
-cfg          = [0,1,4]
-
+cfg          = [0,1,2]  # beam is 3.4 x 2.9
+cfg          = [0,1,4]  # beam is 2.4 x 2.0 - shouldn't it be 0.8"?
 
 # pick integration times
 times        = [2, 1]     # 2 hrs in 1 min integrations for 12m; 7m is 3x
@@ -59,7 +69,8 @@ maxuv        = None
 # Set grid to a positive arcsec grid spacing if the field needs to be covered
 #                   0 will force a single pointing
 #                   ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
-grid         = 30  
+grid         = 30
+#grid         = 25
 
 
 # OTF: if selected, tp2vis will get an OTF Jy/beam, instead of the model Jy/pixel map
@@ -71,6 +82,8 @@ SCHWAB       = 0
 
 # scaling factor of TP to match the INT
 wfactor      = 0.01
+# scaling factor to get more mosaic pointings for the edge
+mfactor      = 1.05
 
 # -- do not change parameters below this ---
 import sys
@@ -103,8 +116,8 @@ tp2vis_version()
 
 
 if grid > 0:
-    # create a mosaic of pointings 
-    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
+    # create a mosaic of pointings (used for both 12m and 7m)
+    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,factor=mfactor,outfile=ptg)
 else:
     # create a single pointing 
     qac_ptg(phasecenter,ptg)
@@ -336,6 +349,13 @@ if False:
     a7 = test+'/clean3/tpint_2.image'
     a8 = test+'/clean3/tpint_2.tweak.image'
     qac_plot_grid([a1,a3,a4,a5,a7,a8],plot=test+'/plot1.cmp.png')
+
+if True:
+    qac_fits('clean3/skymodel_3.smooth.image',         'sky_model_box1.fits',   box=box)
+    qac_fits('clean3/int_3.image.pbcor',               'sky_int_box1.fits',     box=box)
+    qac_fits('clean3/tpint_3.image.pbcor',             'sky_tpint_box1.fits',   box=box)
+    qac_fits('clean3/tpint_3.tweak.image.pbcor',       'sky_tweak_box1.fits',   box=box)
+    qac_fits('clean3/feather_3.image.pbcor',           'sky_feather_box1.fits', box=box)
 
 
 # PSD plot comparison of the images we accumulated in psd[]
