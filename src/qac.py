@@ -367,6 +367,8 @@ def qac_fits(image,outfile=None,box=None, chans=None):
         else:
             exportfits(i,fi,overwrite=True)
         print("Wrote " + fi)
+        qac_stats(fi)
+        qac_plot(fi)
     return fi
 
     #-end of qac_fits()
