@@ -70,8 +70,6 @@ maxuv        = None
 #                   0 will force a single pointing
 #                   ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
-#grid         = 25
-
 
 # OTF: if selected, tp2vis will get an OTF Jy/beam, instead of the model Jy/pixel map
 otf          = 0
@@ -183,7 +181,14 @@ qac_log("SDINT")
 if False:
     sdimage = test + '/clean0/dirtymap.image.pbcor'
     sdpsf = test + '/clean0/dirtymap.psf'
-    qac_sd_int(test+'/clean5',sdimage,intms,sdpsf, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)    
+    qac_sd_int(test+'/clean5',sdimage,intms,sdpsf, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)
+
+qac_log("MAC")
+if True:
+    sdimage = test + '/clean0/dirtymap.image.pbcor'
+    qac_mac(test+'/clean6',sdimage,intms, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)
+
+    
 
 qac_log("CLEAN with TP2VIS")
 if False:
@@ -363,6 +368,9 @@ if True:
     qac_fits('clean3/tpint_3.image.pbcor',             'export/sky_tpint_box1.fits',   box=box, stats=True)
     qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True)
     qac_fits('clean3/feather_3.image.pbcor',           'export/sky_feather_box1.fits', box=box, stats=True)
+    qac_fits('clean6/macint.image.pbcor',              'export/sky_mac_box1.fits',     box=box, stats=True)
+    
+
 
 qac_log("DONE!")
 qac_end()
