@@ -1416,8 +1416,6 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
     #-end of qac_tp()
 
-    # def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
-
 if False:
     # from sky4
     pdir = '.'
@@ -2067,11 +2065,153 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
 
     #-end of qac_tweak()        
 
-        
-def qac_mac(project, **kwargs):
+def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", phasecenter="", do_cleanup = True, **kwargs):        
     """
     Model Assisted Cleaning (Kauffmann)
+    
+    tp         tp image (Jy/beam)
+    ms         list of ms (single ms is ok too)
+    niter      a list, or single number.    The tclean in this MAC approach will use only the last listed niterxs
+
+    The method advocated by Kauffmann (see also https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa) can be summarized as follows:
+    0.   smd is sd in Jy/pixel units
+    1.   tclean vis with startmodel=sdm
+    2.   vism = mod-sdm
+    3.   feather(vism x beam, sd) -> sm (but sm needs rescale to jy/pixel)
+    4.   tclean vis with startmodel=sm
     """
+    def rescale(im1, im2):
+        """
+        take a Jy/beam map, and scale it to a Jy/pixel map
+        """
+        h0 = imstat(im1)
+        s0 = h0['sum'][0]
+        f0 = h0['flux'][0]
+        sdfac = s0/f0
+        
+        print("MAC rescale %s -> %s by %g" % (im1,im2,sdfac))
+        immath(im1,'evalexpr',im2,'IM0/%g' % sdfac)
+        imhead(im2, mode='put', hdkey='bunit', hdvalue='Jy/pixel')
+        imhead(im2, mode='del', hdkey='bmaj')
+        
+    qac_tag("mac")
+    qac_project(project)
+    print("Warning: qac_mac has only been tuned/tested for skymodel")
+
+    # 0. rescale the TP to jy/pixel
+    tpjypp = '%s/sd.jypp' % project
+    rescale(tp,tpjypp)
+    #
+
+    imsize    = QAC.imsize2(imsize)
+    cell      = ['%garcsec' % pixel]
+
+    outim1 = '%s/int1' % project
+    #
+    vis2 = ms
+    # @todo    get the weights[0] and print them
+    print("niter=" + str(niter))
+    print("kwargs: " + str(kwargs))
+    #
+    if type(niter) == type([]):
+        niters = niter
+    else:
+        niters = [niter]
+    #
+    if 'scales' in kwargs.keys():
+        deconvolver = 'multiscale'
+    else:
+        deconvolver = 'hogbom'
+        deconvolver = 'clark'
+
+    # PJT
+    do_concat = False
+    
+    print("Creating MAC imaging using tp=%s vis2=%s tp" % (tp,str(vis2)))
+    if do_concat:
+        # due to a tclean() bug, the vis2 need to be run via concat
+        # MS has a pointing table, this often complaints, but in workflow5 it actually crashes concat()
+        print("Using concat to bypass tclean bug - also using copypointing=False")
+        #concat(vis=vis2,concatvis=outms,copypointing=False,freqtol='10kHz')
+        concat(vis=vis2,concatvis=outms,copypointing=False)
+        vis2 = outms
+        
+    # tclean() mode
+    tclean_args = {}
+    tclean_args['gridder']       = 'mosaic'
+    tclean_args['deconvolver']   = deconvolver
+    tclean_args['imsize']        = imsize
+    tclean_args['cell']          = cell
+    tclean_args['stokes']        = 'I'
+    tclean_args['pbcor']         = True
+    tclean_args['phasecenter']   = phasecenter
+    # tclean_args['vptable']       = vptable
+    tclean_args['weighting']     = weighting
+    tclean_args['specmode']      = 'cube'
+    tclean_args['startmodel']    = tpjypp
+    tclean_args['cyclefactor']   = 5.0
+    #tclean_args['restart']       = True
+    for k in kwargs.keys():
+        tclean_args[k] = kwargs[k]
+
+    niter=niters[-1]
+        
+    print("TCLEAN(niter=%d)" % niter)
+    tclean_args['niter']      = niter
+    tclean(vis = vis2, imagename = outim1, **tclean_args)
+
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
+
+    if do_concat and do_cleanup:
+        print("Removing " + outms)
+        shutil.rmtree(outms)
+
+
+    # 2. get the positive interferometer-only clean components
+    #    though one could argue the negative components are to
+    #    compensate for the fact this is not a true Jy/pixel model
+    #    but a smoothed version
+    immath(['%s/int1.model' % project ,tpjypp],
+           'evalexpr',
+           '%s/int2.model' % project,
+           'iif((IM0-IM1) >= 0.00, IM0-IM1, 0.0)')
+    
+    # 3a. smooth these with the int beam
+    h1 = imhead('%s/int1.image' % project,mode='list')
+    bmaj = h1['beammajor']['value']
+    bmin = h1['beamminor']['value']
+    bpa  = h1['beampa']['value']
+    
+    imsmooth(imagename='%s/int2.model' % project,
+             outfile='%s/int2.image' % project,
+             kernel='gauss',
+             major=str(bmaj)+'arcsec',
+             minor=str(bmin)+'arcsec',
+             pa=str(bpa)+'deg')
+
+    # 3b. feather and rescale
+
+    feather(imagename='%s/int2.feather' % project,
+            lowres=tp,
+            highres='%s/int2.image' % project)
+
+    sm2 = '%s/int2.sm' % project
+    rescale('%s/int2.feather' % project, sm2)
+
+
+    # 4. run tclean again
+    tclean_args['startmodel']    = sm2
+    outim3 = '%s/macint' % project
+    tclean(vis = vis2, imagename = outim3, **tclean_args)
+
+    
+    qac_stats('%s/int1.image.pbcor' % project)
+    qac_stats('%s/int1.model' % project)
+    qac_stats('%s/int2.model' % project)
+    qac_stats('%s/int2.feather' % project)
+    qac_stats('%s/int2.sm' % project)
+    qac_stats('%s/macint.image.pbcor' % project)
+
     #-end of qac_mac()    
 
 def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="dirtymap"):
