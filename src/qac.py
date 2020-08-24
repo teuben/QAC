@@ -2065,24 +2065,55 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
 
     #-end of qac_tweak()        
 
-def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", phasecenter="", do_cleanup = True, **kwargs):        
-    """
-    Model Assisted Cleaning (Kauffmann)
+def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natural", phasecenter="", do_concat = False, do_cleanup = True, **kwargs):        
+    """Model Assisted Cleaning (Kauffmann)
     
     tp         tp image (Jy/beam)
     ms         list of ms (single ms is ok too)
-    niter      a list, or single number.    The tclean in this MAC approach will use only the last listed niterxs
+    niter      number of iter.  Can be a list too, but in that case the last one, niter[-1], is used 
 
-    The method advocated by Kauffmann (see also https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa) can be summarized as follows:
-    0.   smd is sd in Jy/pixel units
-    1.   tclean vis with startmodel=sdm
-    2.   vism = mod-sdm
-    3.   feather(vism x beam, sd) -> sm (but sm needs rescale to jy/pixel)
-    4.   tclean vis with startmodel=sm
+    The method advocated by Kauffmann
+             (see also https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa)
+    can be summarized as follows:
+    1. clean the VIS with a scaled SD startmodel
+    2. subtract the SD components from the model components found in 1)
+    3. feather the PSF convolved difference model with the SD
+    4. clean the VIS with this scaled feather
+
+    Slightly rephrasing (and realizing that the new tclean can only handle
+    Jy/pixel images) Kauffmann's steps:
+
+    1. Setup of relevant parameters. This includes, e.g., the source
+    name and the requested velocity resolution. (a pre-condition)
+
+    2. Read the visibilities into CASA (a pre-condition)
+
+    3. Prepare the single-dish data. This step assures, for example,
+    that the interferometer and single-dish data are gridded to the
+    same velocity/frequency axis. Another important non-trivial step
+    is to add a properly formatted Stokes axis to the single-dish
+    data. (a pre-condition)
+
+    4. Deconvolve the interferometer data via the "clean" algorithm,
+    using a single-dish image as a first guess for the source
+    structure on large spatial scales.
+
+    5. Determine the interferometer-based clean components in excess
+    of the model image. Convolve these components with the clean beam.
+
+    6. Combine the convolved interferometer-induced clean components
+    with the single-dish data via the "feather" algorithm to produce a
+    new source model.
+
+    7. Use this source model in another iteration with clean.  I also
+    include a few more steps that can be used to compare the final
+    result with the initial single-dish imag
+
     """
     def rescale(im1, im2):
         """
-        take a Jy/beam map, and scale it to a Jy/pixel map
+         take a Jy/beam map, and scale it to a Jy/pixel map based on
+        the beam that has to be in the header
         """
         h0 = imstat(im1)
         s0 = h0['sum'][0]
@@ -2093,6 +2124,7 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
         immath(im1,'evalexpr',im2,'IM0/%g' % sdfac)
         imhead(im2, mode='put', hdkey='bunit', hdvalue='Jy/pixel')
         imhead(im2, mode='del', hdkey='bmaj')
+        # this single last imhead will delete all 3 beam components
         
     qac_tag("mac")
     qac_project(project)
@@ -2124,9 +2156,6 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
         deconvolver = 'hogbom'
         deconvolver = 'clark'
 
-    # PJT
-    do_concat = False
-    
     print("Creating MAC imaging using tp=%s vis2=%s tp" % (tp,str(vis2)))
     if do_concat:
         # due to a tclean() bug, the vis2 need to be run via concat
