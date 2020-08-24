@@ -35,7 +35,7 @@ pixel_m      = 0.05
 # pick the pixel_s based on the largest array configuration (cfg[], see below) choosen
 imsize_s     = 256
 pixel_s      = 0.8
-# slightly bigger to see edge effect
+# slightly bigger to see edge effects
 imsize_s     = 512
 pixel_s      = 0.5
 # Toshi
@@ -57,8 +57,9 @@ cfg          = [0]
 cfg          = [0,1,2]  # beam is 3.4 x 2.9
 cfg          = [0,1,4]  # beam is 2.4 x 2.0 - shouldn't it be 0.8"?
 
-# pick integration times
-times        = [2, 1]     # 2 hrs in 1 min integrations for 12m; 7m is 3x
+# pick integration times (making sure integral number)
+times        = [2.5, 1]   # for 45 pointings - mfactor=1.0
+times        = [3.35, 1]  # for 67 pointings - mfactor=1.05
 
 # TP dish size in m; uvmax will be taken as 5/6 of this
 # @todo   don't change this
@@ -81,6 +82,7 @@ SCHWAB       = 0
 # scaling factor of TP to match the INT
 wfactor      = 0.01
 # scaling factor to get more mosaic pointings for the edge
+mfactor      = 1.0
 mfactor      = 1.05
 
 # -- do not change parameters below this ---
@@ -102,9 +104,13 @@ args['pbmask']  = 0.5
 args['deconvolver']= 'hogbom'
 
 # hardcoded
-Qhybrid = True     # this generates /clean4/
-    
+Qfeather = True
+Qhybrid  = True    # this generates /clean4/ - precursor to qac_mac()
+Qsdint   = False
+Qmac     = True    # new qac_mac
+Qexport  = True
 
+    
 # report, add Dtime
 qac_begin(pdir,False)
 qac_project(pdir)
@@ -177,17 +183,26 @@ for idx in range(1):
 
 tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
 
-qac_log("SDINT")
-if False:
+if Qsdint:
+    # not working yet
+    qac_log("SDINT")
     sdimage = test + '/clean0/dirtymap.image.pbcor'
     sdpsf = test + '/clean0/dirtymap.psf'
     qac_sd_int(test+'/clean5',sdimage,intms,sdpsf, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)
 
 qac_log("MAC")
-if True:
+if Qmac:
     sdimage = test + '/clean0/dirtymap.image.pbcor'
     qac_mac(test+'/clean6',sdimage,intms, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)
-
+    if True:
+        qac_fits(test+'/clean6/int1.image',           test+'/clean6/sky_int0.image_box1.fits',     box=box, stats=True)
+        qac_fits(test+'/clean6/int1.image.pbcor',     test+'/clean6/sky_int1.image_box1.fits',     box=box, stats=True)
+        qac_fits(test+'/clean6/int1.model',           test+'/clean6/sky_int1.model_box1.fits',     box=box, stats=True)
+        qac_fits(test+'/clean6/int2.model',           test+'/clean6/sky_int2.model_box1.fits',     box=box, stats=True)
+        qac_fits(test+'/clean6/int2.image',           test+'/clean6/sky_int2.image_box1.fits',     box=box, stats=True)
+        qac_fits(test+'/clean6/int2.feather',         test+'/clean6/sky_int2.feather_box1.fits',   box=box, stats=True)
+        qac_fits(test+'/clean6/int2.sm',              test+'/clean6/sky_int2.sm_box1.fits',        box=box, stats=True)
+        qac_fits(test+'/clean6/macint.image.pbcor',   test+'/clean6/sky_int3.image_box1.fits',     box=box, stats=True)
     
 
 qac_log("CLEAN with TP2VIS")
@@ -219,7 +234,7 @@ qac_tp_otf(test+'/clean3', startmodel, dish, template=test+'/clean3/tpint.image'
 if Qhybrid:
     qac_tp_otf(test+'/clean4', startmodel, dish,template=test+'/clean4/tpint.image')
 
-if True:
+if Qfeather:
     qac_log("FEATHER")
     # combine TP + INT using feather and ssc, for all niter's
     for idx in range(len(niter)):
@@ -273,7 +288,7 @@ qac_stats(test+'/clean3/otf.image.pbcor')
 
 
 
-if True:
+if Qfeather and Qmac and Qhybrid:
     qac_log("PLOT_GRID plot2/3")    
     a1 = test+'/clean1/dirtymap.image'       # INT
     a2 = test+'/clean1/dirtymap_2.image'
@@ -317,8 +332,6 @@ if True:
     a6.append(test+'/clean3/skymodel.smooth.image')
     
     
-    
-
     a41 = test+'/clean4/int.image'           # INT/TPINT w/ startmodel
     a42 = test+'/clean4/int_3.image'
     a43 = test+'/clean4/tpint.image'
@@ -360,10 +373,11 @@ if len(psd) > 0:
     qac_log("QAC_PSD")
     p2=qac_psd(psd, plot=pdir+'/psd.png')
 
-if True:
+if Qexport:
     os.chdir(pdir)
     qac_project('export')
     qac_fits('clean3/skymodel_3.smooth.image',         'export/sky_model_box1.fits',   box=box, stats=True)
+    qac_fits('clean3/int_3.image',                     'export/sky_int0_box1.fits',    box=box, stats=True)    
     qac_fits('clean3/int_3.image.pbcor',               'export/sky_int_box1.fits',     box=box, stats=True)
     qac_fits('clean3/tpint_3.image.pbcor',             'export/sky_tpint_box1.fits',   box=box, stats=True)
     qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True)
