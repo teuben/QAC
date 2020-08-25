@@ -27,7 +27,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 19-aug-2020")
+    print("qac: version 25-aug-2020")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -618,7 +618,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
                   or else it will be skipped
         edge      take off an edge channel from either end (not implemented)
 
-        Output should contain:   mean,rms,min,max,flux
+        Output should contain:   mean,rms,min,max,flux,[sratio]
     """
     def text2array(text):
         a = text.split()
@@ -705,6 +705,14 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         fmt1 = '%%-%ds' % (len(msg1))
         msg2 = fmt1 % ' '
         print("%s %s EXPECTED" % (msg2,test))
+    if True:
+        #if QAC.iscasa(image,'Image'):
+        if True:
+            data = QAC.casa2np(image)
+            sump = data[data > 0.0].sum()
+            sumn = data[data < 0.0].sum()
+            sratio = (sump + sumn) / (sump - sumn)
+            print("SignalRatio: %g" % sratio)
     
     #-end of qac_stats()
     
