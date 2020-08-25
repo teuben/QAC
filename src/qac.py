@@ -27,7 +27,7 @@ stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 19-aug-2020")
+    print("qac: version 25-aug-2020")
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -602,7 +602,7 @@ def qac_stats_grid(images, **kwargs):
         qac_stats(image, **kwargs)
     
     
-def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False):
+def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False, sratio=False):
     """ summary of some stats in an image or measurement set
         in the latter case the flux is always reported as 0
 
@@ -617,6 +617,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         pbcut     only used for images, and a .pb should be parallel to the .image file
                   or else it will be skipped
         edge      take off an edge channel from either end (not implemented)
+        sratio    also produce the Signal Ratio, defined as (FluxP-Fluxn)/(FluxP+FluxN)
 
         Output should contain:   mean,rms,min,max,flux
     """
@@ -972,6 +973,12 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
         os.system('rm -rf %s' % ms2)
 
     # bootstrap noise calculator (will require another call to qac_noise() to computer the correct value
+    # typical usage:
+    # rms = 0.002                                # requested noise 
+    # ms1 = qac_vla(pdir,model, noise=-rms)      # noise<0 triggers it to compute the rms
+    # sn0 = qac_noise(noise,pdir+'/noise', ms1)  # get scaling factor from rms in ms1
+    # ms2 = qac_vla(pdir,model, noise=sn0)       # MS that with correct "rms" in Jy/beam
+
     if noise < 0.0:
         simplenoise = '1Jy'
         print("QAC_VLA: bootstrapping with simplenoise='1Jy'")
@@ -1281,7 +1288,7 @@ def qac_tpdish(name, size=None):
 def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, winpix=0, **line):    
            
     """
-      Simple frontend to call tp2vis() 
+      QAC Frontend to call tp2vis() 
     
     
       _required_keywords:
@@ -2002,7 +2009,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natu
     print("Creating TP+INT imaging using vis2=%s" % str(vis2))
     if do_concat:
         # first report weight 
-        print("Weights in %s" % str(vis2))
+        print("do_concat=True: weights in %s" % str(vis2))
         for v in vis2:
             tp2viswt(v)
         # due to a tclean() bug, the vis2 need to be run via concat
