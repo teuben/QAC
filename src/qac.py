@@ -15,6 +15,10 @@ from utils import radialProfile
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as pl
+try:
+    from astropy.io import fits
+except:
+    import pyfits as fits
 
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
 # one should definitely avoid using 2 letter variables, as CASA uses these a lot
@@ -700,20 +704,25 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
             else:
                 test_out = "FAILED regression delta=%g > %g" % (delta.max(),eps)
                 report = True
+    if sratio:
+        if QAC.iscasa(image,'Image'):
+            data = QAC.casa2np(image)
+        else:
+            data = QAC.fits2np(image)
+        sump = data[data > 0.0].sum()
+        sumn = data[data < 0.0].sum()
+        sratio = (sump + sumn) / (sump - sumn)
+        # print("SignalRatio: %g" % sratio)
+        srat = str(sratio)
+    else:
+        srat = ""
+            
     msg1 = "QAC_STATS: %s" % (image)
-    print("%s %s %s" % (msg1,test_new,test_out))
+    print("%s %s %s %s" % (msg1,test_new,srat,test_out))
     if report:
         fmt1 = '%%-%ds' % (len(msg1))
         msg2 = fmt1 % ' '
         print("%s %s EXPECTED" % (msg2,test))
-    if True:
-        #if QAC.iscasa(image,'Image'):
-        if True:
-            data = QAC.casa2np(image)
-            sump = data[data > 0.0].sum()
-            sumn = data[data < 0.0].sum()
-            sratio = (sump + sumn) / (sump - sumn)
-            print("SignalRatio: %g" % sratio)
     
     #-end of qac_stats()
     
@@ -3563,12 +3572,14 @@ class QAC(object):
             return isdir
         if not isdir:
             return False
+        
         # ms + '/table.info' is an ascii file , first line should be
         # Type = Image
         # Type = Measurement Set
+        ftype = open(filename + '/table.info','r').readlines()[0].strip().split()[-1]
+        # print("casatype(%s)=%s" % (filename,ftype))
 
-        # @todo for now
-        return False
+        return ftype == casatype
 
     @staticmethod    
     def casa2np(image, box=None, z=None):
@@ -3588,6 +3599,24 @@ class QAC(object):
             d1 = tb.getcol("map").squeeze()            
             tb.close()
             return np.flipud(np.rot90(d1))
+        return np.flipud(np.rot90(image))
+
+    @staticmethod    
+    def fits2np(image, box=None, z=None):
+        """
+        convert a casa[x][y] to a numpy[y][x] such that fits writers
+        will produce a fits file that looks like an RA-DEC image
+        and also native matplotlib routines, such that imshow(origin='lower')
+        will give the correct orientation.
+
+        if image is a string, it's assumed to be the casa image name
+
+        box    pixel list of [xmin,ymin, xmax, ymax]
+        z      which plane to pick in case it's a cube (not implemented)
+        """
+        if type(image)==type(""):
+            hdu = fits.open(image)
+            return hdu[0].data
         return np.flipud(np.rot90(image))
 
     @staticmethod    
