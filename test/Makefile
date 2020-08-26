@@ -328,16 +328,13 @@ sky0d:
 	$(CASA) sky0.py test='"sky0d"' wfactor=0.1 > sky0d.log 2>&1
 	grep QAC_STATS sky0d.log
 
-<<<<<<< HEAD
 sky0e:
 	$(CASA) sky0.py test='"sky0e"' wfactor=0.001 > sky0e.log 2>&1
 	grep QAC_STATS sky0e.log
 
 
 
-=======
 #     67 field, cfg=0,1,4;  takes about 40-50 mins
->>>>>>> d78d03f910344d76d38f7e1a586535fb9d5390db
 sky4:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
@@ -347,13 +344,8 @@ sky4a:
 	grep QAC_STATS $@.log
 
 sky4b:
-<<<<<<< HEAD
-	$(CASA) sky4.py pdir='"sky4b"' model='"skymodel-b.fits"' > sky4b.log 2>&1
-	grep QAC_STATS sky4b.log
-=======
 	$(CASA) sky4.py pdir='"$@"' wfactor=0.1 > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
->>>>>>> d78d03f910344d76d38f7e1a586535fb9d5390db
 
 sky4c:
 	$(CASA) sky4.py pdir='"$@"' wfactor=0.01 > $@.log 2>&1; cp sky4.py $@.log $@
@@ -363,8 +355,16 @@ sky4d:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 
-	$(CASA) sky4.py pdir='"sky4d"' niter=1000 > sky4d.log 2>&1
+sky4d1:
+	$(CASA) sky4.py pdir='"sky4d"' wfactor=0.001 > sky4d.log 2>&1
 	grep QAC_STATS sky4d.log
+
+sky4e1:
+	$(CASA) sky4.py pdir='"sky4e"' mfactor=1.1 grid=20 > sky4e.log 2>&1
+	grep QAC_STATS sky4e.log
+
+
+
 
 # qac_mac tests
 sky40:
@@ -403,15 +403,6 @@ sky5:
 sky6:
 	$(CASA) sky6.py pdir='"$@"' > $@.log  afactor=3  2>&1; cp sky6.py $@.log $@
 	grep QAC_STATS $@.log
-
-sky4d:
-	$(CASA) sky4.py pdir='"sky4d"' wfactor=0.001 > sky4d.log 2>&1
-	grep QAC_STATS sky4d.log
-
-sky4e:
-	$(CASA) sky4.py pdir='"sky4e"' mfactor=1.1 grid=20 > sky4e.log 2>&1
-	grep QAC_STATS sky4e.log
-
 
 # this will show that Amp(uv=0,0) is indeed approaches the full flux, 113100.572 Jy
 sky2_000:
