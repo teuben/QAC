@@ -606,7 +606,7 @@ def qac_stats_grid(images, **kwargs):
         qac_stats(image, **kwargs)
     
     
-def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False, sratio=False):
+def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False, sratio=True):
     """ summary of some stats in an image or measurement set
         in the latter case the flux is always reported as 0
 
@@ -621,7 +621,9 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         pbcut     only used for images, and a .pb should be parallel to the .image file
                   or else it will be skipped
         edge      take off an edge channel from either end (not implemented)
-        sratio    also produce the Signal Ratio, defined as (FluxP-Fluxn)/(FluxP+FluxN)
+        sratio    also produce the Signal Ratio, defined as s=(FluxP-FluxN)/(FluxP+FluxN)
+                  Flux = FluxP-FluxN  and FluxP/FluxN = (1-s)/(1+s)
+                  FluxP = Flux * (1+s)/(2s)    FluxN = Flux * (1-s)/(2s)    
 
         Output should contain:   mean,rms,min,max,flux,[sratio]
     """
