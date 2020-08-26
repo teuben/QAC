@@ -106,11 +106,13 @@ if len(cfg) > 0:
     qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False)    
     #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
     #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True)
+    qac_tweak(test+'/clean3','tpint',niter)
     for idx in range(len(niter)):
-        im1 = test+'/clean3/int%s.image'         % QAC.label(idx)
-        im2 = test+'/clean3/int%s.image.pbcor'   % QAC.label(idx)
-        im3 = test+'/clean3/tpint%s.image'       % QAC.label(idx)
-        im4 = test+'/clean3/tpint%s.image.pbcor' % QAC.label(idx)
+        im1 = test+'/clean3/int%s.image'               % QAC.label(idx)
+        im2 = test+'/clean3/int%s.image.pbcor'         % QAC.label(idx)
+        im3 = test+'/clean3/tpint%s.image'             % QAC.label(idx)
+        im4 = test+'/clean3/tpint%s.image.pbcor'       % QAC.label(idx)
+        im5 = test+'/clean3/tpint%s.tweak.image.pbcor' % QAC.label(idx)
         if vrange == None:
             qac_plot(im1,mode=1)      # casa based plot w/ colorbar
             qac_plot(im3,mode=1)      # casa based plot w/ colorbar
@@ -119,7 +121,10 @@ if len(cfg) > 0:
             qac_plot(im3,mode=2,range=vrange)
         qac_stats(im2)            # noise flat
         qac_stats(im4)            # noise flat
+        #
         qac_fits(im4,box=box,stats=True)
+        if QAC.iscasa(im5):
+            qac_fits(im5,box=box,stats=True)
 
     qac_stats(model)
 else:
