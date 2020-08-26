@@ -89,7 +89,7 @@ for idx in range(len(niter)):
     im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
     qac_plot(im1,mode=1)      # casa based plot w/ colorbar
     qac_stats(im2)            # noise flat
-    qac_fitst(im2,box=box,stats=True)
+    qac_fits(im2,box=box,stats=True)
 
 if len(cfg) > 0:
     # create an MS based on a model and antenna configuration for ACA/ALMA
