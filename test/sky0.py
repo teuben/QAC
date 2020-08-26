@@ -38,8 +38,7 @@ cfg          = [1]
 cfg          = [0,1,4]
 
 # integration times
-times        = [3.35, 1]     # 67 pointings, mfactor=1.05
-times        = [2.5, 1]      # 45 pointings, mfactor=1
+times        = [2.25, 1]      # 45 pointings, mfactor=1
 
 # single pointing?  Set grid to a positive arcsec grid spacing if the field needs to be covered
 #                  ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
@@ -96,7 +95,11 @@ if len(cfg) > 0:
     qac_log("ALMA 7m/12m")
     ms1={}
     for c in cfg:
-        ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=5,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+        if c==0:
+            # 3 times integration time in 7m array
+            ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[3*times[0],times[1]])
+        else:
+            ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
     intms = ms1.values()
 
     tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
