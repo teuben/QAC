@@ -37,8 +37,9 @@ DATA1   = M100_TP_CO_cube.bl.image
 DATA2   = M100_aver_7.ms
 DATA3   = M100_aver_12.ms
 DATA4   = skymodel.fits
+DATA5   = skymodel-b.fits
 
-data:	data1 data2 data3 data4
+data:	data1 data2 data3 data4 data4
 
 data1:	$(DATA1)
 
@@ -48,17 +49,22 @@ data3:  $(DATA3)
 
 data4:  $(DATA4)
 
+data5:  $(DATA5)
+
 $(DATA1):
 	ln -s ../data/$@
 $(DATA2):
 	ln -s ../data/$@
 $(DATA3):
 	ln -s ../data/$@
-$(DATA4):P
+$(DATA4):
+	ln -s ../data/$@
+$(DATA5):
 	ln -s ../data/$@
 
 # a few benchmarks
 
+#       your CASA calling overhead
 zero:
 	$(CASA) zero.py > zero.log 2>&1
 	tail -4 zero.log
@@ -97,7 +103,7 @@ slides:	$(SLIDES)
 
 # 1065.29user 75.13system 6:41.29elapsed 284%CPU
 sky1:
-	$(CASA) sky1.py > sky1.log 2>&1
+	$(CASA) sky1.py pdir='"sky1"' > sky1.log 2>&1
 	cp sky1.py sky1.log sky1
 
 # 2626.11user 178.04system 15:03.45elapsed 310%CPU
@@ -309,6 +315,10 @@ sky0a:
 	$(CASA) sky0.py test='"sky0a"' model='"skymodel-a.fits"' > sky0a.log 2>&1
 	grep QAC_STATS sky0a.log
 
+sky0b:
+	$(CASA) sky0.py test='"sky0b"' model='"skymodel-b.fits"' > sky0b.log 2>&1
+	grep QAC_STATS sky0b.log
+
 sky0c:
 	$(CASA) sky0.py test='"sky0c"' niter='[0,1000,3000,10000]'  > sky0c.log 2>&1
 	grep QAC_STATS sky0c.log
@@ -318,27 +328,81 @@ sky0d:
 	$(CASA) sky0.py test='"sky0d"' wfactor=0.1 > sky0d.log 2>&1
 	grep QAC_STATS sky0d.log
 
+<<<<<<< HEAD
 sky0e:
 	$(CASA) sky0.py test='"sky0e"' wfactor=0.001 > sky0e.log 2>&1
 	grep QAC_STATS sky0e.log
 
 
 
+=======
+#     67 field, cfg=0,1,4;  takes about 40-50 mins
+>>>>>>> d78d03f910344d76d38f7e1a586535fb9d5390db
 sky4:
-	$(CASA) sky4.py pdir='"sky4"' > sky4.log 2>&1
-	grep QAC_STATS sky4.log
+	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 
 sky4a:
-	$(CASA) sky4.py pdir='"sky4a"' wfactor=1 > sky4a.log 2>&1
-	grep QAC_STATS sky4a.log
+	$(CASA) sky4.py pdir='"$@"' wfactor=1 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 
 sky4b:
+<<<<<<< HEAD
 	$(CASA) sky4.py pdir='"sky4b"' model='"skymodel-b.fits"' > sky4b.log 2>&1
 	grep QAC_STATS sky4b.log
+=======
+	$(CASA) sky4.py pdir='"$@"' wfactor=0.1 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+>>>>>>> d78d03f910344d76d38f7e1a586535fb9d5390db
 
 sky4c:
-	$(CASA) sky4.py pdir='"sky4c"' wfactor=0.01 > sky4c.log 2>&1
-	grep QAC_STATS sky4c.log
+	$(CASA) sky4.py pdir='"$@"' wfactor=0.01 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+
+sky4d:
+	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+
+	$(CASA) sky4.py pdir='"sky4d"' niter=1000 > sky4d.log 2>&1
+	grep QAC_STATS sky4d.log
+
+# qac_mac tests
+sky40:
+	$(CASA) sky40.py pdir='"sky40"' niter=1000 otf=1 > sky40.log 2>&1
+	grep QAC_STATS sky40.log
+
+sky40a:
+	$(CASA) sky40.py pdir='"sky40a"' niter=0 > sky40a.log 2>&1
+	grep QAC_STATS sky40a.log
+
+sky40b:
+	$(CASA) sky40.py pdir='"sky40b"' niter=1000 > sky40b.log 2>&1
+	grep QAC_STATS sky40b.log
+
+sky40c:
+	$(CASA) sky40.py pdir='"sky40c"' niter=3000 > sky40c.log 2>&1
+	grep QAC_STATS sky40c.log
+
+sky40d:
+	$(CASA) sky40.py pdir='"sky40d"' niter=10000 > sky40d.log 2>&1
+	grep QAC_STATS sky40d.log
+
+sky40e:
+	$(CASA) sky40.py pdir='"sky40e"' niter=30000 > sky40e.log 2>&1
+	grep QAC_STATS sky40e.log
+
+sky40f:
+	$(CASA) sky40.py pdir='"sky40f"' niter=100000 > sky40f.log 2>&1
+	grep QAC_STATS sky40f.log
+
+
+sky5:
+	$(CASA) sky5.py pdir='"sky5"' > sky5.log 2>&1
+	grep QAC_STATS sky5.log
+
+sky6:
+	$(CASA) sky6.py pdir='"$@"' > $@.log  afactor=3  2>&1; cp sky6.py $@.log $@
+	grep QAC_STATS $@.log
 
 sky4d:
 	$(CASA) sky4.py pdir='"sky4d"' wfactor=0.001 > sky4d.log 2>&1
@@ -551,34 +615,38 @@ slide15:
 #   slide16b:  45                                       73.0   80.7
 #   slide16c: 203 pointings                             60.1   -
 slide16:
-	#	$(CASA) sky3.py pdir='"slide16a"' grid=30 niter='[0,100]' > slide16a.log  2>&1
-	#	$(CASA) sky3.py pdir='"slide16b"' grid=30 pixel_s=1.0 niter='[0,100]' > slide16b.log  2>&1
-	#	$(CASA) sky3.py pdir='"slide16c"' grid=30 pixel_m=0.1 pixel_s=1.6 niter='[0,100]' > slide16c.log  2>&1
-	#	$(CASA) sky3.py pdir='"slide16d"' grid=30 pixel_m=0.1 pixel_s=1.6 niter='[0,100,200,400,800,1600,3200,6400,128000]' > slide16d.log  2>&1
+#	$(CASA) sky3.py pdir='"slide16a"' grid=30 niter='[0,100]' > slide16a.log  2>&1
+#	$(CASA) sky3.py pdir='"slide16b"' grid=30 pixel_s=1.0 niter='[0,100]' > slide16b.log  2>&1
+#	$(CASA) sky3.py pdir='"slide16c"' grid=30 pixel_m=0.1 pixel_s=1.6 niter='[0,100]' > slide16c.log  2>&1
+#	$(CASA) sky3.py pdir='"slide16d"' grid=30 pixel_m=0.1 pixel_s=1.6 niter='[0,100,200,400,800,1600,3200,6400,128000]' > slide16d.log  2>&1
 	$(CASA) sky3.py pdir='"slide16e"' grid=30 pixel_m=0.1 pixel_s=1.6 VP=1 niter='[0,100,200,400,800,1600,3200,6400,128000]' > slide16e.log  2>&1
 
 #  experiment with cycleniter to get better flux recovery
 slide17:
-	#$(CASA) sky2.py pdir='"slide17a"' grid=30 niter='[0,100,1000]' cycleniter=10 > slide17a.log  2>&1
+#$(CASA) sky2.py pdir='"slide17a"' grid=30 niter='[0,100,1000]' cycleniter=10 > slide17a.log  2>&1
 	$(CASA) sky2.py pdir='"slide17b"' grid=30 niter='[0,100,1000,3000]' cycleniter=100 > slide17b.log  2>&1
-	#$(CASA) sky2.py pdir='"slide17a0"' grid=30 niter='[0,100,1000]' > slide17a0.log  2>&1
-	#$(CASA) sky2.py pdir='"slide17c"' grid=30 niter='[0,100,1000,3000,10000]' cycleniter=10 > slide17c.log  2>&1
+#$(CASA) sky2.py pdir='"slide17a0"' grid=30 niter='[0,100,1000]' > slide17a0.log  2>&1
+#$(CASA) sky2.py pdir='"slide17c"' grid=30 niter='[0,100,1000,3000,10000]' cycleniter=10 > slide17c.log  2>&1
 
 slide18:
-	#$(CASA) sky2.py pdir='"slide18b"' VP=0 grid=0  dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18b.log  2>&1
+#$(CASA) sky2.py pdir='"slide18b"' VP=0 grid=0  dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18b.log  2>&1
 	$(CASA) sky2.py pdir='"slide18b"' VP=1 grid=0  dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18b.log  2>&1
-	#$(CASA) sky2.py pdir='"slide18a"' VP=1 grid=15 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18a.log  2>&1
-	#$(CASA) sky2.py pdir='"slide18c"' VP=1 grid=0 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18c.log  2>&1
+#$(CASA) sky2.py pdir='"slide18a"' VP=1 grid=15 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18a.log  2>&1
+#$(CASA) sky2.py pdir='"slide18c"' VP=1 grid=0 dish=24 niter='[0,100,300,1000,3000]' cycleniter=100 > slide18c.log  2>&1
 
 # how does the PSF depend on the UV distribution and why is single pointing vs. mosaic so different?
 # minuv only works with VP=0
+# real    21m33.325s    user    58m56.436s    sys     1m42.533s
 slide19:
 	$(CASA) sky2.py pdir='"slide19a"' grid=0  minuv=0 niter='[0]' > slide19a.log  2>&1
 	$(CASA) sky2.py pdir='"slide19b"' grid=0  minuv=1 niter='[0]' > slide19b.log  2>&1
 	$(CASA) sky2.py pdir='"slide19c"' grid=0  minuv=2 niter='[0]' > slide19c.log  2>&1
-	$(CASA) sky2.py pdir='"slide19d"' grid=30 minuv=0 niter='[0]' > slide19d.log  2>&1
-	$(CASA) sky2.py pdir='"slide19e"' grid=30 minuv=1 niter='[0]' > slide19e.log  2>&1
-	$(CASA) sky2.py pdir='"slide19f"' grid=30 minuv=2 niter='[0]' > slide19f.log  2>&1
+	$(CASA) sky2.py pdir='"slide19d"' grid=0  minuv=3 niter='[0]' > slide19d.log  2>&1
+	$(CASA) sky2.py pdir='"slide19e"' grid=0  minuv=4 niter='[0]' > slide19e.log  2>&1
+	$(CASA) sky2.py pdir='"slide19f"' grid=0  minuv=5 niter='[0]' > slide19f.log  2>&1
+#	$(CASA) sky2.py pdir='"slide19d"' grid=30 minuv=0 niter='[0]' > slide19d.log  2>&1
+#	$(CASA) sky2.py pdir='"slide19e"' grid=30 minuv=1 niter='[0]' > slide19e.log  2>&1
+#	$(CASA) sky2.py pdir='"slide19f"' grid=30 minuv=2 niter='[0]' > slide19f.log  2>&1
 
 # how does the PSF depens on maxuv ?  the default is 5/6dish
 slide20:
@@ -600,7 +668,7 @@ slide20-1:
 	$(CASA) sky2.py pdir='"slide20m"' grid=100 niter='[0]' > slide20m.log  2>&1
 
 # shape of single pointing beam;
-#    - does it get rounding as nvgrp goes up
+#    - does it get rounder as nvgrp goes up
 #    - do the sidelobes go down
 slide21:
 	$(CASA) sky2.py pdir='"slide21a"' grid=0 niter='[0]' nvgrp=4             > slide21a.log  2>&1
@@ -653,8 +721,23 @@ slide27:
 
 # hacked sky2.py with ALMA12 = 25m
 slide27-1:
-	#$(CASA) sky2.py pdir='"slide27x"' VP=1 grid=15  dish=25 niter='[0]'  > slide27x.log  2>&1
+#$(CASA) sky2.py pdir='"slide27x"' VP=1 grid=15  dish=25 niter='[0]'  > slide27x.log  2>&1
 	$(CASA) sky2.py pdir='"slide27x"' VP=1 grid=30  dish=15 niter='[0]'  > slide27x.log  2>&1
+
+
+# seed is not a parameter, so need to edit tp2vis.py and re-run and comment out
+slide28:
+	@echo Manual tp2vis.py editing
+#	$(CASA) sky2.py pdir='"slide28a"' grid=0 niter='[0]' nvgrp=4 seed=1    > slide28a.log  2>&1
+#	$(CASA) sky2.py pdir='"slide28b"' grid=0 niter='[0]' nvgrp=4 seed=2    > slide28b.log  2>&1
+#	$(CASA) sky2.py pdir='"slide28c"' grid=0 niter='[0]' nvgrp=4 seed=3    > slide28c.log  2>&1
+	$(CASA) sky2.py pdir='"slide28d"' grid=0 niter='[0]' nvgrp=4 seed=4    > slide28d.log  2>&1
+
+# flux as function of weight for skymodel:
+slide29:
+	$(CASA) sky0.py pdir='"slide29a"' niter='[0,1000,3000,10000]'  wfactor=0.001   > slide29a.log  2>&1
+	$(CASA) sky0.py pdir='"slide29b"' niter='[0,1000,3000,10000]'  wfactor=0.01    > slide29b.log  2>&1
+	$(CASA) sky0.py pdir='"slide29c"' niter='[0,1000,3000,10000]'  wfactor=0.1     > slide29c.log  2>&1
 
 # need to test a pure gauss beam, since tp2vis has gauss beam
 
@@ -692,3 +775,4 @@ point7:
 point8:
 	$(CASA) sky2.py pdir='"point8a"' model='"pointmodel.fits"' grid=0  niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cycleniter=1 > point8a.log 2>&1
 	$(CASA) sky2.py pdir='"point8b"' model='"pointmodel.fits"' grid=30 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cycleniter=1 > point8b.log 2>&1
+
