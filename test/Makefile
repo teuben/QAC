@@ -725,13 +725,13 @@ point1:
 
 
 point2:
-	# at niter=100 start dotting the beam
+# at niter=100 start dotting the beam
 	$(CASA) sky2.py pdir='"point2"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,10,20,30,100,200,300,1000]' VP=1 > point2.log 2>&1
-	#$(CASA) sky2.py pdir='"point2"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' > point2.log 2>&1
+#$(CASA) sky2.py pdir='"point2"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' > point2.log 2>&1
 	cp sky2.py point2.log point2
 
 point3:
-	#$(CASA) sky1.py pdir='"point3"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1]' > point3.log 2>&1
+#$(CASA) sky1.py pdir='"point3"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1]' > point3.log 2>&1
 	$(CASA) sky1.py pdir='"point3"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[0,1]' wfactor=1 > point3.log 2>&1
 
 point4:
