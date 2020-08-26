@@ -527,7 +527,7 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
             #return
         else:
             print("No output file given, expect things to fail now")
-    print("PJT cwa",cwa)
+    #print("PJT cwa",cwa)
 
     if 1 in cwa or 11 in cwa:
         #  1: ensure we have a RA-DEC-POL-FREQ cube
@@ -1304,7 +1304,7 @@ def qac_tpdish(name, size=None):
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print("QAC_DISH: %s %g %g -> %g %g" % (name,old_size, old_fwhm, size, old_fwhm/r))
 
-def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, winpix=0, **line):    
+def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=None, winpix=0, **line):    
            
     """
       QAC Frontend to call tp2vis() 
@@ -1339,6 +1339,8 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
                      @todo   there is a flux difference between fix=0 and fix=1 in dirtymap
       deconv         Use the deconvolved map as model for the simulator
                      Within CASA you can use use deconvolve() to construct a Jy/pixel map.
+                     The default is "None", which will force this to try out the map
+                     based on units being Jy/beam or Jy/pixel
 
       winpix         Tukey window [0]
 
@@ -1385,6 +1387,17 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
         print("No PTG specified, no auto-regioning yet")
         return None
 
+    if deconv == None:
+        bunit = h0['bunit']
+        if bunit == 'Jy/beam':
+            deconv = True
+        elif bunit == 'Jy/pixel':
+            deconv = False
+        else:
+            print("WARNING: input image has units not well understood: %s" % bunit)
+            deconv = False
+        print("Using deconv=%s for tp2vis because of bunit=%s" % (str(deconv),bunit))
+        
     tp2vis(imagename2,outfile,ptg, maxuv=maxuv, rms=rms, nvgrp=nvgrp, deconv=deconv, winpix=winpix)
 
     vptable = outfile + '/TP2VISVP'    
@@ -1440,7 +1453,7 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
     return outfile
 
-    #-end of qac_tp()
+    #-end of qac_tp_vis()
 
 if False:
     # from sky4
@@ -3442,7 +3455,7 @@ def qac_argv(sysargv):
          exec(arg)
 
     """
-    print("PJT: ",sysargv)
+    #print("PJT: ",sysargv)
     return sysargv[3:]
 
 def qac_initkeys(keys, argv=[]):
