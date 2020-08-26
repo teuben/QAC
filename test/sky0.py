@@ -22,13 +22,17 @@ pixel_m      = 0.05
 imsize_s     = 256
 pixel_s      = 0.8
 
-# pick a few niter values for tclean to check flux convergence 
-niter        = [0]
+imsize_s     = 1120
+pixel_s      = 0.21
+box          = '150,150,970,970'
+
+# pick a few niter values for tclean to check flux convergence and be able to tweak
+niter        = [0,1000,3000,10000]
 
 # pick which ALMA configurations you want (0=7m ACA , 1,2,3...=12m ALMA)
 cfg          = [0,1]
 cfg          = [1]
-cfg          = [0,1]
+cfg          = [0,1,4]
 
 # integration times
 times        = [2, 1]     # 2 hrs in 1 min integrations
@@ -94,7 +98,9 @@ if len(cfg) > 0:
 
     # JD clean for tp2vis
     qac_log("CLEAN with TP2VIS")
-    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
+    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False)    
+    #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
+    #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True)
     for idx in range(len(niter)):
         im1 = test+'/clean3/int%s.image'         % QAC.label(idx)
         im2 = test+'/clean3/int%s.image.pbcor'   % QAC.label(idx)
@@ -108,6 +114,7 @@ if len(cfg) > 0:
             qac_plot(im3,mode=2,range=vrange)
         qac_stats(im2)            # noise flat
         qac_stats(im4)            # noise flat
+        qac_fits(im4,box=box,stats=True)
 
     qac_stats(model)
 else:
@@ -116,3 +123,25 @@ else:
 qac_log("DONE!")
 qac_end()
 
+
+"""
+ Wt  Flux(kJy)
+0       -704      0.199  
+0.001     11.7    0.208
+0.005     61.0    0.247
+0.01     121.5    0.296
+0.03     352.9    0.488
+0.04     462.4
+0.06     669.6    0.780
+0.08     862.3    0.987
+0.2     1761.4    2.15
+0.8     2235      5.9
+1       2176
+2       1762      9.5
+10       634.6   14.0
+100      129.0   15.7
+1000      69.5   15.9
+10000     63.5
+100000    62.5
+
+"""
