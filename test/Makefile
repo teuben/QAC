@@ -24,7 +24,7 @@ TESTS = bench bench0 bench1 \
 #  example on Mac:
 CASA  = time /Applications/CASA.app/Contents/MacOS/casa --nogui -c 
 #  example on Linux: (assuming it's in your $PATH - the portable solution)
-CASA  = casa-config --version; time casa --nogui -c
+CASA  = casa-config --version; /usr/bin/time casa --nogui -c
 
 
 help:
@@ -331,6 +331,24 @@ sky0d:
 sky0e:
 	$(CASA) sky0.py test='"sky0e"' wfactor=0.001 > sky0e.log 2>&1
 	grep QAC_STATS sky0e.log
+
+# DC2019: show that mosaic=0,1 make a difference on a single pointing (grid=0)
+#         the pbcor map seems to show that the PB model is not good at the edges
+# Takes about 20"
+sky0f0:
+	$(CASA) sky0.py pdir='"$@"' niter='[0]' grid=0 cfg='[]' mosaic=0 model='"skymodel-b.fits"'  > $@.log 2>&1; cp sky0.py $@.log $@
+	grep QAC_STATS $@.log
+	@echo This flux should be correct
+
+sky0f1:
+	$(CASA) sky0.py pdir='"$@"' niter='[0]' grid=0 cfg='[]' mosaic=1 model='"skymodel-b.fits"'  > $@.log 2>&1; cp sky0.py $@.log $@
+	grep QAC_STATS $@.log
+	@echo This flux should be wrong
+
+sky0f2:
+	$(CASA) sky0.py pdir='"$@"' niter='[0]' grid=0 cfg='[]' mosaic=0 model='"gmc_120L.sd.image.fits"'  > $@.log 2>&1; cp sky0.py $@.log $@
+	grep QAC_STATS $@.log
+	@echo This is SD made by simobserve
 
 
 

@@ -1,5 +1,7 @@
 # -*- python -*-
 #
+#  sky0:     skymodel with optional ACA and ALMA cfg's added
+#
 #  compare fluxes with or without the mosaicing bug in casa 5.1
 #  derived from a simplified sky1
 #
@@ -7,9 +9,9 @@
 #  and once not set at all. VI1 will cause CASA to to not use new features.
 #
 
-test         = 'sky0'                               # name of directory within which everything will reside
-model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model to be on the sky
+pdir         = 'sky0'                               # name of directory within which everything will reside
+model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
+phasecenter  = 'J2000 180.0deg -35.0deg'            # where we want this model to be on the sky
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
@@ -22,6 +24,7 @@ pixel_m      = 0.05
 imsize_s     = 256
 pixel_s      = 0.8
 
+# dc2019 assessment 
 imsize_s     = 1120
 pixel_s      = 0.21
 box          = '150,150,970,970'
@@ -35,15 +38,15 @@ cfg          = [1]
 cfg          = [0,1,4]
 
 # integration times
-times        = [2, 1]     # 2 hrs in 1 min integrations
+times        = [3.35, 1]     # 67 pointings, mfactor=1.05
+times        = [2.5, 1]      # 45 pointings, mfactor=1
 
 # single pointing?  Set grid to a positive arcsec grid spacing if the field needs to be covered
 #                  ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
 
-# mosaic mode?
+# mosaic mode?   for grid=0 should use mosaic=0, for grid > 0, needs mosaic=1
 mosaic       = 1
-mosaic       = 0
 
 # plotting [min:max] if override autoscaling
 vrange       = None
@@ -57,7 +60,8 @@ for arg in qac_argv(sys.argv):
     exec(arg)
 
 # derived parameters
-ptg = test + '.ptg'              # pointing mosaic for the ptg
+test = pdir
+ptg  = test + '.ptg'              # pointing mosaic for the ptg
 
 # report, add Dtime
 qac_begin(test,False)
@@ -70,7 +74,7 @@ qac_project(test)
 p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
 qac_log("TP2VIS:")
-tpms = qac_tp_vis(test,model,ptg,phasecenter=phasecenter,deconv=False,fix=0)
+tpms = qac_tp_vis(test,model,ptg,phasecenter=phasecenter,fix=0)
 
 qac_log("CLEAN1:")
 tp2viswt(tpms,wfactor,'multiply')
@@ -85,6 +89,7 @@ for idx in range(len(niter)):
     im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
     qac_plot(im1,mode=1)      # casa based plot w/ colorbar
     qac_stats(im2)            # noise flat
+    qac_fitst(im2,box=box,stats=True)
 
 if len(cfg) > 0:
     # create an MS based on a model and antenna configuration for ACA/ALMA
