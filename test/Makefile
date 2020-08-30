@@ -381,6 +381,9 @@ sky4e1:
 	$(CASA) sky4.py pdir='"sky4e"' mfactor=1.1 grid=20 > sky4e.log 2>&1
 	grep QAC_STATS sky4e.log
 
+sky4f:
+	$(CASA) sky4.py pdir='"$@"' cfg='[0,1,2,3,4,5]'  > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 
 
 
@@ -413,6 +416,9 @@ sky40f:
 	$(CASA) sky40.py pdir='"sky40f"' niter=100000 > sky40f.log 2>&1
 	grep QAC_STATS sky40f.log
 
+issue12:
+	$(CASA) issue12.py pdir='"issue12"' > issue12.log 2>&1
+	grep QAC_STATS issue12.log | grep mac
 
 sky5:
 	$(CASA) sky5.py pdir='"sky5"' > sky5.log 2>&1
@@ -451,7 +457,7 @@ pjt:
 	$(CASA) sky2.py pdir='"sky2_uvmin1f"' minuv=1 > sky2_uvmin1f.log grid=22 dish=18 maxuv=18 niter='range(0,5000,500)' 2>&1
 
 # expose the mosaicing flux bug in CASA 5.1 (April 2018) - gridder='standard'  is not affected
-cas_11271: cas_11271a cas_11271b
+cas_11271: cas_11271a cas_11271b cas_11271c
 	@grep ^CASA cas_11271a.log
 	@echo vi1 results:
 	grep QAC_STATS cas_11271a.log
@@ -465,6 +471,10 @@ cas_11271a:
 cas_11271b:
 	$(CASA)       cas_11271.py pdir='"cas_11271b"' > cas_11271b.log 2>&1
 	cp cas_11271.py cas_11271b
+
+cas_11271c:
+	$(CASA)       cas_11271.py pdir='"cas_11271c"' do_concat=False  > cas_11271c.log 2>&1
+	cp cas_11271.py cas_11271c
 
 # ngVLA examples
 
@@ -742,7 +752,8 @@ slide28:
 #	$(CASA) sky2.py pdir='"slide28c"' grid=0 niter='[0]' nvgrp=4 seed=3    > slide28c.log  2>&1
 	$(CASA) sky2.py pdir='"slide28d"' grid=0 niter='[0]' nvgrp=4 seed=4    > slide28d.log  2>&1
 
-# flux as function of weight for skymodel:
+# DC2019: flux as function of weight for skymodel:
+# takes about 15mins per run
 slide29:
 	$(CASA) sky0.py pdir='"slide29a"' niter='[0,1000,3000,10000]'  wfactor=0.001   > slide29a.log  2>&1
 	$(CASA) sky0.py pdir='"slide29b"' niter='[0,1000,3000,10000]'  wfactor=0.01    > slide29b.log  2>&1
@@ -752,6 +763,7 @@ slide29:
 
 # lgm homework; default is clark
 
+# pointsource single field
 point1:
 	$(CASA) sky1.py pdir='"point1"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[1]' wfactor=1 > point1.log 2>&1
 
