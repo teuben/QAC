@@ -609,7 +609,7 @@ def qac_stats_grid(images, **kwargs):
         qac_stats(image, **kwargs)
     
     
-def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=False, sratio=True):
+def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcut=0.8, edge=False, sratio=True):
     """ summary of some stats in an image or measurement set
         in the latter case the flux is always reported as 0
 
@@ -620,6 +620,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
         eps       if given, it should parse the test string into numbers, each number
                   needs to be within relative error "eps", i.e. abs(v1-v2)/abs(v) < eps
         box       if used, this is the box for imstat()   box='xmin,ymin,xmax,ymax'
+        region    alternative way to specify a region (file)
         pb        optional pb file, if the .image -> .pb would not work
         pbcut     only used for images, and a .pb should be parallel to the .image file
                   or else it will be skipped
@@ -673,9 +674,9 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
                 maskarea = lel(pb) + '>' + str(pbcut)
         if edge:
             nchan = imhead(image)['shape'][3]
-            s0 = imstat(image,mask=maskarea,chans='1~%d' % (nchan-2),box=box)
+            s0 = imstat(image,mask=maskarea,chans='1~%d' % (nchan-2),box=box,region=region)
         else:
-            s0 = imstat(image,box=box,mask=maskarea)
+            s0 = imstat(image,box=box,region=region,mask=maskarea)
         # mean, rms, min, max, flux
         # @TODO   this often fails
         mean = s0['mean'][0]
@@ -731,7 +732,7 @@ def qac_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=F
     
     #-end of qac_stats()
     
-def qac_beam(im, normalized=True, chan=-1, plot=None):
+def qac_beam(im, normalized=True, chan=-1, array=False, plot=None):
     """ show some properties of the PSF
 
     Returns the BMAJ,BMIN (in arcsec).   Ignoring the BPA.
@@ -742,6 +743,7 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
                   of the clean beam from the header.
                   1.133 * Beam_x * Beam_x
     chan:         which channel to use [-1 means halfway cube]
+    array:        if True, return the array values
     plot:         if set, this is the plot created, usually a png
 
     @todo   have an option to just print beam, no volume info
@@ -836,6 +838,8 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
         pl.savefig(plot)
         pl.show()
         print("QAC_BEAM: %s" % plot)
+        if array:
+            return (r1,flux2)
 
     return (bmaj,bmin)    # @todo bpa
         
@@ -2948,7 +2952,7 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
     """
     image      CASA image (fits file should also work)
     channel    which channel (0=first) in case it's a cube
-    box        None or [xmin,ymin,xmax,ymax]
+    box        None or [xmin,ymin,xmax,ymax] or 'xmin,ymin,xmax,ymax'
     range      None or [vmin,vmax]
     colormap   pick a colormap name
                mode=1:  Cube Helix, Greyscale 1, Greyscale 2, Hot Metal 1, Hot Metal 2, Misc. 1 Isophotes, Misc. 2 Topography
@@ -2975,6 +2979,10 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
         out = image+'.png'
     else:
         out = plot
+
+    # if box='xmin,ymin,xmax,ymax' convert to [xmin,ymin,xmax,ymax]
+    if type(box) == type(""):
+        box = QAC.iarray(box)
 
     if mode == 0: mode=2      # our hardcoded default
         
