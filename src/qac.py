@@ -5,7 +5,7 @@
 #        Some are wrappers around CASA, others are also convenient for regression and performance testing.
 #
 #        The simplicity of these functions is intended to simplify usage of CASA and promote
-#        testing and regressing your scripts.
+#        parameterizing, testing and regressing your scripts.
 #
 
 import os, sys, shutil, math, tempfile, glob
@@ -20,18 +20,21 @@ try:
 except:
     import pyfits as fits
 
+_version = "30-aug-2020"
+    
+
 # this is dangerous, creating some convenient numbers in global namespace, but here they are...
 # one should definitely avoid using 2 letter variables, as CASA uses these a lot
-# @todo:   wrap them inside the QAC class
-cqa  = qa.constants('c')                  # (turns out to be in m/s)
-cms  = qa.convert(cqa,"m/s")['value']     # speed of light, forced in m/s (299792458.0)
-apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
-bof  = np.pi / (4*math.log(2.0))          # beam oversampling factor (1.1331) : NPPB = bof * (Beam/Pixel)**2  [cbm in tp2vis.py]
-stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
+# @todo:   wrap them inside the QAC class or pre_underscore them
+_cqa  = qa.constants('c')                  # (turns out to be in m/s)
+_cms  = qa.convert(_cqa,"m/s")['value']    # speed of light, forced in m/s (299792458.0)
+_apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
+_bof  = np.pi / (4*math.log(2.0))          # beam oversampling factor (1.1331) : NPPB = bof * (Beam/Pixel)**2  [cbm in tp2vis.py]
+_stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
-    print("qac: version 25-aug-2020")
+    print("qac: version %s" % _version)
     print("qac_root: %s" % qac_root)
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
@@ -332,9 +335,9 @@ def qac_line(im):
     ref = h0['restfreq'][0]
     nchan = h0['shape'][3]
     restfreq = str(ref/1e9) + 'GHz'
-    width = -cde/ref*cms/1000.0
+    width = -cde/ref*_cms/1000.0
     width = str(width) + 'km/s'
-    start = (1-(crv - crp*cde)/ref)*cms/1000.0
+    start = (1-(crv - crp*cde)/ref)*_cms/1000.0
     start = str(start) + 'km/s'
     return {'start' : start, 'width' : width, 'nchan' : nchan, 'restfreq' : restfreq}
 
@@ -577,11 +580,11 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
         if 'unit' in h0:
             print("UNIT: " + h0['unit'])
         if 'flux' in s0:
-            bof = s0['sum'][0] / s0['flux'][0]
-            print("BOF = %g" % bof)
+            nppb = s0['sum'][0] / s0['flux'][0]
+            print("NPPB = %g" % nppb)   # not BOF
             if tpout != None:
                 os.system('rm -rf %s' % tpout)                
-                expr = 'IM0/%g' % bof
+                expr = 'IM0/%g' % nppb
                 immath(tp,'evalexpr',tpout,expr)
                 imhead(tpout,'del','beammajor')
                 imhead(tpout,'put','bunit','Jy/pixel')
@@ -756,18 +759,18 @@ def qac_beam(im, normalized=True, chan=-1, plot=None):
     nz    = max(h0['shape'][2],h0['shape'][3])
     if nz>1 and chan<0:
         chan = nz//2
-    pix2 = abs(h0['incr'][0] * h0['incr'][1] * apr * apr)      # pixel**2 (in arcsec)
+    pix2 = abs(h0['incr'][0] * h0['incr'][1] * _apr * _apr)      # pixel**2 (in arcsec)
     if 'perplanebeams' in h0:
         chans = '*%d' % chan
         bmaj = h0['perplanebeams']['beams'][chans]['*0']['major']['value']
         bmin = h0['perplanebeams']['beams'][chans]['*0']['minor']['value']
         pix  = sqrt(pix2)
-        nppb =  bof * bmaj*bmin/pix2        
+        nppb =  _bof * bmaj*bmin/pix2        
     elif 'restoringbeam' in h0:
         bmaj = h0['restoringbeam']['major']['value']
         bmin = h0['restoringbeam']['minor']['value']
         pix  = sqrt(pix2)        
-        nppb =  bof * bmaj*bmin/pix2        
+        nppb =  _bof * bmaj*bmin/pix2        
     else:
         bmaj = 1.0
         bmin = 1.0
@@ -856,7 +859,7 @@ def qac_getuv(ms, kwave=True):
         tb.open(ms + '/SPECTRAL_WINDOW')
         chan_freq = tb.getcol('CHAN_FREQ')
         ref_freq = (chan_freq[0] + chan_freq[-1])/2.0
-        factor = ref_freq / cms / 1000.0
+        factor = ref_freq / _cms / 1000.0
         factor = factor[0]                  # assume/ignore polarization dependent issues
         tb.close()
     else:
@@ -1359,7 +1362,7 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
         # make a new model
         h0=imhead(imagename,mode='list')
         old_pixel = h0['cdelt2']   # radians
-        print("Model has pixel=%g arcsec" % (old_pixel * apr))
+        print("Model has pixel=%g arcsec" % (old_pixel * _apr))
         print("Making new model with pixel=%g arcsec" % pixel)
         imagename2 = project + '/skymodel.orig.im'
         imagename3 = project + '/skymodel.im'
@@ -1591,7 +1594,7 @@ def qac_tp_otf(project, skymodel, dish, label="", freq=None, factor=1.13, templa
 
     # calculate beam size in arcsecs
     # 1.13 is the ALMA nominal value for their dishes (values range from 1.02 to 1.22)
-    beam = 1.13 * cms / (freq * dish) * apr
+    beam = 1.13 * _cms / (freq * dish) * _apr
     print("TP_OTF: %g m %g GHz %g arcsec  %s" % (dish, freq/1e9, beam, out_image))
 
     # convolve skymodel with beam. assumes circular beam
@@ -2151,8 +2154,11 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     """
     def rescale(im1, im2):
         """
-         take a Jy/beam map, and scale it to a Jy/pixel map based on
-        the beam that has to be in the header
+        from a Jy/beam map, and scale it to a Jy/pixel map based on
+        the number per points per beam (required to be in the header)
+        
+        im1:    input Jy/beam map
+        im2:    outpyt Jy/pixels map
         """
         h0 = imstat(im1)
         s0 = h0['sum'][0]
@@ -2164,9 +2170,16 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
         imhead(im2, mode='put', hdkey='bunit', hdvalue='Jy/pixel')
         imhead(im2, mode='del', hdkey='bmaj')
         # this single last imhead will delete all 3 beam components
+        # bmaj,bmin,pa/bpa
         
     qac_tag("mac")
     qac_project(project)
+
+    Qdebug  = True    # extra output during development
+    Qpos    = True    # force only positive components in model subtraction
+    Qpb     = None    # not yet implemented, but blank out PB < 0.25 by the edges
+    Qconcat = False
+    
     print("Warning: qac_mac has only been tuned/tested for skymodel")
 
     # 0. rescale the TP to jy/pixel
@@ -2196,15 +2209,18 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
         deconvolver = 'clark'
 
     print("Creating MAC imaging using tp=%s vis2=%s tp" % (tp,str(vis2)))
-    if do_concat:
+    if Qconcat:
         # due to a tclean() bug, the vis2 need to be run via concat
         # MS has a pointing table, this often complaints, but in workflow5 it actually crashes concat()
+        #
+        # wait - this is only important if TPMS is used.
         print("Using concat to bypass tclean bug - also using copypointing=False")
         #concat(vis=vis2,concatvis=outms,copypointing=False,freqtol='10kHz')
+        outms = '%s/outms' % project
         concat(vis=vis2,concatvis=outms,copypointing=False)
         vis2 = outms
         
-    # tclean() mode
+    # tclean() - first initial run with scaled TP startmodel
     tclean_args = {}
     tclean_args['gridder']       = 'mosaic'
     tclean_args['deconvolver']   = deconvolver
@@ -2213,19 +2229,16 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     tclean_args['stokes']        = 'I'
     tclean_args['pbcor']         = True
     tclean_args['phasecenter']   = phasecenter
-    # tclean_args['vptable']       = vptable
     tclean_args['weighting']     = weighting
     tclean_args['specmode']      = 'cube'
     tclean_args['startmodel']    = tpjypp
     tclean_args['cyclefactor']   = 5.0
-    #tclean_args['restart']       = True
+    tclean_args['cycleniter']    = 100
+    tclean_args['niter']         = niters[-1]
     for k in kwargs.keys():
         tclean_args[k] = kwargs[k]
-
-    niter=niters[-1]
         
-    print("TCLEAN(niter=%d)" % niter)
-    tclean_args['niter']      = niter
+    print("TCLEAN(niter=%d0)" % niters[-1])
     tclean(vis = vis2, imagename = outim1, **tclean_args)
 
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
@@ -2239,11 +2252,21 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     #    though one could argue the negative components are to
     #    compensate for the fact this is not a true Jy/pixel model
     #    but a smoothed version
-    immath(['%s/int1.model' % project ,tpjypp],
-           'evalexpr',
-           '%s/int2.model' % project,
-           'iif((IM0-IM1) >= 0.00, IM0-IM1, 0.0)')
-    
+    if Qpos:
+        immath(['%s/int1.model' % project ,tpjypp],
+               'evalexpr',
+               '%s/int2.model' % project,
+               'iif((IM0-IM1) >= 0.00, IM0-IM1, 0.0)')
+    else:
+        immath(['%s/int1.model' % project ,tpjypp],
+               'evalexpr',
+               '%s/int2.model' % project,
+               'IM0-IM1')
+
+    if Qpb:
+        print("@todo need to mask out the signal where PB < 0.25")
+        
+        
     # 3a. smooth these with the int beam
     h1 = imhead('%s/int1.image' % project,mode='list')
     bmaj = h1['beammajor']['value']
@@ -2262,23 +2285,23 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     feather(imagename='%s/int2.feather' % project,
             lowres=tp,
             highres='%s/int2.image' % project)
+    # @todo  extra feather args?
 
     sm2 = '%s/int2.sm' % project
     rescale('%s/int2.feather' % project, sm2)
 
-
     # 4. run tclean again
-    tclean_args['startmodel']    = sm2
+    tclean_args['startmodel']  = sm2
     outim3 = '%s/macint' % project
     tclean(vis = vis2, imagename = outim3, **tclean_args)
 
-    
-    qac_stats('%s/int1.image.pbcor' % project)
-    qac_stats('%s/int1.model' % project)
-    qac_stats('%s/int2.model' % project)
-    qac_stats('%s/int2.feather' % project)
-    qac_stats('%s/int2.sm' % project)
-    qac_stats('%s/macint.image.pbcor' % project)
+    if Qdebug:
+        qac_stats('%s/int1.image.pbcor' % project)
+        qac_stats('%s/int1.model' % project)
+        qac_stats('%s/int2.model' % project)
+        qac_stats('%s/int2.feather' % project)
+        qac_stats('%s/int2.sm' % project)
+        qac_stats('%s/macint.image.pbcor' % project)
 
     #-end of qac_mac()    
 
@@ -2719,8 +2742,8 @@ def qac_summary(tp, ms=None, source=None, line=False):
     def vrange(f,rf):
         nf = len(f)
         if rf > 0:
-            v0 = (1-f[0]/rf)*cms/1000.0
-            v1 = (1-f[-1]/rf)*cms/1000.0
+            v0 = (1-f[0]/rf)*_cms/1000.0
+            v1 = (1-f[-1]/rf)*_cms/1000.0
             dv = (v1-v0)/(nf-1.0)
         else:
             v0 = 0.0
@@ -2760,8 +2783,8 @@ def qac_summary(tp, ms=None, source=None, line=False):
     # freq_values = h0['crval4'] + (np.arange(nz) - h0['crpix4']) * h0['cdelt4']
     # freq_values.reshape(1,1,1,nz)
     freq_values = h1['refval'][iz] + (np.arange(nz) - h1['refpix'][iz]) * h1['incr'][iz]
-    vmin = (1-freq_values[0]/restfreq)*cms/1000.0
-    vmax = (1-freq_values[-1]/restfreq)*cms/1000.0
+    vmin = (1-freq_values[0]/restfreq)*_cms/1000.0
+    vmax = (1-freq_values[-1]/restfreq)*_cms/1000.0
     dv   = (vmax[0]-vmin[0])/(nz-1)
     rft = h0['reffreqtype']
 
