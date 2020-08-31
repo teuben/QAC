@@ -1,6 +1,6 @@
 # -*- python -*-
 #
-#     tests on qac_mac()
+#     tests on qac_mac() and the use of do_concat=True/False
 #               
 #
 
@@ -127,15 +127,15 @@ startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 intms = ms1.values()
 
 qac_log("TP2VIS")
-if otf == 0:
-    tpms = qac_tp_vis(pdir,model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
-else:
-    tp_beam = 56.7     # @todo
+if otf != 0:
+    tp_beam = 56.7     # @todo  Toshi 57.06" ??
     beam = '%sarcsec' % tp_beam
     otf = pdir + '/' + model.replace('.fits','.otf')
     print("Creating %s" % otf)
     imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otf,overwrite=True)
-    tpms = qac_tp_vis(pdir,otf,ptg,pixel_m,phasecenter=phasecenter,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+    tpms = qac_tp_vis(pdir,otf,  ptg,pixel_m,phasecenter=phasecenter,deconv=True, maxuv=maxuv,nvgrp=nvgrp,fix=0)
+else:
+    tpms = qac_tp_vis(pdir,model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
 tp2viswt(tpms,wfactor,'multiply')
 
 qac_log("CLEAN1:")
@@ -144,6 +144,17 @@ print("ARGS:",args)
     
 
 tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')
+
+qac_log("TPINT")
+test = pdir + '/clean3'
+qac_clean(test,tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False, **args)
+qac_fits(test+'/int.image',            test+'/sky_int.image_box1.fits',     box=box, stats=True)
+qac_fits(test+'/tpint.image',          test+'/sky_tpint.image_box1.fits',   box=box, stats=True)
+
+test = pdir + '/clean4'
+qac_clean(test,tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True, **args)
+qac_fits(test+'/int.image',            test+'/sky_int.image_box1.fits',     box=box, stats=True)
+qac_fits(test+'/tpint.image',          test+'/sky_tpint.image_box1.fits',   box=box, stats=True)
 
 qac_log("MAC")
 
