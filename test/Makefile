@@ -416,9 +416,22 @@ sky40f:
 	$(CASA) sky40.py pdir='"sky40f"' niter=100000 > sky40f.log 2>&1
 	grep QAC_STATS sky40f.log
 
+# dc2019
+# to concat or not to concat: the qac_mac oddity
 issue12:
 	$(CASA) issue12.py pdir='"issue12"' > issue12.log 2>&1
-	grep QAC_STATS issue12.log | grep mac
+	grep QAC_STATS issue12.log | egrep '(clean3|clean4|mac)'
+
+# dc2019
+# shape of PB via pbcor map of single pointing
+issue13:
+	$(CASA) issue13.py pdir='"issue13a"' grid=0  niter='[0]' nvgrp=4    > issue13a.log  2>&1
+	$(CASA) issue13.py pdir='"issue13b"' grid=0  niter='[0]' nvgrp=16   > issue13b.log  2>&1
+	$(CASA) issue13.py pdir='"issue13c"' grid=0  niter='[0]' nvgrp=64   > issue13c.log  2>&1
+	$(CASA) issue13.py pdir='"issue13d"' grid=0  niter='[0]' nvgrp=256  > issue13d.log  2>&1
+	$(CASA) issue13.py pdir='"issue13e"' grid=30 niter='[0]' nvgrp=4    > issue13e.log  2>&1
+
+
 
 sky5:
 	$(CASA) sky5.py pdir='"sky5"' > sky5.log 2>&1
