@@ -1,0 +1,13 @@
+#! /bin/bash
+#
+
+url=ftp://ftp.cv.nrao.edu/pub/casaguides/analysis_scripts.tar
+audir=~/.casa
+#audir=/tmp
+
+# You appear to be importing analysisUtils into python. version =  3.6.7
+
+cd $audir
+wget $url -O - | tar xf -
+
+echo updated $audir/analysis_scripts
