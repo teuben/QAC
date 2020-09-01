@@ -20,12 +20,13 @@ try:
 except:
     import pyfits as fits
 
-_version = "30-aug-2020"
-    
+_version = "31-aug-2020"
 
-# this is dangerous, creating some convenient numbers in global namespace, but here they are...
+print("Loading QAC %s" % _version)
+
+# creating some convenient numbers in _local namespace
 # one should definitely avoid using 2 letter variables, as CASA uses these a lot
-# @todo:   wrap them inside the QAC class or pre_underscore them
+# @todo:   wrap them inside the QAC class and/or pre_underscore them
 _cqa  = qa.constants('c')                  # (turns out to be in m/s)
 _cms  = qa.convert(_cqa,"m/s")['value']    # speed of light, forced in m/s (299792458.0)
 _apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
@@ -34,8 +35,10 @@ _stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
 
 def qac_version():
     """ qac version reporter """
+    global qac_root
     print("qac: version %s" % _version)
     print("qac_root: %s" % qac_root)
+    # casa[] only exists in CASA5
     print("casa:" + casa['version'])        # there is also:   cu.version_string()
     print("data:" + casa['dirs']['data'])
     
@@ -766,12 +769,12 @@ def qac_beam(im, normalized=True, chan=-1, array=False, plot=None):
         chans = '*%d' % chan
         bmaj = h0['perplanebeams']['beams'][chans]['*0']['major']['value']
         bmin = h0['perplanebeams']['beams'][chans]['*0']['minor']['value']
-        pix  = sqrt(pix2)
+        pix  = math.sqrt(pix2)
         nppb =  _bof * bmaj*bmin/pix2        
     elif 'restoringbeam' in h0:
         bmaj = h0['restoringbeam']['major']['value']
         bmin = h0['restoringbeam']['minor']['value']
-        pix  = sqrt(pix2)        
+        pix  = math.sqrt(pix2)        
         nppb =  _bof * bmaj*bmin/pix2        
     else:
         bmaj = 1.0
@@ -1090,7 +1093,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=7
     ms1 = qac_generic_int(project, skymodel, imsize, pixel, phasecenter, cfg=cfg, ptg = ptg, times=times)
     
     if visweightscale != 1.0:
-        print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
+        print("We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale)
         ms2 = ms1 + '.tmp'
         os.system('mv %s %s' % (ms1,ms2))
         concat(ms2, ms1, visweightscale=visweightscale)
@@ -1933,7 +1936,7 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
             tclean_args['calcpsf']    = False
             for ext in ['image', 'image.pbcor', 'residual', 'model']:
                 cmd = 'cp -r %s.%s %s_%d.%s'    % (outim1,ext,outim1,idx+1,ext)
-                print "CMD: ",cmd
+                print("CMD: ",cmd)
                 os.system(cmd)
             
     else:
@@ -2182,7 +2185,7 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     Qdebug  = True    # extra output during development
     Qpos    = True    # force only positive components in model subtraction
     Qpb     = None    # not yet implemented, but blank out PB < 0.25 by the edges
-    Qconcat = False
+    Qconcat = do_concat
     
     print("Warning: qac_mac has only been tuned/tested for skymodel")
 
@@ -2217,6 +2220,8 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
         # due to a tclean() bug, the vis2 need to be run via concat
         # MS has a pointing table, this often complaints, but in workflow5 it actually crashes concat()
         #
+        # https://github.com/teuben/dc2019/issues/12
+        #
         # wait - this is only important if TPMS is used.
         print("Using concat to bypass tclean bug - also using copypointing=False")
         #concat(vis=vis2,concatvis=outms,copypointing=False,freqtol='10kHz')
@@ -2247,11 +2252,6 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
 
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
 
-    if do_concat and do_cleanup:
-        print("Removing " + outms)
-        shutil.rmtree(outms)
-
-
     # 2. get the positive interferometer-only clean components
     #    though one could argue the negative components are to
     #    compensate for the fact this is not a true Jy/pixel model
@@ -2268,7 +2268,14 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
                'IM0-IM1')
 
     if Qpb:
+        # caveat:  if your imager has for example pbcut=0.8 this will effectively use 0.8
+        pbcut = 0.25
+        immath(['%s/int2.model' % project, '%s/int2.pb' % project],
+               'evalexpr',
+               '%s/int3.model' % project,
+               expr='iif((IM1) >= %g, IM0, 0.0)' % pbcut)
         print("@todo need to mask out the signal where PB < 0.25")
+
         
         
     # 3a. smooth these with the int beam
@@ -2306,6 +2313,10 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
         qac_stats('%s/int2.feather' % project)
         qac_stats('%s/int2.sm' % project)
         qac_stats('%s/macint.image.pbcor' % project)
+
+    if do_concat and do_cleanup:
+        print("Removing " + outms)
+        shutil.rmtree(outms)
 
     #-end of qac_mac()    
 
@@ -2345,7 +2356,7 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="
     feather1 = "%s/feather%s%s.image"       % (project,label,niter_label)
     feather2 = "%s/feather%s%s.image.pbcor" % (project,label,niter_label)
 
-    print highres,lowres,pb,feather1,feather2
+    print(highres,lowres,pb,feather1,feather2)
 
     feather(feather1,highres,lowres)                           # it will happily overwrite
     os.system('rm -rf %s' % feather2)                          # immath does not overwrite
@@ -2637,28 +2648,28 @@ def qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidel
                 # call the montage command with subprocess so if an exception is thrown, python will catch it
                 subprocess.call(cmd.split())
             except OSError as e:
-                print 'Montage failed: ', e
+                print('Montage failed: ', e)
                 break
         elif mode == 3:
             cmd = 'montage -title %s %s %s -tile 2x1 -geometry +0+0 %s'% (project_name, diffim+'.png', fidelityim+'.png', image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
-                print 'Montage failed: ', e
+                print('Montage failed: ', e)
                 break
         elif mode == 4:
             cmd = 'montage -title %s %s %s %s -tile 3x1 -geometry +0+0 %s'% (project_name, diffim+'.png', diffim+'.hist.png', fidelityim+'.png',image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
-                print 'Montage failed: ', e
+                print('Montage failed: ', e)
                 break
         elif mode == 5:
             cmd = 'montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s'% (project_name, model+'.png', image+'.png', diffim+'.png', fidelityim+'.png',image + '.fidelity%s.png'%mode)
             try:
                 subprocess.call(cmd.split())
             except OSError as e:
-                print 'Montage failed: ', e
+                print('Montage failed: ', e)
                 break
             
     return scalarfidel
