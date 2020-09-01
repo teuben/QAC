@@ -28,7 +28,7 @@ def plot1(ms0=None, ms7=None, ms12=None, uvmax = 5.0, kwave=True, stride=1, plot
         if stride == 1:
             return uv
         (u,v) = uv
-        idx = range(0,len(u),stride)
+        idx = list(range(0,len(u),stride))
         return (u[idx],v[idx])
         
     (w,h) = plt.figaspect(1.0)
@@ -67,7 +67,7 @@ def plot1a(mslist, uvmax = 5.0, kwave=True, stride=1, plot='plot1a.png'):
         if stride == 1:
             return uv
         (u,v) = uv
-        idx = range(0,len(u),stride)
+        idx = list(range(0,len(u),stride))
         return (u[idx],v[idx])
     
     from matplotlib.colors import LogNorm
@@ -108,7 +108,7 @@ def plot1b(tab, uvmax = 5.0, bins=256, kwave=True, plot='plot1b.png'):
 
     """
     (u,v) = np.loadtxt(tab)
-    print u.min(),v.min(),u.max(),v.max()
+    print(u.min(),v.min(),u.max(),v.max())
     u = np.append(u,-u)
     v = np.append(v,-v)
 
@@ -166,19 +166,19 @@ def plot2a(f, title='Flux Comparison', plot='plot2a.png', label=[], dv=1.0, v=[]
     plt.figure()
     chan = np.arange(len(f[0]))
     if len(label) == 0:
-        labels=range(len(f))
+        labels=list(range(len(f)))
         for n in range(len(f)):
             labels[n] = "%d" % (n+1)
     else:
         labels = label
             
-    for (fi,n) in zip(f,range(len(f))):
+    for (fi,n) in zip(f,list(range(len(f)))):
         if len(v) > 0:
             plt.plot(v[n],fi,label=labels[n])
             dv = v[n][1]-v[n][0]
         else:
             plt.plot(chan,fi,label=labels[n])
-        print "Flux[%d]: %g Jy (* assumed %g km/s) %s" % (n+1,fi.sum()*dv, dv, labels[n])
+        print("Flux[%d]: %g Jy (* assumed %g km/s) %s" % (n+1,fi.sum()*dv, dv, labels[n]))
     zero = 0.0 * f[0]
     plt.ylabel('Flux')
     if len(v) > 0:
@@ -212,7 +212,7 @@ def plot3(mslist, log=True, kwave=True, plot='plot3.png'):
         amp = data.max(axis=0)
         tb.close()
         if log:  amp = np.log10(amp)
-        print "AMP min/max = ",amp.min(),amp.max()
+        print("AMP min/max = ",amp.min(),amp.max())
         return amp
 
     colors = ['r', 'g', 'b']
@@ -222,13 +222,13 @@ def plot3(mslist, log=True, kwave=True, plot='plot3.png'):
         mslist = [mslist]
     for (ms,c) in zip(mslist,colors):
         if iscasa(ms):
-            print "Processing ",ms
+            print("Processing ",ms)
             (u0,v0)  = qtp_getuv(ms,kwave)
             uvd = np.sqrt(u0*u0+v0*v0)
             amp = my_getamp(ms,log)
             plt.scatter(uvd,amp,c=c,label=ms)
         else:
-            print "Skipping ",ms
+            print("Skipping ",ms)
     if kwave:
         plt.xlabel("uvdistance (k$\lambda$)")
     else:
@@ -263,11 +263,11 @@ def plot4(mslist, bin=None, kwave=True, plot='plot4.png'):
         mslist = [mslist]
     for (ms,c) in zip(mslist,colors):
         if iscasa(ms):
-            print "Processing ",ms
+            print("Processing ",ms)
             (u0,v0)  = qtp_getuv(ms,kwave)
             uvd = np.sqrt(u0*u0+v0*v0)     # in kLambda (or meters)
             wt  = my_getwt(ms)
-            print "PJT",wt.shape
+            print("PJT",wt.shape)
             if bin == None:
                 # only do the first pol
                 plt.scatter(uvd,wt[0,:],c=c,label=ms)
@@ -275,27 +275,27 @@ def plot4(mslist, bin=None, kwave=True, plot='plot4.png'):
             else:
                 uvbins = np.arange(0.0,uvd.max() + bin, bin)
                 #uvbins = np.arange(2.0,6.0,1.0)
-                print uvbins
-                print "UVD max",uvd.max()
+                print(uvbins)
+                print("UVD max",uvd.max())
                 wt = wt[0,:]
                 digit = np.digitize(uvd,uvbins)
                 if True:
                     # weight density
                     wt_bin = [wt[digit == i].sum() for i in range(1,len(uvbins))]
-                    print wt_bin
-                    print len(uvbins),len(digit),len(wt_bin)
+                    print(wt_bin)
+                    print(len(uvbins),len(digit),len(wt_bin))
                     # @todo  check if i'm not off by 1/2 bin
                     uvarea = np.diff(uvbins*uvbins)
                     wt_bin = wt_bin / uvarea
                 else:
                     # mean weight per uvbin
                     wt_bin = [wt[digit == i].mean() for i in range(1,len(uvbins))]
-                    print wt_bin
-                    print len(uvbins),len(digit),len(wt_bin)
+                    print(wt_bin)
+                    print(len(uvbins),len(digit),len(wt_bin))
                 wt_bin = np.log10(wt_bin)
                 plt.plot(uvbins[1:],wt_bin,drawstyle='steps-mid')
         else:
-            print "Skipping ",ms
+            print("Skipping ",ms)
     if kwave:
         plt.xlabel("uvdistance (k$\lambda$)")
     else:
@@ -364,7 +364,7 @@ def plot6(imlist, bins=50, range=None, log=False, alpha=[1, 0.3, 0.1], box=None,
         else:
             (xmin,ymin,xmax,ymax) = mybox(box)
             if xmin==0 and xmax==0:
-                print "Warning: bad box ",box
+                print("Warning: bad box ",box)
                 data = ia.getchunk().ravel()
             else:
                 data = ia.getchunk([xmin,ymin],[xmax,ymax]).ravel()
@@ -403,7 +403,7 @@ def plot7(basename, idx=0, channel=0, box=None, range=None, plot='plot7.png', re
             data = d3
         alplot = plt.imshow(data, origin='lower', vmin = drange[0], vmax = drange[1])
         plt.title("%s[%d]" % (image,channel))
-        print("%s[%d]  %g %g" % (image,channel,data.min(),data.max()))
+        print(("%s[%d]  %g %g" % (image,channel,data.min(),data.max())))
 
     def plothi(image, channel, drange, bins=32, box=None):
         """
@@ -434,7 +434,7 @@ def plot7(basename, idx=0, channel=0, box=None, range=None, plot='plot7.png', re
 
     dmin = dmax = None
     print(im0)
-    print(len(im0))
+    print((len(im0)))
     # for i in range(len(im0)):
     for i in [0,1,2,3,4,5]:
         if QAC.iscasa(im0[i]):
@@ -449,7 +449,7 @@ def plot7(basename, idx=0, channel=0, box=None, range=None, plot='plot7.png', re
                     if h['min'] < dmin: dmin = h['min']
                     if h['max'] > dmax: dmax = h['max']
         else:
-            print('%s failed' % im0[i])
+            print(('%s failed' % im0[i]))
             im0[i] = None
     if range == None:
         qprint("Global data min/max = %g %g " % (dmin,dmax))
@@ -512,7 +512,7 @@ def plot8(im1, im2, box=None, range=None, plot='plot8.png', verbose=False):
             if h['min'] < dmin: dmin = h['min']
             if h['max'] > dmax: dmax = h['max']
     if range == None:
-        print("Global data min/max = %g %g " % (dmin,dmax))
+        print(("Global data min/max = %g %g " % (dmin,dmax)))
         drange = [dmin,dmax]
     else:
         drange = range
