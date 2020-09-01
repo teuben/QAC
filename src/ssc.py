@@ -100,11 +100,11 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
     if lowres == None:
         lowres  = "%s/otf%s.image"  % (project,label)   
     
-    print 'SSC array combination method'
-    print '   Single-dish: ',lowres
-    print '   Interferometer: ',highres
-    print '   Single-dish Telescope: ',sdTel
-    print '   f (scaling SD):',f
+    print('SSC array combination method')
+    print('   Single-dish: ',lowres)
+    print('   Interferometer: ',highres)
+    print('   Single-dish Telescope: ',sdTel)
+    print('   f (scaling SD):',f)
 
     lr = lowres                                  # input low resolution cube
     hr = highres                                 # input high resolution cube
@@ -132,13 +132,13 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
         print('Bunits of low- and high-resolution data cubes are not identical!')
         return None
 
-    print ''
-    print 'LR_Bmin: ' + str(getBmin(lr_reg))
-    print 'LR_Bmaj: ' + str(getBmaj(lr_reg))
-    print ''
-    print 'HR_Bmin: ' + str(getBmin(hr))
-    print 'HR_Bmaj: ' + str(getBmaj(hr))
-    print ''
+    print('')
+    print('LR_Bmin: ' + str(getBmin(lr_reg)))
+    print('LR_Bmaj: ' + str(getBmaj(lr_reg)))
+    print('')
+    print('HR_Bmin: ' + str(getBmin(hr)))
+    print('HR_Bmaj: ' + str(getBmaj(hr)))
+    print('')
 
     kernel1 = float(getBmaj(lr_reg))**2 - float(getBmaj(hr))**2
     kernel2 = float(getBmin(lr_reg))**2 - float(getBmin(hr))**2
@@ -148,53 +148,53 @@ def qac_ssc(project, highres=None, lowres=None, f=1.0, sdTel = None, regrid=True
     kernel1 = math.sqrt(kernel1)
     kernel2 = math.sqrt(kernel2)
     
-    print 'Kernel1: ' + str(kernel1)
-    print 'Kernel2: ' + str(kernel2)
-    print ''
+    print('Kernel1: ' + str(kernel1))
+    print('Kernel2: ' + str(kernel2))
+    print('')
 
     # Convolve the highres with the appropriate beam so it matches the lowres 
-    print 'Convolving high resolution cube ...'
+    print('Convolving high resolution cube ...')
     major = str(getBmaj(lr_reg)) + 'arcsec'
     minor = str(getBmin(lr_reg)) + 'arcsec'
     pa = str(getPA(hr)[0]) + str(getPA(hr)[1])
-    print 'imsmooth',major,minor,pa
+    print('imsmooth',major,minor,pa)
     imsmooth(hr, 'gauss', major, minor, pa, True, outfile=hr_conv, overwrite=True)
 
     # Missing flux
-    print 'Computing the obtained flux only by single-dish ...'
+    print('Computing the obtained flux only by single-dish ...')
     os.system('rm -rf %s' % sub)
     immath([lr_reg, hr_conv], 'evalexpr', sub, '%g*IM0-IM1' % f)
-    print 'Flux difference has been determined' + '\n'
-    print 'Units', getBunit(lr_reg)
+    print('Flux difference has been determined' + '\n')
+    print('Units', getBunit(lr_reg))
 
     if getBunit(lr_reg) == 'Jy/beam':
-        print 'Computing the weighting factor according to the surface of the beam ...'
+        print('Computing the weighting factor according to the surface of the beam ...')
         weightingfac = (float(getBmaj(str(hr))) * float(getBmin(str(hr)))
                         ) / (float(getBmaj(str(lr_reg))) * float(getBmin(str(lr_reg))))
-        print 'Weighting factor: ' + str(weightingfac) + '\n'
+        print('Weighting factor: ' + str(weightingfac) + '\n')
 
-        print 'Considering the different beam sizes ...'
+        print('Considering the different beam sizes ...')
         os.system('rm -rf %s' % sub_bc)        
         immath(sub, 'evalexpr', sub_bc, 'IM0*' + str(weightingfac))
-        print 'Fixed for the beam size' + '\n'
+        print('Fixed for the beam size' + '\n')
 
-        print 'Combining the single-dish and interferometer cube [Jy/beam mode]'
+        print('Combining the single-dish and interferometer cube [Jy/beam mode]')
         os.system('rm -rf %s' % combined)        
         immath([hr, sub_bc], 'evalexpr', combined, 'IM0+IM1')
-        print 'The missing flux has been restored' + '\n'
+        print('The missing flux has been restored' + '\n')
 
     if getBunit(lr_reg) == 'Kelvin':
-        print 'Combining the single-dish and interferometer cube [K-mode]'
+        print('Combining the single-dish and interferometer cube [K-mode]')
         os.system('rm -rf %s' % combined)                
         immath([hr, sub], 'evalexpr', combined, 'IM0 + IM1')
-        print 'The missing flux has been restored' + '\n'
+        print('The missing flux has been restored' + '\n')
 
     if cleanup:
         for f in clean_up:
-            print("cleaning %s" % f)
+            print(("cleaning %s" % f))
             os.system('rm -rf %s' % f)
     else:
-        print("Preserving following files:" + str(clean_up))
+        print(("Preserving following files:" + str(clean_up)))
 
     if False:
         qac_stats(lowres)
