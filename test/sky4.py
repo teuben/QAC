@@ -243,6 +243,7 @@ psd.append(pdir+'/clean3/skymodel.smooth.image')
 
 
 if Qhybrid:
+    # this is a big cheat. The niter=0 solution will be pretty good. After that it's downhill.
     qac_clean(pdir+'/clean4',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False,startmodel=startmodel)
     qac_tweak(pdir+'/clean4','int',niter)
     qac_tweak(pdir+'/clean4','tpint',niter)
@@ -407,7 +408,12 @@ if Qexport:
     qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True)
     qac_fits('clean3/feather_3.image.pbcor',           'export/sky_feather_box1.fits', box=box, stats=True)
     qac_fits('clean3/ssc_3.image',                     'export/sky_ssc_box1.fits',     box=box, stats=True)
-    qac_fits('clean7/macint.image.pbcor',              'export/sky_mac_box1.fits',     box=box, stats=True)
+    qac_fits('clean4/int.image.pbcor',                 'export/sky_cheat1_box1.fits',  box=box, stats=True)
+    qac_fits('clean4/tpint.image.pbcor',               'export/sky_cheat2_box1.fits',  box=box, stats=True)
+    qac_fits('clean4/feather.image.pbcor',             'export/sky_cheat3_box1.fits',  box=box, stats=True)
+    qac_fits('clean4/ssc.image',                       'export/sky_cheat4_box1.fits',  box=box, stats=True)            
+    qac_fits('clean7/int1.image.pbcor',                'export/sky_mac1_box1.fits',    box=box, stats=True)
+    qac_fits('clean7/macint.image.pbcor',              'export/sky_mac3_box1.fits',    box=box, stats=True)
     
 
 
