@@ -386,6 +386,16 @@ sky4f:
 	grep QAC_STATS $@.log
 
 
+# dc2019:    Dirk's suggestion to not use anything 12m compact
+sky4g:
+	$(CASA) sky4.py pdir='"$@"' cfg='[0,6]'  > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+
+# dc2019:   with skymodel-c.fits
+sky4h:
+	$(CASA) sky4.py pdir='"$@"' model='"skymodel-c.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+
 
 # qac_mac tests
 sky40:
