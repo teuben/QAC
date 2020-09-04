@@ -396,6 +396,13 @@ sky4h:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-c.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 
+# dc2019:   better UV coverage per field?
+sky4i:
+	$(CASA) sky4.py pdir='"$@"' times='[10.05,0.5]' afactor=2  > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+
+
+
 
 # qac_mac tests
 sky40:
