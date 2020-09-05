@@ -20,7 +20,7 @@ try:
 except:
     import pyfits as fits
 
-_version = "31-aug-2020"
+_version = "2-sep-2020"
 
 print("Loading QAC %s" % _version)
 
@@ -38,10 +38,14 @@ def qac_version():
     global qac_root
     print("qac: version %s" % _version)
     print("qac_root: %s" % qac_root)
-    # casa[] only exists in CASA5
-    print("casa:" + casa['version'])        # there is also:   cu.version_string()
-    print("data:" + casa['dirs']['data'])
-    
+    if False:
+        # casa[] only exists in CASA5
+        print("casa:" + casa['version'])        # there is also:   cu.version_string()
+        print("data:" + casa['dirs']['data'])
+    else:
+        print("casa:" + au.casaVersion)
+        print("data:" + os.getenv('CASAPATH').split()[0]+'/data')
+        
     #-end of qac_version()    
 
 def qac_log(message, verbose=True):
@@ -346,14 +350,15 @@ def qac_line(im):
 
     #-end of qac_line()
 
-def qac_fits(image,outfile=None,box=None, chans=None, stats=False, channel=0):
+def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False, channel=0):
     """ exportfits shortcut, appends the extension ".fits" to a casa image
         also handles a list of images
 
         image     casa image, or list of images, to be converted to fits
-        outfile   if given, output fits file name, else add ".fits"
+        outfile   if given, output fits file name, else add ".fits" (not in list)
         box       if set, use a 'xmin,ymin,xmax,ymax' in 0 based pixels
         chans     if set, use a 'chmin~chmax' in 0 based pixels
+        smooth    if set, it is the number of arcsec (circular beam) it should be smoothed to
         stats     if set, also make a qac_plot and qac_stats
 
         Returns the (last) fits file  (@todo: should do a list if input is a list)
@@ -370,13 +375,30 @@ def qac_fits(image,outfile=None,box=None, chans=None, stats=False, channel=0):
         fi = i + '.fits'
         if len(ii)==1 and outfile!=None:
             fi = outfile
-        if Qsubim:
-            tmpim = i + ".tmp"
-            imsubimage(i,tmpim,box=box,chans=chans)
-            exportfits(tmpim,fi,overwrite=True)
-            QAC.rmcasa(tmpim)
+        if smooth != None:
+            tmpim1 = i + ".tmp1"
+            #print("smooth=%g" % smooth)
+            imsmooth(imagename=i,
+                     outfile=tmpim1,
+                     kernel='gauss',
+                     major='%garcsec' % smooth,
+                     minor='%garcsec' % smooth,                     
+                     pa='0deg',
+                     targetres=True,
+                     overwrite=True)
         else:
-            exportfits(i,fi,overwrite=True)
+            tmpim1 = i
+        if Qsubim:
+            tmpim2 = i + ".tmp2"
+            imsubimage(tmpim1,tmpim2,box=box,chans=chans,overwrite=True)
+            exportfits(tmpim2,fi,overwrite=True)
+            #print("rm tmpim2")            
+            QAC.rmcasa(tmpim2)
+        else:
+            exportfits(tmpim1,fi,overwrite=True)
+        if i != tmpim1:
+            #print("rm tmpim1")
+            QAC.rmcasa(tmpim1)
         print("Wrote " + fi)
         if stats:
             qac_stats(fi)
@@ -385,11 +407,21 @@ def qac_fits(image,outfile=None,box=None, chans=None, stats=False, channel=0):
 
     #-end of qac_fits()
 
-def qac_import(fits, cim, phasecenter=None, dec=None):
+def qac_import(fits, cim, phasecenter=None, dec=None, order=None):
     """ import a fits, and optionally place it somewhere else on the sky
         ? why is indirection not working in simobserve ?
+
+        order:  by defalt not used, but ensure it's a Ra-Dec-Stokes-Freq cube,
+                since this is what CASA wants.   e.g. order='0132'
+                SHM: Why is this not an option in importfits()
     """
-    importfits(fits, cim)
+    if order != None:
+        infile = cim + '.tmp'
+        imtrans(fits,cim+'.tmp',order=order)
+    else:
+        infile = fits
+        
+    importfits(infile, cim, overwrite=True)
     if phasecenter != None:
         print("phasecenter=%s to be applied" % phasecenter)
     if dec != None:
@@ -451,7 +483,9 @@ def qac_ingest(tp, tpout = None, casaworkaround=[1,3], ms=None, ptg=None):
 
     """
     def casa_version_check(version='5.5.0'):
-        cur = casa['build']['version'].split('.')
+        # @todo   fix this casa5 dependency
+        # cur = casa['build']['version'].split('.')
+        cur = au.casaVersion.split('.')
         req = version.split('.')
         print("casa_version_check: %s %s" % (cur,req))
         if cur[0] >= req[0]: return
@@ -633,6 +667,8 @@ def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcu
                   FluxP = Flux * (1+s)/(2s)    FluxN = Flux * (1-s)/(2s)    
 
         Output should contain:   mean,rms,min,max,flux,[sratio]
+
+        @todo   what when the .pb file is missing
     """
     def text2array(text):
         a = text.split()
@@ -1082,7 +1118,8 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=7
         cycle = 6
         
     #                                                  os.getenv("CASAPATH").split()[0]+"/data/alma/simmos/"    
-    data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
+    #data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
+    data_dir = os.getenv('CASAPATH').split()[0]+'/data'
     if cfg==0:
         cfg = 'aca.cycle%d' % (cycle)                # cfg=0 means ACA (7m)
     else:
@@ -1255,6 +1292,8 @@ def qac_vp(my_vp=False, my_schwab=False):
         my_schwab:  Use SchwabSpheroidal for TP deconvolution
     """
     print("QAC_VP: %s %s" % (repr(my_vp),repr(my_schwab)))
+
+    global t2v_arrays
     
     global use_vp
     use_vp = my_vp
@@ -1300,6 +1339,7 @@ def qac_tpdish(name, size=None):
 
     Note that ALMATP and VIRTUAL need to already exist.
     """
+    global t2v_arrays    
     qac_tag("tpdish")    
     if size == None:
         if name in t2v_arrays.keys():
@@ -1470,12 +1510,13 @@ if False:
     pdir = '.'
     tp = 'clean0/dirtymap.image'
     psf = 'clean0/dirtymap.psf'
-    ms  = ['sky4.aca.cycle6.ms/','sky4.alma.cycle6.1.ms','sky4.alma.cycle6.2.ms']
+    #ms  = ['sky4.aca.cycle6.ms/','sky4.alma.cycle6.1.ms','sky4.alma.cycle6.2.ms']
+    ms  = ['sky4.aca.cycle6.ms/']
     imsize_s     = 256
     pixel_s      = 0.8
-    phasecenter  = 'J2000 180.0deg -30.0deg'
+    phasecenter  = 'J2000 180.0deg -35.0deg'
 
-    qac_sd_int(pdir + '/clean5', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter)
+    qac_sd_int(pdir + '/clean8', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter)
     qac_sd_int(pdir + '/clean6', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter,usedata='sd')
     qac_sd_int(pdir + '/clean7', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter,usedata='int')
 
@@ -1494,8 +1535,43 @@ def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
     if True:
         print("SDINT experimental version, API may change")
 
+    qac_project(project)
+
+    if True:
+        # if there is only one channel in input, use a 2 channel map. workaround a CASA problem
+        print("SDINT fixing for single channel",project)
+        # first we need a single vis
+        vis1 = '%s/allvis.ms' % project
+        concat(vis=ms,concatvis=vis1,copypointing=False)
+        #
+        ia.open(tp)
+        mybeam = ia.restoringbeam()
+        ia.close()
+        #
+        sd1 = '%s/sd.im' % project     # copy of SD
+        print('sd1',sd1)
+        os.system('cp -R %s %s' % (tp,sd1))
+        ia.open(sd1)
+        mycoords = ia.coordsys().torecord()
+        mycoords['spectral2']['wcs']['crval'] += mycoords['spectral2']['wcs']['cdelt']
+        ia.setcoordsys(mycoords)
+        ia.close()
+        sd2 = '%s/sd2.im' % project     # 2 plane version
+        tmpia=ia.imageconcat(outfile=sd2, infiles=[tp, sd1],axis=3,overwrite=True)
+        tmpia.close()
+        tp = sd2
+        numchan = 2
+
+    ia.open(tp)
+    ia.setrestoringbeam(remove=True)
+    for i in range(numchan):
+        ia.setrestoringbeam(beam=mybeam, log=True, channel=i, polarization=0) 
+    ia.close()
+        
+
     kwargs['gridder']       = 'mosaic'
-    kwargs['deconvolver']   = 'clark'   
+    kwargs['deconvolver']   = 'clark'
+    #
     kwargs['imsize']        = imsize
     kwargs['cell']          = '%garcsec' % pixel
     kwargs['stokes']        = 'I'
@@ -1503,17 +1579,23 @@ def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
     kwargs['phasecenter']   = phasecenter
     # kwargs['vptable']       = vptable
     kwargs['weighting']     = weighting
-    kwargs['specmode']      = 'cube'
+    if False:
+        kwargs['specmode']  = 'cube'
+    else:
+        kwargs['specmode']   = 'mfs'
+        kwargs['deconvolver']= 'mtmfs'    
     kwargs['startmodel']    = startmodel
     # kwargs['restart']       = True
     # kwargs['restoringbeam'] = 'common'
+
+    print('kwargs',kwargs)
 
         
     jointim = sdintimaging(usedata=usedata,
                            sdimage=tp,
                            sdpsf=psf,
                            sdgain=1.0,
-                           vis=ms,
+                           vis=vis1,
                            #
                            imagename = project + '/' + usedata,
                            #
@@ -2189,9 +2271,12 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     
     print("Warning: qac_mac has only been tuned/tested for skymodel")
 
-    # 0. rescale the TP to jy/pixel
-    tpjypp = '%s/sd.jypp' % project
-    rescale(tp,tpjypp)
+    # 0. rescale the TP to jy/pixel   @todo check if that's needed
+    if True:
+        tpjypp = '%s/sd.jypp' % project
+        rescale(tp,tpjypp)
+    else:
+        tpjypp = tp
     #
 
     imsize    = QAC.imsize2(imsize)
@@ -2215,7 +2300,7 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
         deconvolver = 'hogbom'
         deconvolver = 'clark'
 
-    print("Creating MAC imaging using tp=%s vis2=%s tp" % (tp,str(vis2)))
+    print("Creating MAC imaging using tp=%s vis2=%s" % (tp,str(vis2)))
     if Qconcat:
         # due to a tclean() bug, the vis2 need to be run via concat
         # MS has a pointing table, this often complaints, but in workflow5 it actually crashes concat()
@@ -2242,12 +2327,12 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     tclean_args['specmode']      = 'cube'
     tclean_args['startmodel']    = tpjypp
     tclean_args['cyclefactor']   = 5.0
-    tclean_args['cycleniter']    = 100
+    # tclean_args['cycleniter']  = 100
     tclean_args['niter']         = niters[-1]
     for k in kwargs.keys():
         tclean_args[k] = kwargs[k]
         
-    print("TCLEAN(niter=%d0)" % niters[-1])
+    print("TCLEAN(niter=%d)" % niters[-1])
     tclean(vis = vis2, imagename = outim1, **tclean_args)
 
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
@@ -2307,11 +2392,14 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     tclean(vis = vis2, imagename = outim3, **tclean_args)
 
     if Qdebug:
+        qac_stats(tp)
+        qac_stats('%s/int1.image' % project)
         qac_stats('%s/int1.image.pbcor' % project)
         qac_stats('%s/int1.model' % project)
         qac_stats('%s/int2.model' % project)
         qac_stats('%s/int2.feather' % project)
         qac_stats('%s/int2.sm' % project)
+        qac_stats('%s/macint.image' % project)
         qac_stats('%s/macint.image.pbcor' % project)
 
     if do_concat and do_cleanup:
@@ -2338,6 +2426,8 @@ def qac_feather(project, highres=None, lowres=None, label="", niteridx=0, name="
     qac_clean1('sky3/clean3','sky3/sky3.SWcore.ms',  512,0.25,phasecenter=pcvla,niter=[0,500,1000,2000,3000,4000,5000])
     qac_tp_otf('sky3/clean3','skymodel.fits',45.0,label="45")
     qac_feather('sky3/clean3',label="45")
+
+    @todo   deal with a missing .pb file
 
     """
     qac_tag("feather")
@@ -3585,6 +3675,12 @@ class QAC(object):
         ...
     
     """
+    @staticmethod
+    def version():
+        """ return version
+        """
+        return _version
+    
     @staticmethod
     def plot(mode=None):
         """  set plot mode to interactive or not
