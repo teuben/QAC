@@ -51,6 +51,10 @@ niter        = [0,500,1000,2000]
 niter        = [0]
 niter        = [0,1000,10000]
 
+# tclean threshold, e.g. '10mJy'. 
+threshold    = None
+threshold    = '48mJy'
+
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
 cfg          = [0]
@@ -81,6 +85,8 @@ SCHWAB       = 0
 
 # scaling factor of TP to match the INT
 wfactor      = 0.01
+# ACA times scaling factor
+afactor      = 3
 # scaling factor to get more mosaic pointings for the edge
 mfactor      = 1.0
 mfactor      = 1.05
@@ -91,6 +97,7 @@ for arg in qac_argv(sys.argv):
     exec(arg)
 
 # derived parameters
+cfg.sort()                         # we need them sorted (see code below)
 ptg   = pdir + '.ptg'              # pointing mosaic for the ptg
 psd   = []                         # accumulate images for qac_psd()
 if maxuv == None:
@@ -98,9 +105,10 @@ if maxuv == None:
 
 # extra tclean arguments
 args = {}
-args['usemask'] = 'pb'
-args['pbmask']  = 0.5
-args['deconvolver']= 'hogbom'
+args['usemask']     = 'pb'
+args['pbmask']      = 0.5
+args['deconvolver'] = 'hogbom'
+args['threshold']   = threshold
 
 # hardcoded
 Qfeather = True
@@ -142,7 +150,7 @@ ms1={}
 for c in cfg:
     if c==0:
         # 3 times integration time in 7m array
-        ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[3*times[0],times[1]])
+        ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[afactor*times[0],times[1]])
     else:
         ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
 # startmodel for later
@@ -174,6 +182,14 @@ if True:
     qac_log("CLEAN1:")
     qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, **args)
     print("ARGS:",args)
+    # im.advice vs au.pickCellSize()   NOTE:pickCellSize()  cannot handle a list of vis
+    a,b,c = aU.pickCellSize(tpms, imsize=True, cellstring=True)
+    print("pickCellSize(TP)",a,b,c)
+    a,b,c = aU.pickCellSize(intms[-1], imsize=True, cellstring=True)
+    print("pickCellSize(INT)",a,b,c)
+
+tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')    
+
 
 qac_log("PLOT and STATS:")
 for idx in range(1):
@@ -238,6 +254,7 @@ if False:
 else:
     qac_clean(pdir+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False, **args)
     qac_tweak(pdir+'/clean3','tpint',niter)
+    
 psd.append(pdir+'/clean3/tpint.image.pbcor')
 psd.append(pdir+'/clean3/skymodel.smooth.image')        
 
