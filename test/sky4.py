@@ -43,6 +43,10 @@ imsize_s     = 1120
 pixel_s      = 0.21
 box          = '150,150,970,970'
 
+# export smooth in arcsec? 
+esmooth      = None
+esmooth      = 2.0
+
 # number of TP cycles
 nvgrp        = 4
 
@@ -217,14 +221,14 @@ if Qmac:
     qac_mac(test,sdimage,intms, imsize_s,pixel_s,niter=niter,phasecenter=phasecenter, **args)
     if True:
         qac_fits(sdimage,                      test+'/sky_sdimage_box1.fits',        box=box, stats=True)        
-        qac_fits(test+'/int1.image',           test+'/sky_int0.image_box1.fits',     box=box, stats=True, smooth=2)
-        qac_fits(test+'/int1.image.pbcor',     test+'/sky_int1.image_box1.fits',     box=box, stats=True, smooth=2)
-        qac_fits(test+'/int1.model',           test+'/sky_int1.model_box1.fits',     box=box, stats=True, smooth=2)
-        qac_fits(test+'/int2.model',           test+'/sky_int2.model_box1.fits',     box=box, stats=True, smooth=2)
-        qac_fits(test+'/int2.image',           test+'/sky_int2.image_box1.fits',     box=box, stats=True, smooth=2)
-        qac_fits(test+'/int2.feather',         test+'/sky_int2.feather_box1.fits',   box=box, stats=True, smooth=2)
-        qac_fits(test+'/int2.sm',              test+'/sky_int2.sm_box1.fits',        box=box, stats=True, smooth=2)
-        qac_fits(test+'/macint.image.pbcor',   test+'/sky_int3.image_box1.fits',     box=box, stats=True, smooth=2)
+        qac_fits(test+'/int1.image',           test+'/sky_int0.image_box1.fits',     box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/int1.image.pbcor',     test+'/sky_int1.image_box1.fits',     box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/int1.model',           test+'/sky_int1.model_box1.fits',     box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/int2.model',           test+'/sky_int2.model_box1.fits',     box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/int2.image',           test+'/sky_int2.image_box1.fits',     box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/int2.feather',         test+'/sky_int2.feather_box1.fits',   box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/int2.sm',              test+'/sky_int2.sm_box1.fits',        box=box, stats=True, smooth=esmooth)
+        qac_fits(test+'/macint.image.pbcor',   test+'/sky_int3.image_box1.fits',     box=box, stats=True, smooth=esmooth)
 
     imregrid(imagename=otfmap,                    # input SD needs to be regridded, kind of silly, qac_mac could do that
              template=sdimage,
@@ -419,18 +423,18 @@ if len(psd) > 0:
 if Qexport:
     os.chdir(pdir)
     qac_project('export')
-    qac_fits('clean3/skymodel_3.smooth.image',         'export/sky_model_box1.fits',   box=box, stats=True)
-    qac_fits('clean3/int_3.image.pbcor',               'export/sky_int_box1.fits',     box=box, stats=True)
-    qac_fits('clean3/tpint_3.image.pbcor',             'export/sky_tpint_box1.fits',   box=box, stats=True)
-    qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True)
-    qac_fits('clean3/feather_3.image.pbcor',           'export/sky_feather_box1.fits', box=box, stats=True)
-    qac_fits('clean3/ssc_3.image',                     'export/sky_ssc_box1.fits',     box=box, stats=True)
-    qac_fits('clean4/int.image.pbcor',                 'export/sky_cheat1_box1.fits',  box=box, stats=True)
-    qac_fits('clean4/tpint.image.pbcor',               'export/sky_cheat2_box1.fits',  box=box, stats=True)
-    qac_fits('clean4/feather.image.pbcor',             'export/sky_cheat3_box1.fits',  box=box, stats=True)
-    qac_fits('clean4/ssc.image',                       'export/sky_cheat4_box1.fits',  box=box, stats=True)            
-    qac_fits('clean7/int1.image.pbcor',                'export/sky_mac1_box1.fits',    box=box, stats=True)
-    qac_fits('clean7/macint.image.pbcor',              'export/sky_mac3_box1.fits',    box=box, stats=True)
+    qac_fits('clean3/skymodel_3.smooth.image',         'export/sky_model_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits('clean3/int_3.image.pbcor',               'export/sky_int_box1.fits',     box=box, stats=True, smooth=esmooth)
+    qac_fits('clean3/tpint_3.image.pbcor',             'export/sky_tpint_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits('clean3/feather_3.image.pbcor',           'export/sky_feather_box1.fits', box=box, stats=True, smooth=esmooth)
+    qac_fits('clean3/ssc_3.image',                     'export/sky_ssc_box1.fits',     box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/int.image.pbcor',                 'export/sky_cheat1_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/tpint.image.pbcor',               'export/sky_cheat2_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/feather.image.pbcor',             'export/sky_cheat3_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/ssc.image',                       'export/sky_cheat4_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean7/int1.image.pbcor',                'export/sky_mac1_box1.fits',    box=box, stats=True, smooth=esmooth)
+    qac_fits('clean7/macint.image.pbcor',              'export/sky_mac3_box1.fits',    box=box, stats=True, smooth=esmooth)
     
 
 
