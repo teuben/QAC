@@ -1521,7 +1521,7 @@ if False:
     qac_sd_int(pdir + '/clean7', tp, ms, psf, imsize_s, pixel_s, niter=1000, phasecenter=phasecenter,usedata='int')
 
 def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
-               imsize=512, pixel=0.5, niter=[0],  weighting="natural", startmodel=None, phasecenter=None,
+               imsize=512, pixel=0.5, niter=[0],  startmodel=None, phasecenter=None,
                usedata = 'sdint',     # 'sd', 'int', 'sdint'
                sdgain = 0.1,
                **kwargs):
@@ -1570,7 +1570,7 @@ def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
         
 
     kwargs['gridder']       = 'mosaic'
-    kwargs['deconvolver']   = 'clark'
+    kwargs['deconvolver']   = 'hogbom'     # clark ?
     #
     kwargs['imsize']        = imsize
     kwargs['cell']          = '%garcsec' % pixel
@@ -1578,7 +1578,8 @@ def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
     kwargs['pbcor']         = True
     kwargs['phasecenter']   = phasecenter
     # kwargs['vptable']       = vptable
-    kwargs['weighting']     = weighting
+    kwargs['weighting']     = 'briggs'
+    kwargs['robust']        = 0.5
     if False:
         kwargs['specmode']  = 'cube'
     else:
@@ -1756,7 +1757,7 @@ def qac_noise(noise, *args, **kwargs):
 
     #-end of qac_noise()
 
-def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="",  t=True, do_concat=False, **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="",  t=True, do_concat=False, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
 
@@ -1770,7 +1771,6 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural
     imsize       512  (list of 2 is allowed if you need rectangular area)
     pixel        0.5 arcsec
     niter        0 or more, can be a list as well, e.g. [0,1000,3000]
-    weighting    "natural"
     startmodel   Jy/pixel starting model [ignored in clean() mode]
     phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
     t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
@@ -1778,6 +1778,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural
     **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
 
     Note that clean() uses a different naming convention (e.g. .flux)
+
+    @todo    normalize the default tclean_args parameters in qac_clean1() and qac_clean()
     
     """
     qac_tag("clean1")
@@ -1824,7 +1826,6 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural
         deconvolver = 'multiscale'
     else:
         deconvolver = 'hogbom'
-        deconvolver = 'clark'
 
     if False:
         if type(ms) != type([]):
@@ -1857,7 +1858,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural
         tclean_args['pbcor']         = True
         tclean_args['phasecenter']   = phasecenter
         tclean_args['vptable']       = vptable
-        tclean_args['weighting']     = weighting
+        tclean_args['weighting']     = 'briggs'
+        tclean_args['robust']        = 0.5
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = True
@@ -1886,7 +1888,8 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural
         clean_args['stokes']        = 'I'
         clean_args['pbcor']         = True
         clean_args['phasecenter']   = phasecenter
-        clean_args['weighting']     = weighting
+        clean_args['weighting']     = 'briggs'
+        clean_args['robust']        = 0.5
         clean_args['mode']          = 'velocity'     #   only for cont?
         clean_args['modelimage']    = startmodel
         for k in line.keys():
@@ -1910,11 +1913,11 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural
             clean_args['modelimage']    = ""
         # for niter
             
-    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))
     
     #-end of qac_clean1()
 
-def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="",  t=True, **line):
+def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="",  t=True, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS) - faster niterlist version using 
 
@@ -1928,7 +1931,6 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
     imsize       512  (list of 2 is allowed if you need rectangular area)
     pixel        0.5 arcsec
     niter        0 or more, can be a list as well, e.g. [0,1000,3000]
-    weighting    "natural"
     startmodel   Jy/pixel starting model [ignored in clean() mode]
     phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
     t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
@@ -1968,7 +1970,6 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
         deconvolver = 'multiscale'
     else:
         deconvolver = 'hogbom'
-        deconvolver = 'clark'
         
     if type(ms) != type([]):
         vptable = ms + '/TP2VISVP'
@@ -1997,7 +1998,8 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
         tclean_args['pbcor']         = True
         tclean_args['phasecenter']   = phasecenter
         tclean_args['vptable']       = vptable
-        tclean_args['weighting']     = weighting
+        tclean_args['weighting']     = 'briggs'
+        tclean_args['robust']        = 0.5
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = True
@@ -2031,7 +2033,8 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
         clean_args['stokes']        = 'I'
         clean_args['pbcor']         = True
         clean_args['phasecenter']   = phasecenter
-        clean_args['weighting']     = weighting
+        clean_args['weighting']     = 'briggs'
+        clean_args['robust']        = 0.5
         clean_args['mode']          = 'velocity'     #   only for cont?
         clean_args['modelimage']    = startmodel
         for k in line.keys():
@@ -2050,11 +2053,11 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], weighting="natura
             clean_args['modelimage']    = ""
         # for niter
             
-    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))
     
     #-end of qac_clean1f()
     
-def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natural", startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
+def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="", do_concat = False, do_int = False, do_cleanup = True, **line):
     """
     Simple interface to do a tclean() joint deconvolution of one TP and one or more MS
     
@@ -2098,8 +2101,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natu
         deconvolver = 'multiscale'
     else:
         deconvolver = 'hogbom'
-        deconvolver = 'clark'
-    
+        
     if do_int:
         print("Pure interferometer imaging using vis1=%s" % str(vis1))
         # tclean() mode
@@ -2112,7 +2114,9 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natu
         tclean_args['pbcor']         = True
         tclean_args['phasecenter']   = phasecenter
         # tclean_args['vptable']       = vptable
-        tclean_args['weighting']     = weighting
+        tclean_args['weighting']     = 'briggs'
+        tclean_args['robust']        = 0.5
+        
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = True
@@ -2126,7 +2130,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natu
             tclean_args['startmodel'] = ""
             tclean_args['restart']    = False
             
-        print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))        
+        print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))        
     else:
         print("Skipping pure interferometer imaging using vis1=%s" % str(vis1))
 
@@ -2154,6 +2158,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natu
     tclean_args['phasecenter']   = phasecenter
     # tclean_args['vptable']       = vptable
     tclean_args['weighting']     = weighting
+    tclean_args['robust']        = 0.5
     tclean_args['specmode']      = 'cube'
     tclean_args['startmodel']    = startmodel
     tclean_args['restart']       = True
@@ -2167,7 +2172,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], weighting="natu
         tclean_args['startmodel'] = ""
         tclean_args['restart']    = False
 
-    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))    
 
     if do_concat and do_cleanup:
         print("Removing " + outms)
@@ -2196,7 +2201,7 @@ def qac_tweak(project, name = "dirtymap", niter = [0], **kwargs):
 
     #-end of qac_tweak()        
 
-def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natural", phasecenter="", do_concat = False, do_cleanup = True, **kwargs):        
+def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, phasecenter="", do_concat = False, do_cleanup = True, **kwargs):        
     """Model Assisted Cleaning (Kauffmann)
     
     tp         tp image (Jy/beam)
@@ -2298,7 +2303,6 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
         deconvolver = 'multiscale'
     else:
         deconvolver = 'hogbom'
-        deconvolver = 'clark'
 
     print("Creating MAC imaging using tp=%s vis2=%s" % (tp,str(vis2)))
     if Qconcat:
@@ -2323,7 +2327,8 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     tclean_args['stokes']        = 'I'
     tclean_args['pbcor']         = True
     tclean_args['phasecenter']   = phasecenter
-    tclean_args['weighting']     = weighting
+    tclean_args['weighting']     = "briggs"
+    tclean_args['robust']        = 0.5
     tclean_args['specmode']      = 'cube'
     tclean_args['startmodel']    = tpjypp
     tclean_args['cyclefactor']   = 5.0
@@ -2335,7 +2340,7 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, weighting="natur
     print("TCLEAN(niter=%d)" % niters[-1])
     tclean(vis = vis2, imagename = outim1, **tclean_args)
 
-    print("Wrote %s with %s weighting %s deconvolver" % (outim1,weighting,deconvolver))    
+    print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))    
 
     # 2. get the positive interferometer-only clean components
     #    though one could argue the negative components are to
