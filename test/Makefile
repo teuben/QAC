@@ -350,7 +350,10 @@ sky0f2:
 	grep QAC_STATS $@.log
 	@echo This is SD made by simobserve
 
-
+#  dc2019:   using Toshi's gmc input
+sky7:
+	$(CASA) sky7.py pdir='"$@"' > $@.log 2>&1; cp sky7.py $@.log $@
+	grep QAC_STATS $@.log
 
 #     67 field, cfg=0,1,4;  takes about 40-50 mins
 sky4:
@@ -401,8 +404,25 @@ sky4i:
 	$(CASA) sky4.py pdir='"$@"' times='[10.05,0.5]' afactor=2  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 
+# dc2019:   with skymodel-d.fits
+sky4j:
+	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 
+# dc2019:   with skymodel-e.fits
+sky4k:
+	$(CASA) sky4.py pdir='"$@"' model='"skymodel-e.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 
+# dc2019:   with skymodel-d.fits, less coverage on edges
+sky4l:
+	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003 mfactor=1.0 times='[2.5,1]'  > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+
+# dc2019:   with skymodel-d.fits, more beam overlap - has 137 pointings; use 22 cycles in about 5 hours
+sky4m:
+	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003 grid=20 times='[301.4/60.0,0.1]' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 
 # qac_mac tests
 sky40:
