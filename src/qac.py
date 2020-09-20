@@ -20,7 +20,14 @@ try:
 except:
     import pyfits as fits
 
-_version = "2-sep-2020"
+_version  = "21-sep-2020"
+_is_casa6 = None
+
+try:
+    import casatools
+    _is_casa6 = True    
+except:
+    _is_casa6 = False
 
 print("Loading QAC %s" % _version)
 
@@ -1401,9 +1408,9 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
     
     # assert input files
     QAC.assertf(imagename)
-    
+
     if dish3 != None:
-        print("Warning: dish3=%g" % dish3)
+        print("Warning: tp2vis._dish3=%g" % dish3)
 
     if pixel != None:
         # make a new model
@@ -3582,18 +3589,25 @@ def qac_argv(sysargv):
     Safe argument parser from CASA, removing the CASA dependant ones, including the script name
     
     If you call casa using "casa --nogui -c myscript.py arg1 arg2..."   this function will prepare
-    a new sys.argv[] style list for you 
+    a new sys.argv[] style list for you
+    
+    CASA5 and CASA6 differ in the way they re-populate sys.argv
+       casa5:  ['casa', '-c', 'myscript.py']
+       casa6:  ['myscript.py']
     
     Typical usage:
 
          import sys
 
          for arg in qac_argv(sys.argv):
-         exec(arg)
+             exec(arg)
 
     """
     #print("PJT: ",sysargv)
-    return sysargv[3:]
+    if _is_casa6:
+        return sysargv[1:]
+    else:
+        return sysargv[3:]
 
 def qac_initkeys(keys, argv=[]):
     QAC.keys = {}
