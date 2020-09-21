@@ -1,11 +1,15 @@
 #
-#  This is a snippet of python code you can place in ~/.casa/init.py
-#  to automatically start up QAC in your CASA5 session. For example
-#  the first time you can do:
-#       cat casa.init.py >> ~/.casa/init.py
+#  Code snippets to add modules to CASA can be added to the following files
 #
-#  Probably better, you can directly execfile this
+#  In CASA5:   init.py   and  prelude.py
+#  In CASA6:   config.py and  startup.py
+#
+#  You can add the following line
+#
 #       execfile( os.environ['HOME'] + '/.casa/QAC/casa.init.py' )
+#
+#  to ~/.casa/init.py  (CASA5) or ~/.casa/startup.py (CASA6)
+#
 #  assuming you have placed QAC (or a symlink) in ~/.casa
 #
 #  A few other common examples of enhancing your CASA have been given
@@ -16,7 +20,6 @@
 #  in the CASA startup. Most likely you will need to tinker in the init.py
 #  since that's being read just before the CASA prompt appears.
 #
-#  @todo  For CASA6 this probably should go into ~/.casa/startup.py
 
 import os, sys
 
@@ -47,11 +50,11 @@ if False:
 
 if False:
     print("Adding SD2vis_1.4")
-    execfile("/home/teuben/.casa/SD2vis_1.4/mytasks.py")
+    execfile("/home/teuben/.casa/SD2vis_1.4/mytasks.py",globals())
 
 if False:
     print("Adding casairing_1.1")
-    execfile('/astromake/opt/casa/Nordic_Tools/casairing_1.1/mytasks.py')
+    execfile('/astromake/opt/casa/Nordic_Tools/casairing_1.1/mytasks.py',globals())
 
 
 #   QAC version 6-aug-2019
@@ -63,32 +66,32 @@ if False:
 #     e.g.      ln -s tp2vis.git tp2vis
 #               ln -s distribute.git distribute
 #   - note that this is the order of searching for tp2vis.py:   contrib, distribute, tpvis
+#   - note the CASA6 execfile has globals() and the order of loading makes a difference
 try:
     if sys.path[0] != "":   sys.path.insert(0,'')                  # ipython5 took this out, we put it back
     qac_root  = os.environ['HOME'] + '/.casa/QAC'                  # SET THIS TO YOUR LOCATION OF QAC or use a symlink
-    py_files  = ['src/qac',
-                 'src/ssc',
-                 'src/plot',
-                 'contrib/tp2vis',
-                 'distribute/tp2vis',
-                 'tp2vis/tp2vis',
-                 'contrib/sdint_helper',
-                 'contrib/sdint_imager',
+    py_files  = ['contrib/tp2vis.py',
+                 'distribute/tp2vis.py',
+                 'tp2vis/tp2vis.py',
+                 'src/qac.py',
+                 'src/ssc.py',
+                 'src/plot.py',
+                 #'contrib/sdint_helper.py',
+                 #'contrib/sdint_imager.py',
                  ]
     sys.path.append(qac_root + '/src')
     work_dir = os.getcwd()
     os.chdir(qac_root)
     print("QAC: Root %s" % qac_root)
-    for py in py_files:
-        p = py + '.py'
+    for p in py_files:
         if os.path.exists(p):
             print("QAC: Load %s" % p)
             if p.rfind('/') < 0:
-                execfile(p)
+                execfile(p,globals())
             else:
                 # need to execfile() in the directory in order for local import to work
                 os.chdir(p[:p.rfind('/')])
-                execfile(p[p.rfind('/')+1:])
+                execfile(p[p.rfind('/')+1:],globals())
                 os.chdir(qac_root)
         else:
             print("QAC: Skip %s" % p)
