@@ -3,15 +3,18 @@
 QAC provides a set of functions that mostly call CASA tools and tasks
 to help you combining data from a single dish and interferometer.
 QAC hides some of the complexity of writing CASA scripts and
-provide a simple interface to array combination tools and tasks in
+provide a simpler interface to array combination tools and tasks in
 CASA.
+
+An alternative abbreviation to QAC: Quick Access to CASA.
 
 This project was conceived alongside the TP2VIS project, where it was
 used to provide an easier way to call CASA, and perform regression
 tests. We still keep these within QAC as they are not distributed with
 [TP2VIS](https://github.com/tp2vis/distribute). In an earlier version
-these functions were called QTP.  We also use QAC for an ngVLA design
-study.
+these functions were called QTP.  We also used QAC for an ngVLA design
+study, and was matured during the DC2019 project to deal with the
+new style CASA6/python3.
 
 See the
 [INSTALL](INSTALL.md)
