@@ -1,12 +1,5 @@
 #    Various tests for tp2vis and other QAC methods
 
-TESTS = bench bench0 bench1 \
-        sky0 sky1 sky2 \
-	cas_11271a cas_11271b \
-        test1 test2 test3 test4 test5
-
-#TESTS = bench bench0 bench1 sky1 test1 test2 test3 test4 test5
-
 SLIDES = slide1 slide2 slide3 slide4 slide6 slide7 slide8 slide9 slide10
 SLIDES = slide6 slide7 slide8 slide9 slide10
 
@@ -37,19 +30,23 @@ DATA1   = M100_TP_CO_cube.bl.image
 DATA2   = M100_aver_7.ms
 DATA3   = M100_aver_12.ms
 DATA4   = skymodel.fits
-DATA5   = skymodel-b.fits
+DATA5   = skymodel-a.fits
+DATA6   = skymodel-b.fits
+DATA7   = skymodel-c.fits
+DATA8   = skymodel-d.fits
+# GMC: See also sky5.py
+# gmc_120L.sd.image.fits
 
 data:	data1 data2 data3 data4 data4
 
 data1:	$(DATA1)
-
 data2:  $(DATA2)
-
 data3:  $(DATA3)
-
 data4:  $(DATA4)
-
 data5:  $(DATA5)
+data6:  $(DATA6)
+data7:  $(DATA7)
+data8:  $(DATA8)
 
 $(DATA1):
 	ln -s ../data/$@
@@ -60,6 +57,12 @@ $(DATA3):
 $(DATA4):
 	ln -s ../data/$@
 $(DATA5):
+	ln -s ../data/$@
+$(DATA6):
+	ln -s ../data/$@
+$(DATA7):
+	ln -s ../data/$@
+$(DATA8):
 	ln -s ../data/$@
 
 # a few benchmarks
@@ -94,7 +97,7 @@ bench70:
 	cp bench70.log bench70
 	tail -8 bench70.log
 
-#       Slides to show off some examples features
+#       Slides to show off some examples features; takes a long long time
 
 slides:	$(SLIDES)
 
@@ -304,7 +307,6 @@ sky2_1i:
 	tail -20 sky2_1i.log
 
 
-
 sky0:
 	$(CASA) sky0.py test='"sky0"' > sky0.log 2>&1
 	grep QAC_STATS sky0.log
@@ -335,6 +337,7 @@ sky0e:
 # DC2019: show that mosaic=0,1 make a difference on a single pointing (grid=0)
 #         the pbcor map seems to show that the PB model is not good at the edges
 # Takes about 20"
+# with zoom it takes 75"
 sky0f0:
 	$(CASA) sky0.py pdir='"$@"' niter='[0]' grid=0 cfg='[]' mosaic=0 model='"skymodel-b.fits"'  > $@.log 2>&1; cp sky0.py $@.log $@
 	grep QAC_STATS $@.log
@@ -384,8 +387,9 @@ sky4e1:
 	$(CASA) sky4.py pdir='"sky4e"' mfactor=1.1 grid=20 > sky4e.log 2>&1
 	grep QAC_STATS sky4e.log
 
+#  ulimit -n 4096    might be needed here ('too many open files')
 sky4f:
-	$(CASA) sky4.py pdir='"$@"' cfg='[0,1,2,3,4,5]'  > $@.log 2>&1; cp sky4.py $@.log $@
+	$(CASA) sky4.py pdir='"$@"' cfg='[0,1,2,3,4,5]' esmooth=3.0  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 
 
