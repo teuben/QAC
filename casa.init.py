@@ -4,8 +4,9 @@
 #  In CASA5:   init.py   and  prelude.py
 #  In CASA6:   config.py and  startup.py
 #
-#  You can add the following line
+#  You can add the following lines
 #
+#       import os
 #       execfile( os.environ['HOME'] + '/.casa/QAC/casa.init.py' , globals())
 #
 #  to ~/.casa/init.py  (CASA5) or ~/.casa/startup.py (CASA6)
