@@ -50,6 +50,7 @@ def qac_version():
         print("casa:" + casa['version'])        # there is also:   cu.version_string()
         print("data:" + casa['dirs']['data'])
     else:
+        # this works in both CASA5 and CASA6 but depends on "au" having been loaded
         print("casa:" + au.casaVersion)
         print("data:" + os.getenv('CASAPATH').split()[0]+'/data')
         
@@ -2164,7 +2165,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", 
     tclean_args['pbcor']         = True
     tclean_args['phasecenter']   = phasecenter
     # tclean_args['vptable']       = vptable
-    tclean_args['weighting']     = weighting
+    tclean_args['weighting']     = 'briggs'
     tclean_args['robust']        = 0.5
     tclean_args['specmode']      = 'cube'
     tclean_args['startmodel']    = startmodel
@@ -3061,12 +3062,12 @@ def qac_math(outfile, infile1, oper, infile2):
 
     #-end of qac_math()
     
-def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, title=None, plot=None):
+def qac_plot(image, channel=0, box=None, vrange=None, colormap=None, mode=0, title=None, plot=None):
     """
     image      CASA image (fits file should also work)
     channel    which channel (0=first) in case it's a cube
     box        None or [xmin,ymin,xmax,ymax] or 'xmin,ymin,xmax,ymax'
-    range      None or [vmin,vmax]
+    vrange     None or [vmin,vmax]
     colormap   pick a colormap name
                mode=1:  Cube Helix, Greyscale 1, Greyscale 2, Hot Metal 1, Hot Metal 2, Misc. 1 Isophotes, Misc. 2 Topography
                         RGB 1, RGB 2, Rainbow 1, Rainbow 2 [default], Rainbow 3, Rainbow 4, Smooth 1, Smooth 2, Smooth 3, Smooth 4
@@ -3100,10 +3101,10 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
     if mode == 0: mode=2      # our hardcoded default
         
     if mode == 1:
-        if range == None:
+        if vrange == None:
             h0 = imstat(image,chans='%d' % channel)
-            range = [h0['min'][0],h0['max'][0]]
-        raster ={'file': image,  'colorwedge' : True, 'range' : range}    # scaling (numeric), colormap (string)
+            vrange = [h0['min'][0],h0['max'][0]]
+        raster ={'file': image,  'colorwedge' : True, 'range' : vrange}    # scaling (numeric), colormap (string)
         if colormap != None:
             raster['colormap'] = colormap
         zoom={'channel' : channel,
@@ -3112,7 +3113,7 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
             zoom['blc'] = box[0:2]
             zoom['trc'] = box[2:4]
             
-        print("QAC_PLOT: %s range=%s" % (image,str(range)))
+        print("QAC_PLOT: %s vrange=%s" % (image,str(vrange)))
         imview(raster=raster, zoom=zoom, out=out)
     elif mode == 2:
         tb.open(image)
@@ -3130,8 +3131,8 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
             data = d3[box[1]:box[3],box[0]:box[2]]
         else:
             data = d3
-        if range == None:
-            range = [data.min(), data.max()]
+        if vrange == None:
+            vrange = [data.min(), data.max()]
 
         pl.ioff()    # not interactive
         pl.figure(figsize=QAC.figsize())
@@ -3142,7 +3143,7 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
         if cmap == None:
             print("QAC_PLOT unknown colormap=%s" % colormap)
         
-        alplot = pl.imshow(data, origin='lower', vmin = range[0], vmax = range[1], cmap=cmap)
+        alplot = pl.imshow(data, origin='lower', vmin = vrange[0], vmax = vrange[1], cmap=cmap)
         #pl.set_cmap(cmap)
         #alplot.set_cmap(cmap)
         pl.colorbar()
@@ -3152,7 +3153,7 @@ def qac_plot(image, channel=0, box=None, range=None, colormap=None, mode=0, titl
             pl.title('%s chan=%d' % (image,channel))
         else:
             pl.title('%s' % (title))
-        print("QAC_PLOT: %s range=%s   %s" % (image,str(range),out))
+        print("QAC_PLOT: %s vrange=%s   %s" % (image,str(vrange),out))
         pl.savefig(out)
         if False:
             pl.show()
@@ -3208,8 +3209,8 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     #
     print("QAC_PLOT_GRID",images)
     n = len(images)
-    dim = range(n)
-    ppb = range(n)
+    dim = list(range(n))
+    ppb = list(range(n))
     for i in range(n):
         tb.open(images[i])
         d1 = tb.getcol("map").squeeze()
@@ -3262,10 +3263,10 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     # @todo check if enough xgrid[] and ygrid[]
     #
     # placeholders for the data
-    d = range(nrow)
+    d = list(range(nrow))
     i = 0
     for row in range(nrow):
-        d[row] = range(ncol)
+        d[row] = list(range(ncol))
         for col in range(ncol):
             if diff != 0:
                 if col < 2:
