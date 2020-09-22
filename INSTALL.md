@@ -3,7 +3,7 @@
 ## 0) Executive Summary
 
 On a linux machine with "nothing" installed, the following commands should get you to be able
-to run the benchmark  Explanations and alternate ways to install are detailed below. This benchmark
+to run the benchmark.  Explanations and alternate ways to install are detailed below. This benchmark
 should take around 2 minutes to run.
 
     cd ~
@@ -32,6 +32,9 @@ You will need to install CASA before you can use QAC.
 See https://casa.nrao.edu/casa_obtaining.shtml
 
 An example is in the [casa/install_casa](casa/install_casa) shell script.
+
+NOTE:  CASA5 and below use init.py and prelude.py, CASA6 uses config.py and startup.py.
+       
 
 ## 2) QAC and TP2VIS
 
@@ -85,6 +88,15 @@ be in some future release, depending on further development of CASA.
 As it stands now, using the execfile() style to load the correct files
 is the more pragmatic approach, well realizing this will have to be
 replaced when CASA switches to Python 3.
+
+Most scripts that use QAC start with a pdir= that is created, but under certain
+circumstances has expensive datasets that could be re-used. For these it would
+be useful to be re-entrant, like the dc2019 "script4paper" examples.
+
+E.g. pdir='"sky4a"'
+     sdir='"sky4"'
+     sdata='["sky4.aca.cycle6.ms","sky4.alma.cycle6.1.ms","sky4.alma.cycle6.4.ms"]'
+
 
 
 
