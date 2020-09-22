@@ -8,6 +8,8 @@
 #  run this script twice, once with setting the VI1 environment variable set to 1,
 #  and once not set at all. VI1 will cause CASA to to not use new features.
 #
+import pickle
+#from qac import *
 
 pdir         = 'sky0'                               # name of directory within which everything will reside
 model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
@@ -53,9 +55,13 @@ vrange       = None
 # scaling factors
 wfactor      = 0.01
 
+#
+rerun        = 0
+
 # -- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
+    print("ARG",arg)
     exec(arg)
 
 # derived parameters
@@ -68,74 +74,104 @@ qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
-qac_project(test)
+if rerun == 0:
+    qac_project(test)
 
-p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
+    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
-qac_log("TP2VIS:")
-tpms = qac_tp_vis(test,model,ptg,phasecenter=phasecenter,fix=0)
+    qac_log("TP2VIS:")
+    tpms = qac_tp_vis(test,model,ptg,phasecenter=phasecenter,fix=0)
 
-qac_log("CLEAN1:")
-tp2viswt(tpms,wfactor,'multiply')
-line = {}
-if mosaic == 0:
-    line['gridder']     =  'standard'      # 'standard' or 'mosaic' 
-qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
+    qac_log("CLEAN1:")
+    
+    tp2viswt(tpms,wfactor,'constant')
+    line = {}
+    if mosaic == 0:
+        line['gridder']     =  'standard'      # 'standard' or 'mosaic' 
+    qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
 
-qac_log("PLOT and STATS:")
-for idx in range(len(niter)):
-    im1 = test+'/clean0/dirtymap%s.image'       % QAC.label(idx)
-    im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
-    qac_plot(im1,mode=1)      # casa based plot w/ colorbar
-    qac_stats(im2)            # noise flat
-    qac_fits(im2,box=box,stats=True)
-
-if len(cfg) > 0:
-    # create an MS based on a model and antenna configuration for ACA/ALMA
-    qac_log("ALMA 7m/12m")
-    ms1={}
-    for c in cfg:
-        if c==0:
-            # 3 times integration time in 7m array
-            ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[3*times[0],times[1]])
-        else:
-            ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
-    intms = ms1.values()
-
-    tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
-
-    # JD clean for tp2vis
-    qac_log("CLEAN with TP2VIS")
-    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False)    
-    #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
-    #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True)
-    qac_tweak(test+'/clean3','tpint',niter)
+    qac_log("PLOT and STATS:")
     for idx in range(len(niter)):
-        im1 = test+'/clean3/int%s.image'               % QAC.label(idx)
-        im2 = test+'/clean3/int%s.image.pbcor'         % QAC.label(idx)
-        im3 = test+'/clean3/tpint%s.image'             % QAC.label(idx)
-        im4 = test+'/clean3/tpint%s.image.pbcor'       % QAC.label(idx)
-        im5 = test+'/clean3/tpint%s.tweak.image.pbcor' % QAC.label(idx)
-        if vrange == None:
-            qac_plot(im1,mode=1)      # casa based plot w/ colorbar
-            qac_plot(im3,mode=1)      # casa based plot w/ colorbar
-        else:
-            qac_plot(im1,mode=2,range=vrange)
-            qac_plot(im3,mode=2,range=vrange)
+        im1 = test+'/clean0/dirtymap%s.image'       % QAC.label(idx)
+        im2 = test+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
+        qac_plot(im1,mode=1)      # casa based plot w/ colorbar
         qac_stats(im2)            # noise flat
-        qac_stats(im4)            # noise flat
-        #
-        qac_fits(im4,box=box,stats=True)
-        if QAC.iscasa(im5):
-            qac_fits(im5,box=box,stats=True)
+        qac_fits(im2,box=box,stats=True)
 
-    qac_stats(model)
+    if len(cfg) > 0:
+        # create an MS based on a model and antenna configuration for ACA/ALMA
+        qac_log("ALMA 7m/12m")
+        ms1={}
+        for c in cfg:
+            if c==0:
+                # 3 times integration time in 7m array
+                ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[3*times[0],times[1]])
+            else:
+                ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+        intms = list(ms1.values())
+
+        tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
+
+        # JD clean for tp2vis
+        qac_log("CLEAN with TP2VIS")
+        qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False)    
+        #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
+        #qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=True)
+        qac_tweak(test+'/clean3','tpint',niter)
+        for idx in range(len(niter)):
+            im1 = test+'/clean3/int%s.image'               % QAC.label(idx)
+            im2 = test+'/clean3/int%s.image.pbcor'         % QAC.label(idx)
+            im3 = test+'/clean3/tpint%s.image'             % QAC.label(idx)
+            im4 = test+'/clean3/tpint%s.image.pbcor'       % QAC.label(idx)
+            im5 = test+'/clean3/tpint%s.tweak.image.pbcor' % QAC.label(idx)
+            if vrange == None:
+                qac_plot(im1,mode=1)      # casa based plot w/ colorbar
+                qac_plot(im3,mode=1)      # casa based plot w/ colorbar
+            else:
+                qac_plot(im1,mode=2,range=vrange)
+                qac_plot(im3,mode=2,range=vrange)
+            qac_stats(im2)            # noise flat
+            qac_stats(im4)            # noise flat
+            #
+            qac_fits(im4,box=box,stats=True)
+            if QAC.iscasa(im5):
+                qac_fits(im5,box=box,stats=True)
+
+        qac_stats(model)
+    else:
+        intms = []
+        qac_log("no INT work to be done")
+
+    # saving
+    print("QAC_save")
+    pdata = (tpms,intms)
+    pickle.dump(pdata,open(pdir+'/data.pkl','wb'))
 else:
-    qac_log("no INT work to be done")
+    # restoring
+    print("QAC_restore")
+    if False:
+        (tpms,intms) = pickle.load(open(pdir+'/data.pkl','rb'))
+    else:
+        tpms = 'slide29x/tp.ms'
+        intms = ['slide29x/slide29x.aca.cycle6.ms','slide29x/slide29x.alma.cycle6.1.ms','slide29x/slide29x.alma.cycle6.4.ms']
+
+# A loop to make PSF
+if False:
+    # wts = [0.01, 0.02, 0.03]
+    #wts = np.arange(0.04,0.1,0.01)
+    #wts = np.arange(0.005,0.025,0.001)
+    #wts = np.arange(0.001,0.030,0.001)
+    wts = np.arange(0.0002,0.0300,0.0002)
+    for wt in wts:
+        tdir = pdir + '/clean8_%g' % wt
+        tp2viswt(tpms,wt,'constant')
+        qac_clean(tdir,tpms,intms,imsize_s,pixel_s,niter=0,phasecenter=phasecenter,do_int=False,do_concat=False)
+        (r,f) = qac_beam(tdir + '/tpint.psf',plot=tdir+'/tpint.beam.png',array=True)
+        np.savetxt(tdir + '/beam.tab',np.transpose([r,f]))
+            
 
 qac_log("DONE!")
 qac_end()
-
 
 """
  Wt  Flux(kJy)
