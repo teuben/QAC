@@ -33,6 +33,7 @@ help:
 	@echo ""
 	@echo "  install         add QAC execfile to ~/.casa/init.py for CASA to recognize QAC"
 	@echo "  install_casa    install this if you don't have casa yet"
+	@echo "  install_au      (force) re-install of analysisUtils"
 	@echo "  test            confirm all components are working"
 	@echo "  clean           remove the 'distribute' version"
 	@echo ""
