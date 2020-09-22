@@ -11,6 +11,7 @@
 #  to ~/.casa/init.py  (CASA5) or ~/.casa/startup.py (CASA6)
 #
 #  assuming you have placed QAC (or a symlink) in ~/.casa
+#  or alternatively you can copy this file into ~/.casa and hack it.
 #
 #  A few other common examples of enhancing your CASA have been given
 #  here, but except for "au" they are not activated since you will need to
@@ -60,7 +61,7 @@ if False:
     execfile('/astromake/opt/casa/Nordic_Tools/casairing_1.1/mytasks.py',globals())
 
 
-#   QAC version 6-aug-2019
+#   QAC version 22-sep-2020
 #
 #   To select the version of tp2vis to be activated:
 #   - in QAC run "make tp2vis dev" which places two .git repos in QAC
@@ -69,7 +70,7 @@ if False:
 #     e.g.      ln -s tp2vis.git tp2vis
 #               ln -s distribute.git distribute
 #   - note that this is the order of searching for tp2vis.py:   contrib, distribute, tpvis
-#   - note the CASA6 execfile has globals() and the order of loading makes a difference
+#   - note the CASA6 execfile now has globals() and the order of loading makes a difference
 try:
     if sys.path[0] != "":   sys.path.insert(0,'')                  # ipython5 took this out, we put it back
     qac_root  = os.environ['HOME'] + '/.casa/QAC'                  # SET THIS TO YOUR LOCATION OF QAC or use a symlink
