@@ -162,7 +162,7 @@ startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 psd.append(startmodel)
 
 # get a list of MS we got for the INT
-intms = ms1.values()
+intms = list(ms1.values())
 
 qac_log("OTFMAP")
 
