@@ -6,15 +6,15 @@
 #
 #  You can add the following line
 #
-#       execfile( os.environ['HOME'] + '/.casa/QAC/casa.init.py' )
+#       execfile( os.environ['HOME'] + '/.casa/QAC/casa.init.py' , globals())
 #
 #  to ~/.casa/init.py  (CASA5) or ~/.casa/startup.py (CASA6)
 #
 #  assuming you have placed QAC (or a symlink) in ~/.casa
 #
 #  A few other common examples of enhancing your CASA have been given
-#  here, but are not activated since you will need to install them and
-#  put in the correct paths for you.
+#  here, but except for "au" they are not activated since you will need to
+#  install them and put in the correct paths for you.
 #
 #  Note that another startup file ~/.casa/prelude.py is first read, early
 #  in the CASA startup. Most likely you will need to tinker in the init.py
@@ -37,10 +37,13 @@ if False:
 
 # https://casaguides.nrao.edu/index.php/Analysis_Utilities
 # ftp://ftp.cv.nrao.edu/pub/casaguides/analysis_scripts.tar
-if False:
-    print("Adding au")
-    sys.path.append("/astromake/opt/casa/analysis_scripts")
-    import analysisUtils as au
+if True:
+    _au_dir = os.environ['HOME'] + '/.casa/analysis_scripts'
+    if os.path.exists(_au_dir):
+        print("Adding au")
+        sys.path.append(_au_dir)
+        import analysisUtils as au
+        import analysisUtils as aU
 
 # https://www.oso.nordic-alma.se/software-tools.php
 if False:
