@@ -20,7 +20,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "21-sep-2020"
+_version  = "23-sep-2020"
 _is_casa6 = None
 
 try:
@@ -120,18 +120,50 @@ def qac_tmp(prefix, tmpdir='.'):
     return name
 
     #-end of qac_tmp()
-    
 
+def qac_image_desc(image, phasecenter=None, imsize=None, pixel=None):
+    """
+    Return image descriptors for QAC.
+    image          : input image (casa or fits)
+    phasecenter    : if given, passed through 
+    imsize         : if given, passed through 
+    pixel          : if given, passed through
+    
+    e.g.   (phasecenter, imsize, pixel) = qac_image_desc('skymodel.fits')
+    """
+    h0 = imhead(image,mode='list')
+    ia.open(image)
+    h1=ia.summary()
+    ia.close()
+
+    imsize1 = h0['shape'][0]
+    imsize2 = h0['shape'][1]
+    if imsize == None:
+        if imsize1 == imsize2:
+            imsize = imsize1
+        else:
+            imsize = [imsize1,imsize2]
+    if phasecenter == None:
+        _dpr = _apr / 3600.0
+        phasecenter = 'J2000 %gdeg %gdeg' % (h0['crval1'] * _dpr, h0['crval2'] * _dpr)
+    if pixel == None:
+        pixel = abs(h0['cdelt1'] * _apr)
+    print("qac_image_desc(%s) -> " % image, phasecenter, imsize, pixel)
+    return (phasecenter, imsize, pixel)
+
+    #-end of qac_image_desc()
+
+ 
 def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, factor=1.0, outfile=None):
     """
     Generate hex-grid of pointing centers that covers a specified area. 
     Can optionally output in file or as list. Can check for overlap with input image areas
 
-    One can also use simobserve() to generate a pointing file. Note that it has two
+    One can also use simobserve() to generate a pointing file. Note that this has two
     conventions:  maptype = "HEX" or "ALMA". For "HEX" the base of the triangle is horizontal,
     for "ALMA" the base of the triangle is vertical. This is also the shortest distance between
-    two pointings.
-    Our qac_im_ptg() only has one convention: the "HEX" maptype.
+    two pointings, which is supposed to to be FWHM/2 (nyquist)
+    Our qac_im_ptg() only has one convention: the "HEX" maptype (at least for now).
     
     Required Parameters
     -------------------
@@ -1578,8 +1610,7 @@ def qac_sd_int(project, tp, ms, psf,     #  sdimage, vis, sdpsf,
         
 
     kwargs['gridder']       = 'mosaic'
-    kwargs['deconvolver']   = 'hogbom'     # clark ?
-    #
+    kwargs['deconvolver']   = 'hogbom'
     kwargs['imsize']        = imsize
     kwargs['cell']          = '%garcsec' % pixel
     kwargs['stokes']        = 'I'
