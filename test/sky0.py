@@ -12,13 +12,7 @@ import pickle
 #from qac import *
 
 pdir         = 'sky0'                               # name of directory within which everything will reside
-model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.0deg -35.0deg'            # where we want this model to be on the sky
-
-# pick the piece of the model to image, and at what pixel size
-# natively this model is 4096 pixels at 0.05"
-imsize_m     = 4096
-pixel_m      = 0.05
+model        = 'skymodel-b.fits'                    # phasecenter, imsize_m and pixel_m all inherited
 
 # pick the sky imaging parameters (for tclean)
 # The product of these typically will be the same as that of the model (but don't need to)
@@ -68,6 +62,7 @@ for arg in qac_argv(sys.argv):
 test = pdir
 ptg  = test + '.ptg'              # pointing mosaic for the ptg
 
+
 # report, add Dtime
 qac_begin(test,False)
 qac_log("REPORT")
@@ -77,13 +72,13 @@ tp2vis_version()
 if rerun == 0:
     qac_project(test)
 
+    (phasecenter, imsize_m, pixel_m) = qac_image_desc(model)
     p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,outfile=ptg)
 
     qac_log("TP2VIS:")
-    tpms = qac_tp_vis(test,model,ptg,phasecenter=phasecenter,fix=0)
+    tpms = qac_tp_vis(test,model,ptg,fix=0)
 
     qac_log("CLEAN1:")
-    
     tp2viswt(tpms,wfactor,'constant')
     line = {}
     if mosaic == 0:
@@ -105,9 +100,9 @@ if rerun == 0:
         for c in cfg:
             if c==0:
                 # 3 times integration time in 7m array
-                ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[3*times[0],times[1]])
+                ms1[c] = qac_alma(test,model,cycle=7,cfg=c,ptg=ptg, times=[3*times[0],times[1]])
             else:
-                ms1[c] = qac_alma(test,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+                ms1[c] = qac_alma(test,model,cycle=7,cfg=c,ptg=ptg, times=times)
         intms = list(ms1.values())
 
         tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
