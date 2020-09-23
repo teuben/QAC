@@ -129,6 +129,8 @@ qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
+# allow overriding the map area
+(phasecenter, imsize_m, pixel_m) = qac_image_desc(model, phasecenter, imsize_m, pixel_m)
 
 if grid > 0:
     # create a mosaic of pointings (used for both 12m and 7m)
@@ -172,7 +174,7 @@ beam = '%sarcsec' % tp_beam
 otfmap = '%s/skymodel_orig.otf' % pdir
 print("Creating %s" % otfmap)
 imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otfmap+'.tmp',overwrite=True)
-imtrans(otfmap+'.tmp',otfmap,order='0132')    # make sure it's an RDSF cubee
+imtrans(otfmap+'.tmp',otfmap,order='0132')    # make sure it's an RDSF cube
 
 qac_log("TP2VIS")
 if otf == 0:
