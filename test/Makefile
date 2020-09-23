@@ -362,71 +362,85 @@ sky7:
 sky4:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4a:
 	$(CASA) sky4.py pdir='"$@"' wfactor=1 > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4b:
 	$(CASA) sky4.py pdir='"$@"' wfactor=0.1 > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4c:
 	$(CASA) sky4.py pdir='"$@"' wfactor=0.01 > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4d:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4d1:
 	$(CASA) sky4.py pdir='"sky4d"' wfactor=0.001 > sky4d.log 2>&1
 	grep QAC_STATS sky4d.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4e1:
 	$(CASA) sky4.py pdir='"sky4e"' mfactor=1.1 grid=20 > sky4e.log 2>&1
 	grep QAC_STATS sky4e.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 #  ulimit -n 4096    might be needed here ('too many open files')
 sky4f:
 	$(CASA) sky4.py pdir='"$@"' cfg='[0,1,2,3,4,5]' esmooth=3.0  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
-
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:    Dirk's suggestion to not use anything 12m compact
 sky4g:
 	$(CASA) sky4.py pdir='"$@"' cfg='[0,6]'  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:   with skymodel-c.fits
 sky4h:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-c.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:   better UV coverage per field?
 sky4i:
 	$(CASA) sky4.py pdir='"$@"' times='[10.05,0.5]' afactor=2  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:   with skymodel-d.fits
 sky4j:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:   with skymodel-e.fits
 sky4k:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-e.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:   with skymodel-d.fits, less coverage on edges
 sky4l:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003 mfactor=1.0 times='[2.5,1]'  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # dc2019:   with skymodel-d.fits, more beam overlap - has 137 pointings; use 22 cycles in about 5 hours
 sky4m:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003 grid=20 times='[301.4/60.0,0.1]' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 # qac_mac tests
 sky40:
