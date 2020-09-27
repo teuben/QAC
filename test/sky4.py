@@ -25,6 +25,11 @@ pdir         = 'sky4'                               # name of directory within w
 model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.0deg -35.0deg'            # where we want this model to be on the sky
 
+# alternate way to provide the input TP and MS via Toshi's simulations
+# they need to be defined in a python execfile'able where the variables
+# are defined, e.g. datafile = 'skymodel-b.py'
+datafile     = None
+
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
@@ -100,6 +105,15 @@ import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
 
+# any parameter file?
+if QAC.exists(datafile):
+    qac_log("DATAFILE %s" % datafile)
+    execfile(datafile,globals())
+    if not Qgmc:
+         print("Warning: datafile with Qgmc=False")
+else:    
+    Qgmc = False       # if GMC models from Toshi (needs sd0,ms0)
+    
 # derived parameters
 cfg.sort()                         # we need them sorted (see code below)
 ptg   = pdir + '.ptg'              # pointing mosaic for the ptg
@@ -121,6 +135,7 @@ Qsdint   = False
 Qmac     = True    # new qac_mac
 Qexport  = True
 
+
     
 # report, add Dtime
 qac_begin(pdir,False)
@@ -129,63 +144,99 @@ qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
-# allow overriding the map area
-(phasecenter, imsize_m, pixel_m) = qac_image_desc(model, phasecenter, imsize_m, pixel_m)
-
-if grid > 0:
-    # create a mosaic of pointings (used for both 12m and 7m)
-    p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,factor=mfactor,outfile=ptg)
-else:
-    # create a single pointing 
-    qac_ptg(phasecenter,ptg)
-    p = [phasecenter]
 
 if True:
-    qac_tpdish('ALMATP', dish)
-    qac_tpdish('VIRTUAL',dish)
-    qac_vp(VP,SCHWAB)
+    qac_log("OTFMAP")
+    tp_beam = 56.7                    # @todo is this really good enough
+    beam = '%sarcsec' % tp_beam
+    # otf = model.replace('.fits','.otf')
+    otfmap = '%s/skymodel_orig.otf' % pdir
+    print("Creating %s with beam %s" % (otfmap,beam))
+    imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otfmap+'.tmp',overwrite=True)
+    imtrans(otfmap+'.tmp',otfmap,order='0132')    # make sure it's an RDSF cube
+
+if not Qgmc:
+    # this is where we generate our own simulated data
+    
+    # allow overriding the map area
+    (phasecenter, imsize_m, pixel_m) = qac_image_desc(model, phasecenter, imsize_m, pixel_m)
+
+    if grid > 0:
+        # create a mosaic of pointings (used for both 12m and 7m)
+        p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,factor=mfactor,outfile=ptg)
+    else:
+        # create a single pointing 
+        qac_ptg(phasecenter,ptg)
+        p = [phasecenter]
+
+    if True:
+        qac_tpdish('ALMATP', dish)
+        qac_tpdish('VIRTUAL',dish)
+        qac_vp(VP,SCHWAB)
     
 
-# create a series of MS based on a model and antenna configuration for different ACA/ALMA configurations
-# we do the INT first, so we get a better sized startmodel for tp2vis, in case we rescale the model
-qac_log("ALMA 7m/12m")
+    # create a series of MS based on a model and antenna configuration for different ACA/ALMA configurations
+    # we do the INT first, so we get a better sized startmodel for tp2vis, in case we rescale the model
+    qac_log("ALMA 7m/12m")
 
-# time ratio between 12m : 7m : TP should be 1 : 3 : 4
+    # time ratio between 12m : 7m : TP should be 1 : 3 : 4
 
-ms1={}
-for c in cfg:
-    if c==0:
-        # 3 times integration time in 7m array
-        ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[afactor*times[0],times[1]])
+    ms1={}
+    for c in cfg:
+        if c==0:
+            # 3 times integration time in 7m array
+            ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=[afactor*times[0],times[1]])
+        else:
+            ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
+            
+    # startmodel for later
+    startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
+    psd.append(startmodel)
+
+    # get a list of MS we got for the INT
+    intms = list(ms1.values())
+
+
+    qac_log("TP2VIS")
+    if otf == 0:
+        tpms = qac_tp_vis(pdir,model,ptg,pixel_m,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
     else:
-        ms1[c] = qac_alma(pdir,model,imsize_m,pixel_m,cycle=7,cfg=c,ptg=ptg, phasecenter=phasecenter, times=times)
-# startmodel for later
-startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
-psd.append(startmodel)
+        tpms = qac_tp_vis(pdir,otfmap,ptg,pixel_m,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+        psd.append(otfmap)
 
-# get a list of MS we got for the INT
-intms = list(ms1.values())
-
-qac_log("OTFMAP")
-
-tp_beam = 56.7                    # @todo is this really good enough
-beam = '%sarcsec' % tp_beam
-# otf = model.replace('.fits','.otf')
-otfmap = '%s/skymodel_orig.otf' % pdir
-print("Creating %s" % otfmap)
-imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otfmap+'.tmp',overwrite=True)
-imtrans(otfmap+'.tmp',otfmap,order='0132')    # make sure it's an RDSF cube
-
-qac_log("TP2VIS")
-if otf == 0:
-    tpms = qac_tp_vis(pdir,model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
 else:
-    tpms = qac_tp_vis(pdir,otfmap,ptg,pixel_m,phasecenter=phasecenter,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
-    psd.append(otfmap)
+    # Qgmc=True here
+    # this needs to define:    sd0, ms0{},skymodel0
+    # tpms is generated
+    #
+    qac_log("GMC TP2VIS %s" % sd0)
+
+    (phasecenter, imsize_m, pixel_m) = qac_image_desc(sd0)
+    if grid > 0:
+        # create a mosaic of pointings (used for both 12m and 7m)
+        p = qac_im_ptg(phasecenter,imsize_m,pixel_m,grid,rect=True,factor=mfactor,outfile=ptg)
+    else:
+        # create a single pointing 
+        qac_ptg(phasecenter,ptg)
+        p = [phasecenter]
+
+    tpms = qac_tp_vis(pdir,sd0,ptg,pixel_m,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+
+    qac_log("GMC INTMS")
+    intms = []
+    for c in cfg:
+        for s in ms0[c]:
+            intms.append(s)
+    startmodel = sm0
+    print("INTMS:  %s" % str(intms))
+
 tp2viswt(tpms,wfactor,'multiply')
 
+print("tp2vispl: ",intms,tpms)
+tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')    
+
 if True:
-    qac_log("CLEAN1:")
+    qac_log("CLEAN0: mapping the TPMS")
     qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, **args)
     print("ARGS:",args)
     # im.advice vs au.pickCellSize()   NOTE:pickCellSize()  cannot handle a list of vis
@@ -194,21 +245,15 @@ if True:
     a,b,c = aU.pickCellSize(intms[-1], imsize=True, cellstring=True)
     print("pickCellSize(INT)",a,b,c)
 
-tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')    
-
-
-qac_log("PLOT and STATS:")
-for idx in range(1):
-    im1 = pdir+'/clean0/dirtymap%s.image'       % QAC.label(idx)
-    im2 = pdir+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
-    qac_plot(im1,mode=1)      # casa based plot w/ colorbar
-    qac_stats(im1)            # noise flat
-    qac_stats(im2)            # flux flat
-    if idx==0: psd.append(im2)
+    qac_log("PLOT and STATS:")
+    for idx in range(1):
+        im1 = pdir+'/clean0/dirtymap%s.image'       % QAC.label(idx)
+        im2 = pdir+'/clean0/dirtymap%s.image.pbcor' % QAC.label(idx)
+        qac_plot(im1,mode=1)      # casa based plot w/ colorbar
+        qac_stats(im1)            # noise flat
+        qac_stats(im2)            # flux flat
+        if idx==0: psd.append(im2)
     
-
-tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')
-
 if Qsdint:
     # not working yet
     qac_log("SDINT")
@@ -425,7 +470,7 @@ if len(psd) > 0:
 if Qexport:
     os.chdir(pdir)
     qac_project('export')
-    qac_fits('clean3/skymodel_3.smooth.image',         'export/sky_model_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits('clean3/skymodel.smooth.image',           'export/sky_model_box1.fits',   box=box, stats=True, smooth=esmooth)
     qac_fits('clean3/int_3.image.pbcor',               'export/sky_int_box1.fits',     box=box, stats=True, smooth=esmooth)
     qac_fits('clean3/tpint_3.image.pbcor',             'export/sky_tpint_box1.fits',   box=box, stats=True, smooth=esmooth)
     qac_fits('clean3/tpint_3.tweak.image.pbcor',       'export/sky_tweak_box1.fits',   box=box, stats=True, smooth=esmooth)
