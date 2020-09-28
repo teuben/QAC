@@ -1,11 +1,12 @@
 #  QAC:  "Quick Array Combinations"
 #
-#        These are helper functions for various Array Combination techniques, such as
+#        Helper functions for various Array Combination techniques, such as
 #        Feather, TP2VIS and others.
 #        Some are wrappers around CASA, others are also convenient for regression and performance testing.
 #
 #        The simplicity of these functions is intended to simplify usage of CASA and promote
 #        parameterizing, testing and regressing your scripts.
+#
 #
 
 import os, sys, shutil, math, tempfile, glob
@@ -20,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "23-sep-2020"
+_version  = "27-sep-2020"
 _is_casa6 = None
 
 try:
@@ -1024,7 +1025,7 @@ def qac_flag1(ms1, ms2):
     
     #-end of qac_flag1()
 
-def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg = None, times=[1/3.0, 1], fix=0, noise=0):
+def qac_vla(project, skymodel, imsize=None, pixel=None, phasecenter=None, cfg=1, ptg = None, times=[1/3.0, 1], fix=0, noise=0):
     """
 
     NOTE: each cfg will append its data to any existing data for that same cfg
@@ -1117,7 +1118,7 @@ def qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, p
 
     #-end of qac_vla()
     
-def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=7, cfg=0, ptg = None, times=None, fix=0):
+def qac_alma(project, skymodel, imsize=None, pixel=None, phasecenter=None, cycle=7, cfg=0, ptg = None, times=None, fix=0):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
 
@@ -1181,7 +1182,7 @@ def qac_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=7
 
     #-end of qac_alma()
 
-def qac_carma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=0, ptg = None, times=None, fix=0):
+def qac_carma(project, skymodel, imsize=None, pixel=None, phasecenter=None, cfg=0, ptg = None, times=None, fix=0):
     """
     helper function to create an MS from a skymodel for a given CARMA configuration
 
@@ -1211,7 +1212,7 @@ def qac_carma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=0,
 
     #-end of qac_carma()
     
-def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, ptg = None, times=None, fix=0):
+def qac_generic_int(project, skymodel, imsize=None, pixel=None, phasecenter=None, freq=None, cfg=None, ptg = None, times=None, fix=0):
     """
     generic interferometer; called by qac_vla() and qac_alma()
 
@@ -1224,6 +1225,8 @@ def qac_generic_int(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, 
     fix         - fix=1 remove pointing table
     
     """
+
+    (phasecenter, imsize, pixel) = qac_image_desc(skymodel, phasecenter,imsize,pixel)
 
     imsize    = QAC.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
@@ -1394,7 +1397,7 @@ def qac_tpdish(name, size=None):
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print("QAC_DISH: %s %g %g -> %g %g" % (name,old_size, old_fwhm, size, old_fwhm/r))
 
-def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=None, winpix=0, **line):    
+def qac_tp_vis(project, imagename, ptg=None, pixel=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=None, winpix=0):    
            
     """
       QAC Frontend to call tp2vis() 
@@ -1415,9 +1418,8 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
       ===================
     
       pixel:         pixel size, in arcsec, if to be overriden from the input map. Default: None
+                     This will create a new copy of the input map
                      Note we won't allow you to change the imsize.
-      phasecenter    Defaults to mapcenter (note special format)
-                     e.g. 'J2000 00h48m15.849s -73d05m0.158s'
       rms            if set, this is the TP cube noise to be used to set the weights
       maxuv          maximum uv distance of TP vis distribution (in m)  [10m] 
       nvgrp          Number of visibility group (nvis = 1035*nvgrp)
@@ -1434,8 +1436,6 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
 
       winpix         Tukey window [0]
 
-      line           Dictionary of tclean() parameters, usually the line parameters are useful, e.g.
-                     line = {"restfreq":"115.271202GHz","start":"1500km/s", "width":"5km/s","nchan":5}
     """
     qac_tag("tp_vis")
     
@@ -1457,10 +1457,13 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
         imtrans(imagename2,imagename3,order=['r','d','s','f'])
         imhead(imagename3,mode='put',hdkey='cdelt1',hdvalue='-%garcsec' % pixel)
         imhead(imagename3,mode='put',hdkey='cdelt2',hdvalue='+%garcsec' % pixel)
+        imagename2 = imagename3
+        print("New model written to %s" % imagename2)
     else:
         imagename2 = imagename
 
     # report phasecenter in a proper phasecenter format
+    # it is actually not used here
     h0=imhead(imagename2,mode='list')
     ra  = h0['crval1'] * 180.0 / math.pi
     dec = h0['crval2'] * 180.0 / math.pi
@@ -1468,8 +1471,6 @@ def qac_tp_vis(project, imagename, ptg=None, pixel=None, phasecenter=None, rms=N
     dec_string = const.sixty_string(const.dms(dec),hms=False)
     phasecenter0 = 'J2000 %s %s' % (ra_string, dec_string)
     print("MAP REFERENCE: phasecenter = '%s'" % phasecenter0)
-    if phasecenter == None:
-        phasecenter == phasecenter0
 
     outfile = project + '/tp.ms'
     
@@ -2298,7 +2299,7 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, phasecenter="", 
         f0 = h0['flux'][0]
         sdfac = s0/f0
         
-        print("MAC rescale %s -> %s by %g" % (im1,im2,sdfac))
+        print("MAC nppb rescale %s -> %s by %g" % (im1,im2,sdfac))
         immath(im1,'evalexpr',im2,'IM0/%g' % sdfac)
         imhead(im2, mode='put', hdkey='bunit', hdvalue='Jy/pixel')
         imhead(im2, mode='del', hdkey='bmaj')
@@ -3750,7 +3751,9 @@ class QAC(object):
         return True
         
     @staticmethod
-    def exists(filename):
+    def exists(filename = None):
+        if filename == None:
+            return False
         return os.path.exists(filename)
     
     @staticmethod
