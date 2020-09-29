@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "27-sep-2020"
+_version  = "29-sep-2020"
 _is_casa6 = None
 
 try:
@@ -3691,6 +3691,8 @@ def qac_begin(label="QAC", log=True, plot=False, local=False):
         print('sys.stderr:', sys.stderr)
         QAC.dt = Dtime.Dtime(label)
 
+    print("CASA_logfile: %s" % casalog.logfile())
+
 def qac_end():
     """
     Ending your QAC script.
@@ -3699,7 +3701,9 @@ def qac_end():
     
     See also qac_begin()
     """
-    if QAC.hasdt(): 
+    print("CASA_logfile: %s" % casalog.logfile())
+    
+    if QAC.hasdt():
         QAC.dt.tag("done")
         QAC.dt.end()
         
