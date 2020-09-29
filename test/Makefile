@@ -394,7 +394,8 @@ sky4.tar:   sky4
                         sky4/sky4.alma.cycle6.1.ms \
                         sky4/sky4.alma.cycle6.4.ms \
                         sky4/sky4.py \
-                        sky4/sky4.log
+                        sky4/sky4.log \
+                        sky4/export
 
 
 sky4a:
