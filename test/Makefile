@@ -358,11 +358,44 @@ sky7:
 	$(CASA) sky7.py pdir='"$@"' > $@.log 2>&1; cp sky7.py $@.log $@
 	grep QAC_STATS $@.log
 
+# Toshi using a new sky4 with datafile=
+sky4z:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+# Using a predefined set
+sky4q:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4o:
+	$(CASA) sky4.py pdir='"$@"' otf=1  > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4zz:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-c.sim.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
 #     67 field, cfg=0,1,4;  takes about 40-50 mins
 sky4:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4.tar:   sky4
+	tar cf sky4.tar sky4/skymodel_orig.otf \
+                        sky4/skymodel.im \
+                        sky4/tp.ms \
+                        sky4/sky4.aca.cycle6.ms \
+                        sky4/sky4.alma.cycle6.1.ms \
+                        sky4/sky4.alma.cycle6.4.ms \
+                        sky4/sky4.py \
+                        sky4/sky4.log
+
 
 sky4a:
 	$(CASA) sky4.py pdir='"$@"' wfactor=1 > $@.log 2>&1; cp sky4.py $@.log $@
@@ -396,7 +429,7 @@ sky4e1:
 
 #  ulimit -n 4096    might be needed here ('too many open files')
 sky4f:
-	$(CASA) sky4.py pdir='"$@"' cfg='[0,1,2,3,4,5]' esmooth=3.0  > $@.log 2>&1; cp sky4.py $@.log $@
+	$(CASA) sky4.py pdir='"$@"' cfg='[0,1,2,3,4,5,6]' esmooth=3.0  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
