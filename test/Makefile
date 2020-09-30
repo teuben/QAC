@@ -25,6 +25,9 @@ help:
 
 all:	$(TESTS)
 
+dc2019:
+	@echo Here will be all the tests for DC2019
+
 #  benchmark data are in the QAC/data directory, but need to be symlinked locally
 DATA1   = M100_TP_CO_cube.bl.image
 DATA2   = M100_aver_7.ms
@@ -359,8 +362,15 @@ sky7:
 	grep QAC_STATS $@.log
 
 # Toshi using a new sky4 with datafile=
+# 2L
 sky4z:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+# 120L
+sky4z120:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b120.py"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
@@ -513,7 +523,7 @@ issue12:
 	grep QAC_STATS issue12.log | egrep '(clean3|clean4|mac)'
 
 # dc2019
-# shape of PB via pbcor map of single pointing
+# shape of PB via pbcor map of single pointing of a point source in pointmodel.fits
 issue13:
 	$(CASA) issue13.py pdir='"issue13a"' grid=0  niter='[0]' nvgrp=4    > issue13a.log  2>&1
 	$(CASA) issue13.py pdir='"issue13b"' grid=0  niter='[0]' nvgrp=16   > issue13b.log  2>&1
