@@ -93,9 +93,9 @@ qac_log("TP2VIS:")
 
 # for VP=1, fix=1 doesn't copy our TP2VISVP table
 if VP:
-    tpms = qac_tp_vis(pdir, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, nvgrp=nvgrp, deconv=False, fix=0)
+    tpms = qac_tp_vis(pdir, model, ptg, pixel_m, maxuv=maxuv, nvgrp=nvgrp, deconv=False, fix=0)
 else:
-    tpms = qac_tp_vis(pdir, model, ptg, pixel_m, phasecenter=phasecenter, maxuv=maxuv, nvgrp=nvgrp, deconv=False, fix=1)
+    tpms = qac_tp_vis(pdir, model, ptg, pixel_m, maxuv=maxuv, nvgrp=nvgrp, deconv=False, fix=1)
 
 if clean == 0:
     # print flux at (0,0), the first datapoint of the first pointing
@@ -122,14 +122,18 @@ qac_log("CLEAN1:")
 line = {}
 if True:
     line['usemask']  = 'pb'
-    line['pbmask']   = 0.5             # the default appears to be 0.0 !!
-    # line['normtype'] = 'flatnoise'     # this is supposed to be the default
+    line['pbmask']   = 0.5             # the default appears to be 0.0 !!  Q: IS THIS FOR MOSAIC OR SINGLE POINTING?
+    line['pblimit']  = 0.0             # default is 0.2 (negative values become positive!) - the PSF also depends on this!!!
+    line['pblimit']  = 0.2             # default is 0.2 (negative values become positive!) - the PSF also depends on this!!!
+    # line['normtype'] = 'flatnoise'   # this is supposed to be the default
 if True:
     line['cycleniter'] = cycleniter    # hack for point source because of bad (mismatching) TP beam
 if grid == 0:
     line['gridder'] = 'standard'
+else:
+    line['gridder'] = 'mosaic'    
     
-qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, niter=niter, **line)
+qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, niter=niter, **line)
 tp2vispl(tpms,outfig=pdir+'/tp2vispl.png', uvzoom = dish2*1.2)
 
 qac_fits(pdir+'/clean0/dirtymap.image',         stats=True)
@@ -188,13 +192,14 @@ qac_niter_flux(pdir+'/clean0')
 # qac_smooth(pdir+'/clean0', startmodel, name="dirtymap")
 
 
-i1 = pdir+'/clean0/dirtymap.image.png'
-i2 = pdir+'/clean0/dirtymap_2.image.png'
-i3 = pdir+'/clean0/dirtymap_3.image.png'
-i4 = pdir+'/clean0/skymodel.smooth.png'
-i0 = pdir+'/clean0/montage1.png'
-cmd  = "montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s" % (pdir,i1,i2,i3,i4,i0)
-os.system(cmd)
+if len(niter) > 2:
+    i1 = pdir+'/clean0/dirtymap.image.png'
+    i2 = pdir+'/clean0/dirtymap_2.image.png'
+    i3 = pdir+'/clean0/dirtymap_3.image.png'
+    i4 = pdir+'/clean0/skymodel.smooth.png'
+    i0 = pdir+'/clean0/montage1.png'
+    cmd  = "montage -title %s %s %s %s %s -tile 2x2 -geometry +0+0 %s" % (pdir,i1,i2,i3,i4,i0)
+    os.system(cmd)
 
 # not the right gridding
 # qac_fidelity(pdir+'/clean0/skymodel.smooth',pdir+'/clean0/dirtymap_3.image.png')
