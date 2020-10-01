@@ -396,6 +396,7 @@ sky4:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+#      export for friends
 sky4.tar:   sky4
 	tar cf sky4.tar sky4/skymodel_orig.otf \
                         sky4/skymodel.im \
@@ -424,6 +425,7 @@ sky4c:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+# ? this is sky4
 sky4d:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
