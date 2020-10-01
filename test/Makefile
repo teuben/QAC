@@ -463,6 +463,32 @@ sky4i:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+sky4i_1:
+	$(CASA) sky4.py pdir='"$@"'                     afactor=2 wfactor=0.01 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4i_2:
+	$(CASA) sky4.py pdir='"$@"' times='[10.05,0.5]' afactor=2  wfactor=0.06 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4i_3:
+	$(CASA) sky4.py pdir='"$@"' times='[3.35,0.2]' afactor=2  wfactor=0.05 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4i_4:
+	$(CASA) sky4.py pdir='"$@"'                     afactor=1 wfactor=0.01 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4i_5:
+	$(CASA) sky4.py pdir='"$@"'                     afactor=4 wfactor=0.01 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+
 # dc2019:   with skymodel-d.fits
 sky4j:
 	$(CASA) sky4.py pdir='"$@"' model='"skymodel-d.fits"'  wfactor=0.003   > $@.log 2>&1; cp sky4.py $@.log $@
