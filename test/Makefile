@@ -376,9 +376,19 @@ sky4z120:
 
 # Using a predefined set
 sky4q:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' > $@.log 2>&1; cp sky4.py $@.log $@
-	grep QAC_STATS $@.log
-	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' > $@.log
+	2>&1; cp sky4.py $@.log $@ grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4q1:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,100,200,300]' > $@.log
+	2>&1; cp sky4.py $@.log $@ grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4q2:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,300]'         > $@.log
+	2>&1; cp sky4.py $@.log $@ grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4o:
 	$(CASA) sky4.py pdir='"$@"' otf=1  > $@.log 2>&1; cp sky4.py $@.log $@
@@ -899,6 +909,37 @@ slide29:
 	$(CASA) sky0.py pdir='"slide29a"' niter='[0,1000,3000,10000]'  wfactor=0.001   > slide29a.log  2>&1
 	$(CASA) sky0.py pdir='"slide29b"' niter='[0,1000,3000,10000]'  wfactor=0.01    > slide29b.log  2>&1
 	$(CASA) sky0.py pdir='"slide29c"' niter='[0,1000,3000,10000]'  wfactor=0.1     > slide29c.log  2>&1
+
+.PHONY:   slide30
+
+#    slide30 is a quick sky4 with only clean3/
+#    still, it takes 4h cpu.
+slide30:
+	$(CASA) slide30.py pdir='"$@"' niter='range(0,10000,100)'   > $@.log  2>&1
+	cp slide30.py $@.log $@
+	@echo flux logs
+	$(CASA) sky-flux.py pdir='"$@"' image='"clean3/int_*.image.pbcor"'     > $@/flux-int.log      2>&1
+	$(CASA) sky-flux.py pdir='"$@"' image='"clean3/tpint_*.image.pbcor"'   > $@/flux-tpint.log    2>1&
+	$(CASA) sky-flux.py pdir='"$@"' image='"clean3/feather_*.image.pbcor"' > $@/flux-feather.log  2>1&
+	$(CASA) sky-flux.py pdir='"$@"' image='"clean3/ssc_*.image"'           > $@/flux-ssc.log      2>&1
+	@echo flux table
+	grep -i niter= $@/$@.log |grep TCLEAN|sort | uniq| awk -F= '{print $$2}' | sed s/\)// | sort -n > $@/niter.tab
+	grep QAC_STATS $@/flux-int.log  | awk -F_ '{print $$3}' | sort -n                     > $@/flux-int.tab
+	grep QAC_STATS $@/flux-tpint.log  | grep -v tweak | awk -F_ '{print $$3}' | sort -n   > $@/flux-tpint.tab
+	grep QAC_STATS $@/flux-tpint.log  | grep    tweak | awk -F_ '{print $$3}' | sort -n   > $@/flux-tweak.tab
+	grep QAC_STATS $@/flux-feather.log  | awk -F_ '{print $$3}' | sort -n                 > $@/flux-feather.tab
+	grep QAC_STATS $@/flux-ssc.log  | awk -F_ '{print $$3}' | sort -n                     > $@/flux-ssc.tab
+	@echo flux tables
+	tail +2 $@/niter.tab                         > $@/niter.tabs
+	awk '{print $$6}' $@/flux-int.tab       > $@/flux-int.tabs
+	awk '{print $$6}' $@/flux-tpint.tab     > $@/flux-tpint.tabs
+	awk '{print $$6}' $@/flux-tweak.tab     > $@/flux-tweak.tabs
+	awk '{print $$6}' $@/flux-feather.tab   > $@/flux-feather.tabs
+	awk '{print $$6}' $@/flux-ssc.tab       > $@/flux-ssc.tabs
+	(cd $@; paste niter.tabs flux-int.tabs flux-tpint.tabs flux-tweak.tabs flux-feather.tabs flux-ssc.tabs > flux-all.tabs)
+
+xxx:
+	grep -i niter= slide30.log |grep TCLEAN|sort | uniq| awk -F= '{print $$2}' | sed s/\)// | sort -n 
 
 # need to test a pure gauss beam, since tp2vis has gauss beam
 
