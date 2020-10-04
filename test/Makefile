@@ -368,6 +368,11 @@ sky4z:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+sky4z1:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b1.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
 # 120L
 sky4z120:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b120.py"' > $@.log 2>&1; cp sky4.py $@.log $@
