@@ -946,6 +946,8 @@ xxx:
 # lgm homework; default is clark
 
 # pointsource single field
+# range(0,10)+range(10,140,10)
+# just 12m dishes
 point1:
 	$(CASA) sky1.py pdir='"point1"' model='"pointmodel.fits"' grid=0 niter='[0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,110,120,130]' cfg='[1]' wfactor=1 > point1.log 2>&1
 
