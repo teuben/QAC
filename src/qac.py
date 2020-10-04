@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "29-sep-2020"
+_version  = "3-oct-2020"
 _is_casa6 = None
 
 try:
@@ -1797,7 +1797,7 @@ def qac_noise(noise, *args, **kwargs):
 
     #-end of qac_noise()
 
-def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="",  t=True, do_concat=False, **line):
+def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="", do_concat=False, **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS)
 
@@ -1887,7 +1887,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", pha
     if vptable != None:
         vp.summarizevps()        
 
-    if t == True:
+    if True:
         # tclean() mode
         tclean_args = {}
         tclean_args['gridder']       = 'mosaic'
@@ -1903,13 +1903,15 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", pha
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = True
+        tclean_args['calcres']       = True
+        tclean_args['calcpsf']       = True        
         # tclean_args['restoringbeam'] = 'common'
         for k in line.keys():
             tclean_args[k] = line[k]
 
-        for niter in niters:
-            print("TCLEAN(niter=%d)" % niter)
-            tclean_args['niter']      = niter
+        for i in range(len(niters)):
+            print("TCLEAN(niter=%d)" % niters[i])
+            tclean_args['niter']  = niters[i]
             if do_concat:
                 print("Using concat to bypass tclean bug - also using copypointing=False")
                 concat(vis=vis1,concatvis=outim1+'.tmpms',copypointing=False)
@@ -1918,46 +1920,14 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", pha
                 tclean(vis = vis1, imagename = outim1, **tclean_args)
             tclean_args['startmodel'] = ""
             tclean_args['restart']    = False
-    else:
-        # old clean() mode
-        clean_args = {}
-        clean_args['imagermode']    = 'mosaic'
-        clean_args['psfmode']       = deconvolver
-        clean_args['imsize']        = imsize
-        clean_args['cell']          = cell
-        clean_args['stokes']        = 'I'
-        clean_args['pbcor']         = True
-        clean_args['phasecenter']   = phasecenter
-        clean_args['weighting']     = 'briggs'
-        clean_args['robust']        = 0.5
-        clean_args['mode']          = 'velocity'     #   only for cont?
-        clean_args['modelimage']    = startmodel
-        for k in line.keys():
-            clean_args[k] = line[k]
-
-        i = 0
-        for niter in niters:
-            print("CLEAN(niter=%d)" % niter)
-            clean_args['niter']     = niter
-            i = i + 1
-            if i == 1:
-                outim2 = outim1
-            else:
-                outim2 = "%s_%d" % (outim1,i)
-            if do_concat:
-                print("Using concat to bypass clean bug - also using copypointing=False")
-                concat(vis=vis1,concatvis=outim2+'.tmpms',copypointing=False)
-                clean(vis=outim2+'.tmpms', imagename = outim2, **clean_args)
-            else:
-                clean(vis = vis1, imagename = outim2, **clean_args)
-            clean_args['modelimage']    = ""
-        # for niter
+            tclean_args['calcres']    = False
+            tclean_args['calcpsf']    = False
             
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))
     
     #-end of qac_clean1()
 
-def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="",  t=True, **line):
+def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", phasecenter="",  **line):
     """
     Simple interface to do a tclean() [or clean()] on an MS (or list of MS) - faster niterlist version using 
 
@@ -1973,7 +1943,6 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", ph
     niter        0 or more, can be a list as well, e.g. [0,1000,3000]
     startmodel   Jy/pixel starting model [ignored in clean() mode]
     phasecenter  mapping center   (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
-    t            True means using tclean. False means try and fallback to old clean() [w/ caveats]
     **line       Dictionary meant for  ["restfreq","start","width","nchan"] but anything (t)clean can be passed here
 
     Note that clean() uses a different naming convention (e.g. .flux)
@@ -2027,7 +1996,7 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", ph
         use_vp = False        
         vptable = None
 
-    if t == True:
+    if True:
         # tclean() mode
         tclean_args = {}
         tclean_args['gridder']       = 'mosaic'
@@ -2045,7 +2014,6 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", ph
         tclean_args['restart']       = True
         tclean_args['calcres']       = True
         tclean_args['calcpsf']       = True
-
         # tclean_args['restoringbeam'] = 'common'
         for k in line.keys():
             tclean_args[k] = line[k]
@@ -2062,36 +2030,6 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", ph
                 cmd = 'cp -r %s.%s %s_%d.%s'    % (outim1,ext,outim1,idx+1,ext)
                 print("CMD: ",cmd)
                 os.system(cmd)
-            
-    else:
-        # old clean() mode, really not recommended
-        clean_args = {}
-        clean_args['imagermode']    = 'mosaic'
-        clean_args['psfmode']       = deconvolver
-        clean_args['imsize']        = imsize
-        clean_args['cell']          = cell
-        clean_args['stokes']        = 'I'
-        clean_args['pbcor']         = True
-        clean_args['phasecenter']   = phasecenter
-        clean_args['weighting']     = 'briggs'
-        clean_args['robust']        = 0.5
-        clean_args['mode']          = 'velocity'     #   only for cont?
-        clean_args['modelimage']    = startmodel
-        for k in line.keys():
-            clean_args[k] = line[k]
-
-        i = 0
-        for niter in niters:
-            print("CLEAN(niter=%d)" % niter)
-            clean_args['niter']     = niter
-            i = i + 1
-            if i == 1:
-                outim2 = outim1
-            else:
-                outim2 = "%s_%d" % (outim1,i)
-            clean(vis = vis1, imagename = outim2, **clean_args)
-            clean_args['modelimage']    = ""
-        # for niter
             
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))
     
@@ -2143,7 +2081,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", 
         deconvolver = 'hogbom'
         
     if do_int:
-        print("Pure interferometer imaging using vis1=%s" % str(vis1))
+        print("Creating INT imaging using vis1=%s" % str(vis1))
         # tclean() mode
         tclean_args = {}
         tclean_args['gridder']       = 'mosaic'
@@ -2160,19 +2098,24 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", 
         tclean_args['specmode']      = 'cube'
         tclean_args['startmodel']    = startmodel
         tclean_args['restart']       = True
+        tclean_args['calcres']       = True
+        tclean_args['calcpsf']       = True        
         for k in line.keys():        # merge in **line
             tclean_args[k] = line[k]
         
-        for niter in niters:
-            print("TCLEAN(niter=%d)" % niter)
-            tclean_args['niter']      = niter
+        for i in range(len(niters)):
+            print("TCLEAN(niter=%d)" % niters[i])
+            tclean_args['niter']  = niters[i]
             tclean(vis = vis1, imagename = outim1, **tclean_args)
             tclean_args['startmodel'] = ""
             tclean_args['restart']    = False
+            #tclean_args['calcres']    = False
+            #tclean_args['calcpsf']    = False
+            
             
         print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))        
     else:
-        print("Skipping pure interferometer imaging using vis1=%s" % str(vis1))
+        print("Skipping INT imaging using vis1=%s" % str(vis1))
 
     print("Creating TP+INT imaging using vis2=%s" % str(vis2))
     if do_concat:
@@ -2202,15 +2145,19 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", 
     tclean_args['specmode']      = 'cube'
     tclean_args['startmodel']    = startmodel
     tclean_args['restart']       = True
+    tclean_args['calcres']       = True
+    tclean_args['calcpsf']       = True    
     for k in line.keys():
         tclean_args[k] = line[k]
         
-    for niter in niters:
-        print("TCLEAN(niter=%d)" % niter)
-        tclean_args['niter']      = niter
+    for i in range(len(niters)):
+        print("TCLEAN(niter=%d)" % niters[i])
+        tclean_args['niter']  = niters[i]
         tclean(vis = vis2, imagename = outim2, **tclean_args)
         tclean_args['startmodel'] = ""
         tclean_args['restart']    = False
+        #tclean_args['calcres']    = False
+        #tclean_args['calcpsf']    = False
 
     print("Wrote %s with %s weighting %s deconvolver" % (outim1,"briggs",deconvolver))    
 
