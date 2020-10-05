@@ -21,7 +21,7 @@ ms0[5] = ['%s/%s.alma.cycle6.5.ms' % (mdir,mdir)]
 ms0[6] = ['%s/%s.alma.cycle6.6.ms' % (mdir,mdir)]
 
 # SM startmodel, can be used for a cheat. Any of the ms0's can be used
-sm0    =   ms0[0].replace('.ms','.skymodel')
+sm0    =   ms0[0][0].replace('.ms','.skymodel')
 
 #
 Qgmc   = True     # this is required to use sd0/ms0/sm0
