@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "3-oct-2020"
+_version  = "4-oct-2020"
 _is_casa6 = None
 
 try:
@@ -3191,6 +3191,9 @@ def qac_plot_grid(images, channel=0, box=None, minmax=None, ncol=2, diff=0, xgri
     dim = list(range(n))
     ppb = list(range(n))
     for i in range(n):
+        if not QAC.exists(images[i]):
+            print("Image %s does not exist, skipping qac_plot_grid" % images[i])
+            return
         tb.open(images[i])
         d1 = tb.getcol("map").squeeze()
         tb.close()
