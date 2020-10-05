@@ -207,7 +207,7 @@ if not Qgmc:
 
 else:
     # Qgmc=True here
-    # this needs to define:    sd0, ms0{},skymodel0
+    # this needs to define:    sd0, ms0{},sm0
     # tpms is generated
     #
     qac_log("GMC TP2VIS %s" % sd0)
@@ -221,7 +221,7 @@ else:
         qac_ptg(phasecenter,ptg)
         p = [phasecenter]
 
-    tpms = qac_tp_vis(pdir,sd0,ptg,pixel_m,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+    tpms = qac_tp_vis(pdir,sd0,ptg,pixel_m,maxuv=maxuv,nvgrp=nvgrp,fix=0)
 
     qac_log("GMC INTMS")
     intms = []
