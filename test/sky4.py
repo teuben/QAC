@@ -120,6 +120,8 @@ ptg   = pdir + '.ptg'              # pointing mosaic for the ptg
 psd   = []                         # accumulate images for qac_psd()
 if maxuv == None:
     maxuv = 5.0*dish/6.0           # for tp2vis
+if type(niter) != type([]):        # ensure niter is a list
+    niter = [niter]
 
 # extra tclean arguments
 args = {}
@@ -468,22 +470,24 @@ if len(psd) > 0:
     qac_log("QAC_PSD")
     p2=qac_psd(psd, plot=pdir+'/psd.png')
 
+
 if Qexport:
+    qac_log("EXPORT")
     os.chdir(pdir)
     qac_project('export')
-    idx = len(niter)    # pick last one
-    qac_fits('clean3/skymodel.smooth.image',            'export/sky_model_box1.fits',   box=box, stats=True, smooth=esmooth)
-    qac_fits('clean3/int_%d.image.pbcor' % idx,         'export/sky_int_box1.fits',     box=box, stats=True, smooth=esmooth)
-    qac_fits('clean3/tpint_%d.image.pbcor' % idx,       'export/sky_tpint_box1.fits',   box=box, stats=True, smooth=esmooth)
-    qac_fits('clean3/tpint_%d.tweak.image.pbcor' % idx, 'export/sky_tweak_box1.fits',   box=box, stats=True, smooth=esmooth)
-    qac_fits('clean3/feather_%d.image.pbcor' % idx,     'export/sky_feather_box1.fits', box=box, stats=True, smooth=esmooth)
-    qac_fits('clean3/ssc_%d.image' % idx,               'export/sky_ssc_box1.fits',     box=box, stats=True, smooth=esmooth)
-    qac_fits('clean4/int.image.pbcor',                  'export/sky_cheat1_box1.fits',  box=box, stats=True, smooth=esmooth)
-    qac_fits('clean4/tpint.image.pbcor',                'export/sky_cheat2_box1.fits',  box=box, stats=True, smooth=esmooth)
-    qac_fits('clean4/feather.image.pbcor',              'export/sky_cheat3_box1.fits',  box=box, stats=True, smooth=esmooth)
-    qac_fits('clean4/ssc.image',                        'export/sky_cheat4_box1.fits',  box=box, stats=True, smooth=esmooth)
-    qac_fits('clean7/int1.image.pbcor',                 'export/sky_mac1_box1.fits',    box=box, stats=True, smooth=esmooth)
-    qac_fits('clean7/macint.image.pbcor',               'export/sky_mac3_box1.fits',    box=box, stats=True, smooth=esmooth)
+    idx = len(niter)-1    # pick last one (also works with niter a single number)
+    qac_fits('clean3/skymodel.smooth.image',                     'export/sky_model_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits(QAC.label(idx,'clean3/int%s.image.pbcor'),          'export/sky_int_box1.fits',     box=box, stats=True, smooth=esmooth)
+    qac_fits(QAC.label(idx,'clean3/tpint%s.image.pbcor'),        'export/sky_tpint_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits(QAC.label(idx,'clean3/tpint%s.tweak.image.pbcor'),  'export/sky_tweak_box1.fits',   box=box, stats=True, smooth=esmooth)
+    qac_fits(QAC.label(idx,'clean3/feather%s.image.pbcor'),      'export/sky_feather_box1.fits', box=box, stats=True, smooth=esmooth)
+    qac_fits(QAC.label(idx,'clean3/ssc%s.image'),                'export/sky_ssc_box1.fits',     box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/int.image.pbcor',                           'export/sky_cheat1_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/tpint.image.pbcor',                         'export/sky_cheat2_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/feather.image.pbcor',                       'export/sky_cheat3_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean4/ssc.image',                                 'export/sky_cheat4_box1.fits',  box=box, stats=True, smooth=esmooth)
+    qac_fits('clean7/int1.image.pbcor',                          'export/sky_mac1_box1.fits',    box=box, stats=True, smooth=esmooth)
+    qac_fits('clean7/macint.image.pbcor',                        'export/sky_mac3_box1.fits',    box=box, stats=True, smooth=esmooth)
     
 
 
