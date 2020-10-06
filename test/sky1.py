@@ -11,10 +11,16 @@
 #      12m PB is 50" (FWHM)   [FWHM" ~ 600/DishDiam]
 #       7m PB is 85"
 #
+#  Integration times:
+#     TP               uses (nvgrp * npnt) seconds
+#     INT (per config) uses times[0] hours in total, times[1] minutes per pointing
+#                      thus it is useful to make sure that (times[0]*60) / (times[1]*npnt) is integral
+#                     
+#
 
 pdir         = 'sky1'                               # name of directory within which everything will reside
-model        = 'skymodel.fits'                      # this has phasecenter with dec=-30 for ALMA sims
-phasecenter  = 'J2000 180.0deg -30.0deg'            # where we want this model to be on the sky
+model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
+phasecenter  = 'J2000 180.0deg -35.0deg'            # where we want this model to be on the sky
 
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
@@ -26,6 +32,11 @@ pixel_m      = 0.05
 # pick the pixel_s based on the largest array configuration (cfg[], see below) choosen
 imsize_s     = 256
 pixel_s      = 0.8
+box          = '17,17,238,238'
+
+imsize_s     = 1120
+pixel_s      = 0.21
+box          = '150,150,970,970'
 
 # number of TP cycles
 nvgrp        = 4
@@ -38,15 +49,16 @@ niter        = [0,1000,4000]
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
 cfg          = [0]
-cfg          = [0,1]
+cfg          = [0,1,4]
 
-
-# pick integration times
-times        = [2, 1]     # 2 hrs in 1 min integrations
+# pick integration times for cfg's
+times        = [2.25, 1]     # 2 hrs in 1 min integrations
 
 # TP dish size in m; uvmax will be taken as 5/6 of this
 # @todo   don't change this
-dish         = 12.0  
+dish         = 12.0
+
+maxuv        = None
 
 # Set grid to a positive arcsec grid spacing if the field needs to be covered
 #                   0 will force a single pointing
@@ -62,8 +74,7 @@ VP           = 0
 SCHWAB       = 0
 
 # scaling factors
-wfactor      = 0.01
-afactor      = 1      # not implemented yet
+wfactor      = 1
 
 # -- do not change parameters below this ---
 import sys
@@ -74,7 +85,15 @@ for arg in qac_argv(sys.argv):
 ptg   = pdir + '.ptg'              # pointing mosaic for the ptg
 test  = pdir                       # compat
 psd   = []                         # accumulate images for qac_psd()
-maxuv = 5.0*dish/6.0               # for tp2vis
+if maxuv == None:
+    maxuv = 5.0*dish/6.0           # for tp2vis
+
+# extra tclean arguments
+args = {}
+args['usemask'] = 'pb'
+args['pbmask']  = 0.5
+args['deconvolver']= 'hogbom'
+    
 
 # report, add Dtime
 qac_begin(pdir,False)
@@ -82,6 +101,9 @@ qac_project(pdir)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
+
+
+(phasecenter, imsize_m, pixel_m) = qac_image_desc(model, phasecenter, imsize_m, pixel_m)
 
 
 if grid > 0:
@@ -110,27 +132,35 @@ startmodel = ms1[cfg[0]].replace('.ms','.skymodel')
 psd.append(startmodel)
 
 # get a list of MS we got for the INT
-intms = ms1.values()
+intms = list(ms1.values())
 
 
-# now do TP2VIS
+if False:
+    # generate two OTF
+    qac_log('OTF')
+    qac_tp_otf(test+'/clean1', startmodel, 24.0, label='24')
+    qac_tp_otf(test+'/clean1', startmodel, 12.0, label='12')
+
+    # smooth the skymodel with the feather beam so we can compare when they are in Jy/beam
+    qac_log('SMOOTH')
+    qac_smooth(test+'/clean1', startmodel, label='24', niteridx=0)
+    qac_smooth(test+'/clean1', startmodel, label='12', niteridx=0)
+
 qac_log("TP2VIS")
-
 if otf == 0:
-    tpms = qac_tp_vis(pdir,model,ptg,pixel_m,phasecenter=phasecenter,deconv=False,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+    tpms = qac_tp_vis(pdir,model,ptg,pixel_m,maxuv=maxuv,nvgrp=nvgrp,fix=0)
 else:
     tp_beam = 56.7     # @todo
     beam = '%sarcsec' % tp_beam
     otf = model.replace('.fits','.otf')
     print("Creating %s" % otf)
     imsmooth(model,'gaussian',beam,beam,pa='0deg',outfile=otf,overwrite=True)
-    tpms = qac_tp_vis(test,otf,ptg,pixel_m,phasecenter=phasecenter,deconv=True,maxuv=maxuv,nvgrp=nvgrp,fix=0)
+    tpms = qac_tp_vis(test,otf,ptg,pixel_m,maxuv=maxuv,nvgrp=nvgrp,fix=0)
     psd.append(otf)
+tp2viswt(tpms,wfactor,'multiply')
 
 qac_log("CLEAN1:")
-tp2viswt(tpms,wfactor,'multiply')
-line = {'deconvolver' : 'hogbom'}
-qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, **line)
+qac_clean1(test+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, **args)
 
 qac_log("PLOT and STATS:")
 for idx in range(1):
@@ -141,18 +171,16 @@ for idx in range(1):
     qac_stats(im2)            # flux flat
     if idx==0: psd.append(im2)
     
-    
 
 tp2vispl(intms+[tpms],outfig=test+'/tp2vispl.png')
 
-# JD clean for tp2vis
 qac_log("CLEAN with TP2VIS")
 if False:
-    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
+    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False, **args)
     qac_tweak(test+'/clean3','int',  niter)
     qac_tweak(test+'/clean3','tpint',niter)
 else:
-    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False)
+    qac_clean(test+'/clean3',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False, **args)
     qac_tweak(test+'/clean3','tpint',niter)
 psd.append(test+'/clean3/tpint.image.pbcor')
 psd.append(test+'/clean3/skymodel.smooth.image')        
@@ -168,7 +196,6 @@ if False:
     qac_clean(test+'/clean5',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=True,do_concat=False,t=True)
     qac_tweak(test+'/clean5','int',niter)
     qac_tweak(test+'/clean5','tpint',niter)
-
 
 qac_log("OTF")
 # create an OTF TP map using a [12m] dish
