@@ -3813,17 +3813,21 @@ class QAC(object):
         return
     
     @staticmethod
-    def label(idx):
+    def label(idx,basename="%s"):
         """ helper function to create indexed filenames that tclean() produces, e.g.
             dirtymap.image, dirtyname_2.image, dirtymap_3.image
             are:
-            "dirtymap%s.image" % QAC.label(idx)    where idx=[0,1,2]
+              "dirtymap%s.image" % QAC.label(idx)    where idx=[0,1,2]
+            or
+              QAC.label(idx,"dirtymap%s.image")      where idx=[0,1,2]
+        
         """
         if idx==0:
             lab = ""
         else:
             lab = "_%d" % (idx+1)
-        return lab
+        return basename % lab
+    
 
     @staticmethod    
     def maxofiles(nofiles = None):
