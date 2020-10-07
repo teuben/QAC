@@ -31,17 +31,24 @@ box          = '150,150,970,970'
 esmooth      = None
 esmooth      = 2.0
 
+niter        = None
+
 # -- do not change parameters below this ---
 import sys
 for arg in qac_argv(sys.argv):
     exec(arg)
 
 
-images = glob.glob('%s/%s' % (pdir,image))
+globname = '%s/%s' % (pdir,image)
+images = glob.glob(globname)
 images.sort()
 print(images)
-print("Found %d images" % len(images))
+print("Found %d images for %s" % (len(images),globname))
 
-for i in images:
-    qac_fits(i, box=box, stats=True, smooth=esmooth)
+if True:
+    for i in images:
+        qac_fits(i, box=box, stats=True, smooth=esmooth)
+else:
+    for i in images:
+        qac_stats(i)
 
