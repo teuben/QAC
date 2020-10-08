@@ -1,0 +1,31 @@
+
+pdir=sky4_long
+
+grep -i niter= $pdir.log |grep TCLEAN|sort | uniq| awk -F= '{print $2}' | sed s/\)// | sort -n > flux0.log
+
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/int.image.pbcor"' > flux1.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/int_?.image.pbcor"' >> flux1.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/int_??.image.pbcor"' >> flux1.log
+
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint.image.pbcor"' > flux2.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint_?.image.pbcor"' >> flux2.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint_??.image.pbcor"' >> flux2.log
+
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/int.model"' > flux1m.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/int_?.model"' >> flux1m.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/int_??.model"' >> flux1m.log
+
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint.model"' > flux2m.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint_?.model"' >> flux2m.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint_??.model"' >> flux2m.log
+
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint_?.tweak.image.pbcor"' > flux3.log
+casa --nogui -c sky-flux.py pdir='"'$pdir'"' image='"clean3/tpint_??.tweak.image.pbcor"' >> flux3.log
+
+grep QAC_STATS flux1.log  | awk '{print $7}' > flux1.tab
+grep QAC_STATS flux2.log  | awk '{print $7}' > flux2.tab
+grep QAC_STATS flux3.log  | awk '{print $7}' > flux3.tab
+grep QAC_STATS flux1m.log  | awk '{print $7}' > flux1m.tab
+grep QAC_STATS flux2m.log  | awk '{print $7}' > flux2m.tab
+
+# paste flux0.log flux1.tab flux2.tab flux1m.tab flux2m.tab flux3.tab | tabmath - - 'log(%1+1),%2,%3,%4,%5,%6' all | tabplot - 1 2,3,4,5,6 0 8 -400 9800  ycoord=6657,0 color=2,3,4,5,6 point=2,0.05  yapp=/png

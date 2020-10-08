@@ -386,14 +386,19 @@ sky4q:
 	QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4q1:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,100,200,300]' > $@.log
-	2>&1; cp sky4.py $@.log $@ grep QAC_STATS $@.log 
-	QAC_STATS $@.log | grep export > $@/qac_stats.log
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,10000,20000,30000]' > $@.log 2>&1
+	cp sky4.py $@.log $@
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4q2:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,300]'         > $@.log
-	2>&1; cp sky4.py $@.log $@ grep QAC_STATS $@.log 
-	QAC_STATS $@.log | grep export > $@/qac_stats.log
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,30000]'         > $@.log 2>&1
+	cp sky4.py $@.log $@
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4q3:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[30000]'         > $@.log 2>&1
+	cp sky4.py $@.log $@
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4o:
 	$(CASA) sky4.py pdir='"$@"' otf=1  > $@.log 2>&1; cp sky4.py $@.log $@
@@ -408,6 +413,11 @@ sky4zz:
 #     67 field, cfg=0,1,4;  takes about 40-50 mins
 sky4:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4_long:
+	$(CASA) sky4.py pdir='"$@"' niter='range(0,10)+range(0,100,10)+range(100,1000,100)+range(1000,10000,1000)' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
@@ -452,8 +462,13 @@ sky4d1:
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4e1:
-	$(CASA) sky4.py pdir='"sky4e"' mfactor=1.1 grid=20 > sky4e.log 2>&1
-	grep QAC_STATS sky4e.log
+	$(CASA) sky4.py pdir='"$@"' mfactor=1.1 grid=20 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4e2:
+	$(CASA) sky4.py pdir='"$@"' mfactor=1.2 grid=25 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 #  ulimit -n 4096    might be needed here ('too many open files')
