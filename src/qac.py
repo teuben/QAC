@@ -403,7 +403,24 @@ def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False
         stats     if set, also make a qac_plot and qac_stats
 
         Returns the (last) fits file  (@todo: should do a list if input is a list)
+    
+        @todo  how can we add the QAC keywords to the FITS file
     """
+    def add_qac_history(image, idict):
+        """ add the QAC keywords to the (FITS) history
+        """
+        def addkey(kv):
+            """ add a key=val to the history of the fits file
+            """
+            print(kv)
+        if idict == None:
+            return
+        ia.open(image)
+        for k in idict.keys():
+            ia.sethistory(origin='QAC',history=['%s=%s' % (k, str(idict[k]))])
+        ia.close()
+        print(idict)
+    #
     if type(image) == type([]):
         ii = image
     else:
@@ -413,6 +430,10 @@ def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False
     else:
         Qsubim = False
     for i in ii:
+        if not QAC.exists(i):
+            print("warning: %s does not exist" % i)
+            continue
+        idict = qac_image(i)
         fi = i + '.fits'
         if len(ii)==1 and outfile!=None:
             fi = outfile
@@ -432,10 +453,12 @@ def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False
         if Qsubim:
             tmpim2 = i + ".tmp2"
             imsubimage(tmpim1,tmpim2,box=box,chans=chans,overwrite=True)
+            add_qac_history(tmpim2,idict)
             exportfits(tmpim2,fi,overwrite=True)
             #print("rm tmpim2")            
             QAC.rmcasa(tmpim2)
         else:
+            add_qac_history(tmpim1,idict)            
             exportfits(tmpim1,fi,overwrite=True)
         if i != tmpim1:
             #print("rm tmpim1")
@@ -3613,6 +3636,8 @@ def qac_image(image, idict=None, merge=True):
         image:   input image
         idict:   new or updated dictionary. If blank, it return QAC
         merge:   if true, it merged, else it will overwrite
+
+        NOTE that these keywords will not be exported to a fits file
     """
     QAC.assertf(image)
     tb.open(image,nomodify=False)
