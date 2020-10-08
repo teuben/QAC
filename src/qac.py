@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "4-oct-2020"
+_version  = "7-oct-2020"
 _is_casa6 = None
 
 try:
@@ -452,7 +452,7 @@ def qac_import(fits, cim, phasecenter=None, dec=None, order=None):
     """ import a fits, and optionally place it somewhere else on the sky
         ? why is indirection not working in simobserve ?
 
-        order:  by defalt not used, but ensure it's a Ra-Dec-Stokes-Freq cube,
+        order:  by defalt not used, but ensure it's a Ra-Dec-Stokes-Freq (RDSF) cube,
                 since this is what CASA wants.   e.g. order='0132'
                 SHM: Why is this not an option in importfits()
     """
@@ -3606,7 +3606,39 @@ def qac_initkeys(keys, argv=[]):
 def qac_getkey(key):
     return QAC.keys[key]
 
+def qac_image(image, idict=None, merge=True):
+    """ save a QAC dictionary, optionally merge it with an old one
+        return the new dictionary
 
+        image:   input image
+        idict:   new or updated dictionary. If blank, it return QAC
+        merge:   if true, it merged, else it will overwrite
+    """
+    QAC.assertf(image)
+    tb.open(image,nomodify=False)
+    kw = tb.getkeywords()
+    if 'QAC' in kw:
+        jdict = kw['QAC']
+        if idict == None:
+            tb.close()            
+            return jdict        
+        if merge:
+            jdict.update(idict)
+            tb.putkeyword('QAC',jdict)
+        else:
+            tb.putkeyword('QAC',idict)
+    else:
+        if idict == None:
+            tb.close()
+            return None
+        tb.putkeyword('QAC',idict)
+
+    kw = tb.getkeywords()
+    jdict = kw['QAC']
+    print("Updated QAC in %s to %s" % (image,str(jdict)))
+    tb.close()
+    return jdict
+    
 
 def qac_begin(label="QAC", log=True, plot=False, local=False):
     """
@@ -3801,15 +3833,17 @@ class QAC(object):
         return map(float,array.split(','))
     
     @staticmethod
-    def assertf(filename = None):
+    def assertf(filename = None, debug=False):
         """ ensure a file or directory exists, else report and and fail
         """
         if filename == None: return
         if type(filename) == type([]):
             for f in filename:
                 assert os.path.exists(f),  "QAC.assertf: %s does not exist" % f
+                #print("Checking %s" % f)
         else:
             assert os.path.exists(filename),  "QAC.assertf: %s does not exist" % filename
+            #print("Checking %s" % filename)
         return
     
     @staticmethod
