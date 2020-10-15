@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "7-oct-2020"
+_version  = "14-oct-2020"
 _is_casa6 = None
 
 try:
@@ -429,11 +429,12 @@ def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False
         Qsubim = True
     else:
         Qsubim = False
+    fi = None
     for i in ii:
         if not QAC.exists(i):
             print("warning: %s does not exist" % i)
             continue
-        idict = qac_image(i)
+        idict = qac_image(i,QAC.keys)
         fi = i + '.fits'
         if len(ii)==1 and outfile!=None:
             fi = outfile
@@ -1929,8 +1930,7 @@ def qac_clean1(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", pha
         tclean_args['calcres']       = True
         tclean_args['calcpsf']       = True        
         # tclean_args['restoringbeam'] = 'common'
-        for k in line.keys():
-            tclean_args[k] = line[k]
+        tclean_args.update(line)
 
         for i in range(len(niters)):
             print("TCLEAN(niter=%d)" % niters[i])
@@ -2038,8 +2038,7 @@ def qac_clean1f(project, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", ph
         tclean_args['calcres']       = True
         tclean_args['calcpsf']       = True
         # tclean_args['restoringbeam'] = 'common'
-        for k in line.keys():
-            tclean_args[k] = line[k]
+        tclean_args.update(line)
 
         for (niter,idx) in zip(niters,range(len(niters))):
             print("TCLEAN(niter=%d)" % niter)
@@ -2123,8 +2122,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", 
         tclean_args['restart']       = True
         tclean_args['calcres']       = True
         tclean_args['calcpsf']       = True        
-        for k in line.keys():        # merge in **line
-            tclean_args[k] = line[k]
+        tclean_args.update(line)
         
         for i in range(len(niters)):
             print("TCLEAN(niter=%d)" % niters[i])
@@ -2170,8 +2168,7 @@ def qac_clean(project, tp, ms, imsize=512, pixel=0.5, niter=[0], startmodel="", 
     tclean_args['restart']       = True
     tclean_args['calcres']       = True
     tclean_args['calcpsf']       = True    
-    for k in line.keys():
-        tclean_args[k] = line[k]
+    tclean_args.update(line)
         
     for i in range(len(niters)):
         print("TCLEAN(niter=%d)" % niters[i])
@@ -2344,8 +2341,7 @@ def qac_mac(project, tp, ms, imsize=512, pixel=0.5, niter=1000, phasecenter="", 
     tclean_args['cyclefactor']   = 5.0
     # tclean_args['cycleniter']  = 100
     tclean_args['niter']         = niters[-1]
-    for k in kwargs.keys():
-        tclean_args[k] = kwargs[k]
+    tclean_args.update(kwargs)
         
     print("TCLEAN(niter=%d)" % niters[-1])
     tclean(vis = vis2, imagename = outim1, **tclean_args)
@@ -3615,8 +3611,10 @@ def qac_argv(sysargv):
     else:
         return sysargv[3:]
 
-def qac_initkeys(keys, argv=[]):
+def qac_initkeys(keys=None, argv=[]):
     QAC.keys = {}
+    if keys==None:
+        return
     for k in keys.keys():
         QAC.keys[k] = keys[k]
     for kv in argv[3:]:
@@ -3626,7 +3624,9 @@ def qac_initkeys(keys, argv=[]):
             cmd='QAC.keys["%s"]=%s' % (kv[:i], kv[i+1:])
             exec(cmd)
         
-def qac_getkey(key):
+def qac_getkey(key=None):
+    if key==None:
+        return QAC.keys
     return QAC.keys[key]
 
 def qac_image(image, idict=None, merge=True):
@@ -3683,7 +3683,8 @@ def qac_begin(label="QAC", log=True, plot=False, local=False):
             print("Reading a local tp2vis, which doesn't seem to work")
             execfile('./tp2vis.py')
             tp2vis_version()
-        
+
+    qac_initkeys()      # QAC.keys = {}
     
     if log:
         from utils import Dtime
@@ -3760,7 +3761,20 @@ class QAC(object):
     def hasdt():
         if dir(QAC).count('dt') == 0: return False
         return True
+
+    @staticmethod
+    def kwargs(**kwargs):
+        """
+        return the arguments of the caller as a dictionary for futher processing.
+        The locals() function could also be used.
         
+        Example of use:
+
+        kw = my_kwargs(a=1, b='2', c='c')
+        tclean(vis,**kw)
+    """
+        return kwargs
+       
     @staticmethod
     def exists(filename = None):
         if filename == None:
