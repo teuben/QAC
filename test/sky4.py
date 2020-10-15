@@ -55,14 +55,16 @@ esmooth      = 2.0
 # number of TP cycles
 nvgrp        = 4
 
-# pick a few niter values for tclean to check flux convergence 
+# pick a few niter values for tclean to check flux convergence
+# if niter[0] is negative, it creates a logarithmic series to that power niter[1] is the stepsize
+# [-4,1] means [0,1,10,100,1000,10000]
 niter        = [0,500,1000,2000]
 niter        = [0]
 niter        = [0,1000,10000]
 
-# tclean threshold, e.g. '10mJy'. 
-threshold    = None
-threshold    = '48mJy'
+# tclean threshold, e.g. '10mJy'.  Set to 0 if go on for niter.   Set to None if automasking requested
+threshold    = '48mJy'      #   fixed niter cleaning
+threshold    = None         #   automasking
 
 # pick which ALMA configurations you want (0=7m ACA ; 1,2,3...=12m ALMA)
 cfg          = [0,1,2,3]
@@ -80,8 +82,12 @@ dish         = 12.0
 
 maxuv        = None
 
+# Multi-scales?  setting this e.g. [0,5,15,45,135]
+# Otherwise the default is standard classic point source clean
+scales       = None
+
 # Set grid to a positive arcsec grid spacing if the field needs to be covered
-#                   0 will force a single pointing
+#                   0 will force a single pointing (but needs gridder='standard'  !!!)
 #                   ALMA normally uses lambda/2D   hexgrid is Lambda/sqrt(3)D
 grid         = 30
 
@@ -122,13 +128,13 @@ if maxuv == None:
     maxuv = 5.0*dish/6.0           # for tp2vis
 if type(niter) != type([]):        # ensure niter is a list
     niter = [niter]
-
-# extra tclean arguments
-args = {}
-args['usemask']     = 'pb'
-args['pbmask']      = 0.5
-args['deconvolver'] = 'hogbom'
-args['threshold']   = threshold
+if niter[0] < 0:                   # logithmically spaced  [-5,1] would do  0,10,100,1000,10000,100000
+     n0 = -niter[0]                # final number
+     dn0 = niter[1]                # increment
+     n1=list(set(np.power(10,np.arange(0,n0+dn0,dn0)).astype(int).tolist()))
+     n1.sort()
+     niter = [0] + n1
+     print("special long NITER: ",niter)
 
 # hardcoded
 Qfeather = True
@@ -138,7 +144,40 @@ Qmac     = True    # new qac_mac
 Qexport  = True
 
 
+# compose special tclean arguments depending on
+args = {}
+
+if threshold == None:                                                   # automasking
+    args1 = QAC.kwargs(cycleniter           = 100000, 
+                       cyclefactor          = 2.0,                         # ??? cyclefactor has wrong type, expected double got doublevec
+                       usemask              = 'auto-multithresh',
+                       sidelobethreshold    = 2.0,
+                       noisethreshold       = 4.25,
+                       lownoisethreshold    = 1.5, 
+                       minbeamfrac          = 0.3,
+                       growiterations       = 75,
+                       negativethreshold    = 0.0)
     
+else:
+    args1 = QAC.kwargs(usemask    = 'pb',
+                       pbmask     = 0.5,
+                       threshold  = threshold)
+    
+args2 = QAC.kwargs(deconvolver   = 'hogbom',      # 'multiscale', needs scales=[]
+                   weighting     = 'briggs',
+                   robust        = 0.5)
+
+if grid <= 0.0:
+    args2['gridder']      = 'standard'
+if scales != None:
+    args2['deconvolver']  = 'multiscale'
+    args2['scales']       = scales
+
+args.update(args1)
+args.update(args2)
+print("My_tclean KWARGS:",args)
+
+
 # report, add Dtime
 qac_begin(pdir,False)
 qac_project(pdir)
@@ -146,6 +185,13 @@ qac_log("REPORT")
 qac_version()
 tp2vis_version()
 
+#  some global parameters that qac_export() will put in the FITS header
+QAC.keys['pdir']    = pdir
+QAC.keys['model']   = model
+QAC.keys['cfg']     = cfg
+QAC.keys['wfactor'] = wfactor
+QAC.keys['mfactor'] = mfactor
+QAC.keys['afactor'] = afactor
 
 if True:
     # always make an OTF, even if we don't use it
@@ -239,14 +285,15 @@ print("tp2vispl: ",intms,tpms)
 tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')    
 
 if True:
-    qac_log("CLEAN0: mapping the TPMS")
+    # we need the tpms.psf for sdintimaging(), otherwise this is not important
+    qac_log("CLEAN0: mapping the TPMS niter=0")
     qac_clean1(pdir+'/clean0', tpms, imsize_s, pixel_s, phasecenter=phasecenter, **args)
-    print("ARGS:",args)
-    # im.advice vs au.pickCellSize()   NOTE:pickCellSize()  cannot handle a list of vis
-    a,b,c = aU.pickCellSize(tpms, imsize=True, cellstring=True)
-    print("pickCellSize(TP)",a,b,c)
-    a,b,c = aU.pickCellSize(intms[-1], imsize=True, cellstring=True)
-    print("pickCellSize(INT)",a,b,c)
+    if True:
+        # im.advice vs au.pickCellSize()   NOTE:pickCellSize()  cannot handle a list of vis
+        a,b,c = aU.pickCellSize(tpms, imsize=True, cellstring=True)
+        print("pickCellSize(TP)",a,b,c)
+        a,b,c = aU.pickCellSize(intms[-1], imsize=True, cellstring=True)
+        print("pickCellSize(INT)",a,b,c)
 
     qac_log("PLOT and STATS:")
     for idx in range(1):
