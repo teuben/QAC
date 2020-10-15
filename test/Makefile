@@ -337,10 +337,13 @@ sky0e:
 	$(CASA) sky0.py test='"sky0e"' wfactor=0.001 > sky0e.log 2>&1
 	grep QAC_STATS sky0e.log
 
-# DC2019: show that mosaic=0,1 make a difference on a single pointing (grid=0)
-#         the pbcor map seems to show that the PB model is not good at the edges
+
+# =================================================================================================================================================
+# DC2019
+
+# show that mosaic=0,1 make a difference on a single pointing (grid=0)
+# the pbcor map seems to show that the PB model is not good at the edges
 # Takes about 20"
-# with zoom it takes 75"
 sky0f0:
 	$(CASA) sky0.py pdir='"$@"' niter='[0]' grid=0 cfg='[]' mosaic=0 model='"skymodel-b.fits"'  > $@.log 2>&1; cp sky0.py $@.log $@
 	grep QAC_STATS $@.log
@@ -356,13 +359,8 @@ sky0f2:
 	grep QAC_STATS $@.log
 	@echo This is SD made by simobserve
 
-#  dc2019:   using Toshi's gmc input
-sky7:
-	$(CASA) sky7.py pdir='"$@"' > $@.log 2>&1; cp sky7.py $@.log $@
-	grep QAC_STATS $@.log
-
-# Toshi using a new sky4 with datafile=
-# 2L
+# dc2019:   Toshi using a new sky4 with datafile=
+# 2L:   don't have the skymodel, so you a cheat skymodel-b.im
 sky4z:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
@@ -373,31 +371,40 @@ sky4z1:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
-# 120L
+# 120L    will need:   ulimit -Sn 4096  (too many open files)
 sky4z120:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b120.py"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
-# Using a predefined set
-sky4q:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' > $@.log
-	2>&1; cp sky4.py $@.log $@ grep QAC_STATS $@.log 
+# 120L  -  just 1 day instead of the full 4
+sky4z120a:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b120a.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+# Using a predefined set (depends on sky4f)
+sky4q: sky4f
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log 
 	QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+# test the heisenbug style
 sky4q1:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,10000,20000,30000]' > $@.log 2>&1
-	cp sky4.py $@.log $@
-	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,100,200,300]' > $@.log 2>&1; cp sky4.py $@.log $@ ;grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4q2:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,30000]'         > $@.log 2>&1
-	cp sky4.py $@.log $@
-	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[0,300]'         > $@.log 2>&1; cp sky4.py $@.log $@ ;grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4q3:
-	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[30000]'         > $@.log 2>&1
-	cp sky4.py $@.log $@
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[300]  '         > $@.log 2>&1; cp sky4.py $@.log $@ ;grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4q4:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[-5,0.5]' scales='[0,5,15,45]'   > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4o:
@@ -416,8 +423,9 @@ sky4:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+
 sky4_long:
-	$(CASA) sky4.py pdir='"$@"' niter='range(0,10)+range(0,100,10)+range(100,1000,100)+range(1000,10000,1000)' > $@.log 2>&1; cp sky4.py $@.log $@
+	$(CASA) sky4.py pdir='"$@"' niter='[-3,1]' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
@@ -457,18 +465,13 @@ sky4d:
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4d1:
-	$(CASA) sky4.py pdir='"sky4d"' wfactor=0.001 > sky4d.log 2>&1
+	$(CASA) sky4.py pdir='"$@"' wfactor=0.001 > sky4d.log 2>&1
 	grep QAC_STATS sky4d.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 sky4e1:
-	$(CASA) sky4.py pdir='"$@"' mfactor=1.1 grid=20 > $@.log 2>&1; cp sky4.py $@.log $@
-	grep QAC_STATS $@.log
-	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
-
-sky4e2:
-	$(CASA) sky4.py pdir='"$@"' mfactor=1.2 grid=25 > $@.log 2>&1; cp sky4.py $@.log $@
-	grep QAC_STATS $@.log
+	$(CASA) sky4.py pdir='"$@"' mfactor=1.1 grid=20 > sky4e.log 2>&1
+	grep QAC_STATS sky4e.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 #  ulimit -n 4096    might be needed here ('too many open files')
