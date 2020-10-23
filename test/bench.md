@@ -16,4 +16,11 @@ This is a quick test
 
 ## sky4z
 
-This is the medium scale 
+This is the medium scale, with the (old) small gmc_2L model
+
+      T480   hdd   7772.26user 273.52system 34:49.61elapsed 385%CPU
+             shm   
+      X1Y4   hdd
+             shm
+      XPS13  hdd
+             shm
