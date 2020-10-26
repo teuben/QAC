@@ -1,8 +1,9 @@
 # Benchmark Notes
 
-
-As it turns out CASA is throwing us some curve balls with benchmarks, we also
-add a more classical benchmark. One that combines a very simple
+As it turns out CASA is throwing us some tricky curve balls with benchmarks,
+so we also add a more classical benchmark to confirm the general picture.
+One that combines a very simple CPU and DISK I/O component, so they can be
+separated.
 
 ## Preparation
 
@@ -14,10 +15,10 @@ Based on having QAC (for code) and dc2019 (for data)
       ln -s ~/dc2019/data/gmcSkymodel/gmc_2L
       make sky0f0 sky4z sky4
 
-
 ## sky0f0
 
-This is a quick test
+This is a quick test, but showing that moving to memory it barely has an impact, if
+you look at the system time.
 
 
       T480   hdd   28.29user 4.04system 0:25.90elapsed 124%CPU (somewhat busy machine)
@@ -29,7 +30,8 @@ This is a quick test
 
 ## sky4z
 
-This is the medium scale, with the (old) small gmc_2L model
+This is the medium scale, with the (old) small gmc_2L model. This is confusing,
+on shm it actually runs slower, despite that there is enough memory.
 
       T480   hdd   7772.26user 273.52system 34:49.61elapsed 385%CPU
              shm   
@@ -50,7 +52,6 @@ This is the medium scale, with the (old) small gmc_2L model
 		   6405.97user 310.07system 27:43.83elapsed 403%CPU
              shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
       
-
 
 ## NEMO
 
