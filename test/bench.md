@@ -1,13 +1,24 @@
 # Benchmark Notes
 
+
 As it turns out CASA is throwing us some curve balls with benchmarks, we also
 add a more classical benchmark. One that combines a very simple
+
+## Preparation
+
+Based on having QAC (for code) and dc2019 (for data)
+
+      cd ~/QAC/test
+      cp Makefile skymodel-b.fits sky0.py sky4.py /dev/shm
+      cd /dev/shm
+      ln -s ~/dc2019/data/gmcSkymodel/gmc_2L
+      make sky0f0 sky4z sky4
+
 
 ## sky0f0
 
 This is a quick test
 
-      cp Makefile skymodel-b.fits sky0.py /dev/shm
 
       T480   hdd   28.29user 4.04system 0:25.90elapsed 124%CPU (somewhat busy machine)
              shm   16.94user 4.05system 0:22.07elapsed  95%CPU
