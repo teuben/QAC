@@ -30,6 +30,17 @@ This is the medium scale, with the (old) small gmc_2L model
              shm   7519.31user 355.76system 33:36.69elapsed 390%CPU
                    7549.72user 357.43system 33:42.61elapsed 390%CPU
 
+
+# sky4
+
+      XPS13  hdd   6637.55user 329.92system 28:51.53elapsed 402%CPU busy>
+                   6460.71user 311.96system 27:49.63elapsed 405%CPU
+		   6508.26user 310.58system 27:57.96elapsed 406%CPU   uncached
+		   6405.97user 310.07system 27:43.83elapsed 403%CPU
+             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
+      
+
+
 ## NEMO
 
 A good disk I/O test in NEMO is the mkspiral task, which writes a file just over 2GB. This will
@@ -61,6 +72,8 @@ viz.
       sudo tlp ac
       sudo cpupower  frequency-set --governor performance
 
+Here are results on an old Xeon:
+
       sdp    hdd  12.779u 2.367s 0:15.15 99.8%
       sdp    raid 12.767u 2.354s 0:15.14 99.8% 
       sdp    shm  12.833u 1.137s 0:13.98 99.8%
@@ -76,12 +89,17 @@ viz.
       dante  shm   0.681u 1.408s 0:02.09 99.5%   test=3
       
 
+      x1y4   hdd   3.87u 1.38s 0:05.25
+      x1y4         3.83u 0.47s 0:04.31
+      x1y4         1.98u 0.48s 0:02.47
+      x1y4         0.95u 0.45s 0:01.41
+      x1y4         0.12u 0.46s 0:00.59
+      x1y4         0.14u 1.44s 0:01.58
 
-# sky4
+            shm    3.85u 0.95s 0:04.81
+		   3.92u 0.48s 0:04.40
+		   1.96u 0.49s 0:02.46
+		   0.97u 0.46s 0:01.43
+		   0.16u 0.43s 0:00.59
+		   0.14u 0.98s 0:01.13
 
-      XPS13  hdd   6637.55user 329.92system 28:51.53elapsed 402%CPU busy>
-                   6460.71user 311.96system 27:49.63elapsed 405%CPU
-		   6508.26user 310.58system 27:57.96elapsed 406%CPU   uncached
-		   6405.97user 310.07system 27:43.83elapsed 403%CPU
-             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
-      
