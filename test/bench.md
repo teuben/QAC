@@ -13,9 +13,8 @@ This is a quick test
              shm   16.94user 4.05system 0:22.07elapsed  95%CPU
       X1Y4   hdd    9.56user 1.25system 0:12.15elapsed  89%CPU
              shm    9.30user 1.12system 0:11.79elapsed  88%CPU
-      XPS13  hdd
-             shm
-
+      XPS13  hdd   11.49user 1.62system 0:12.84elapsed 102%CPU
+             shm   11.87user 1.33system 0:12.53elapsed 105%CPU
 
 ## sky4z
 
@@ -25,9 +24,11 @@ This is the medium scale, with the (old) small gmc_2L model
              shm   
       X1Y4   hdd   5439.75user 196.41system 20:43.28elapsed 453%CPU 
              shm  10287.44user 364.05system 41:54.90elapsed 423%CPU 
-      XPS13  hdd
-             shm
-
+      XPS13  hdd   4601.71user 199.77system 17:29.57elapsed 457%CPU cpu heavier
+                   4055.08user 206.60system 16:18.39elapsed 435%CPU
+		   4157.42user 207.88system 16:35.48elapsed 438%CPU drop cache
+             shm   7519.31user 355.76system 33:36.69elapsed 390%CPU
+                   7549.72user 357.43system 33:42.61elapsed 390%CPU
 
 ## NEMO
 
@@ -74,4 +75,13 @@ viz.
       dante  .     0.707u 0.669s 0:01.38 98.5%
       dante  shm   0.681u 1.408s 0:02.09 99.5%   test=3
       
-      X1Y4
+
+
+# sky4
+
+      XPS13  hdd   6637.55user 329.92system 28:51.53elapsed 402%CPU busy>
+                   6460.71user 311.96system 27:49.63elapsed 405%CPU
+		   6508.26user 310.58system 27:57.96elapsed 406%CPU   uncached
+		   6405.97user 310.07system 27:43.83elapsed 403%CPU
+             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
+      
