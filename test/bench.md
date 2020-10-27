@@ -46,9 +46,10 @@ on shm it actually runs slower, despite that there is enough memory.
 
       QAC_STATS: export/sky_tweak_box1.fits 1.0010571278181761 1.5930145349309555 -0.69122767448425293 8.9708108901977539 6565.3723606948697 0.942194 
 
-      yorp20 hdd  42515.81user 2450.67system 1:32:44elapsed    808%CPU
-
+      yorp20 hdd  42515.81user 2450.67system 1:32:44elapsed    808%CPU (has 32 processors)
+                   4226.02user  528.60system 1:27:35elapsed     90%CPU  OMP_NUM_THREADS=1
       QAC_STATS: export/sky_tweak_box1.fits 0.99950875761575164 1.5935251499479519 -0.65302145481109619 9.0135574340820312 6555.21746878248 0.938545
+      QAC_STATS: export/sky_tweak_box1.fits 0.99950884279055641 1.5935252376332345 -0.65302163362503052 9.0135564804077148 6555.2180273962631 0.938545 
 
 
 
@@ -58,7 +59,19 @@ on shm it actually runs slower, despite that there is enough memory.
                    6460.71user 311.96system 27:49.63elapsed 405%CPU
 		   6508.26user 310.58system 27:57.96elapsed 406%CPU   uncached
 		   6405.97user 310.07system 27:43.83elapsed 403%CPU
-             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
+             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU
+
+# M100
+
+This benchmark still suffers from a CASA edge-channel bug, but takes 5 from the 70 channels of
+the standard M100 casaguide feather benchmark.  The data must have been prepared via
+the http://admit.astro.umd.edu/~teuben/QAC/qac_bench5.tar.gz, which creates three files:
+
+      M100_TP_CO_cube.bl.image
+      M100_aver_12.ms
+      M100_aver_7.ms
+
+
       
 
 ## NEMO
