@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "14-oct-2020"
+_version  = "26-oct-2020"
 _is_casa6 = None
 
 try:
@@ -312,7 +312,7 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, factor=1.0, o
     return finalPtglist
 
     #-end of qac_im_ptg()
-
+pwd
 def qac_ms_ptg(msfile, outfile=None, uniq=True):
     """ get the ptg's from an MS into a list and/or ascii ptg file
     'J2000 19h00m00.00000 -030d00m00.000000',...
@@ -718,6 +718,7 @@ def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcu
         This routine can also be used for regression testing (see test=)
 
         image     image file name (CASA, FITS, MIRIAD)
+                  measurement set also allowed, but limited stats will be given
         test      expected regression string
         eps       if given, it should parse the test string into numbers, each number
                   needs to be within relative error "eps", i.e. abs(v1-v2)/abs(v) < eps
@@ -757,6 +758,7 @@ def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcu
         return
     
     if QAC.iscasa(image + '/ANTENNA'):                      # assume it's a MS
+        Qms = True
         tb.open(image)
         data  = np.abs(tb.getcol('DATA')[0,:,:])  # first pol ->  data[nchan,nvis]
         mean = data.mean()
@@ -767,6 +769,7 @@ def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcu
         tb.close()
         del data
     else:                                                   # assume it's an IM
+        Qms = False
         maskarea = None
         if pbcut != None:
             # this requires a .pb file to be parallel to the .image file
@@ -814,7 +817,7 @@ def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcu
             else:
                 test_out = "FAILED regression delta=%g > %g" % (delta.max(),eps)
                 report = True
-    if sratio:
+    if sratio and not Qms:
         if QAC.iscasa(image,'Image'):
             data = QAC.casa2np(image)
         else:
