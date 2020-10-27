@@ -1,8 +1,9 @@
 # Benchmark Notes
 
-
-As it turns out CASA is throwing us some curve balls with benchmarks, we also
-add a more classical benchmark. One that combines a very simple
+As it turns out CASA is throwing us some tricky curve balls with benchmarks,
+so we also add a more classical benchmark to confirm the general picture.
+One that combines a very simple CPU and DISK I/O component, so they can be
+separated.
 
 ## Preparation
 
@@ -14,10 +15,10 @@ Based on having QAC (for code) and dc2019 (for data)
       ln -s ~/dc2019/data/gmcSkymodel/gmc_2L
       make sky0f0 sky4z sky4
 
-
 ## sky0f0
 
-This is a quick test
+This is a quick test, but showing that moving to memory it barely has an impact, if
+you look at the system time.
 
 
       T480   hdd   28.29user 4.04system 0:25.90elapsed 124%CPU (somewhat busy machine)
@@ -29,7 +30,8 @@ This is a quick test
 
 ## sky4z
 
-This is the medium scale, with the (old) small gmc_2L model
+This is the medium scale, with the (old) small gmc_2L model. This is confusing,
+on shm it actually runs slower, despite that there is enough memory.
 
       T480   hdd   7772.26user 273.52system 34:49.61elapsed 385%CPU
              shm   
@@ -48,6 +50,16 @@ This is the medium scale, with the (old) small gmc_2L model
 
       QAC_STATS: export/sky_tweak_box1.fits 0.99950875761575164 1.5935251499479519 -0.65302145481109619 9.0135574340820312 6555.21746878248 0.938545
 
+
+
+# sky4
+
+      XPS13  hdd   6637.55user 329.92system 28:51.53elapsed 402%CPU busy>
+                   6460.71user 311.96system 27:49.63elapsed 405%CPU
+		   6508.26user 310.58system 27:57.96elapsed 406%CPU   uncached
+		   6405.97user 310.07system 27:43.83elapsed 403%CPU
+             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
+      
 
 ## NEMO
 
@@ -82,6 +94,8 @@ viz.
       sudo tlp ac
       sudo cpupower  frequency-set --governor performance
 
+Here are results on an old Xeon:
+
       sdp    hdd  12.779u 2.367s 0:15.15 99.8%
       sdp    raid 12.767u 2.354s 0:15.14 99.8% 
       sdp    shm  12.833u 1.137s 0:13.98 99.8%
@@ -97,12 +111,17 @@ viz.
       dante  shm   0.681u 1.408s 0:02.09 99.5%   test=3
       
 
+      x1y4   hdd   3.87u 1.38s 0:05.25
+      x1y4         3.83u 0.47s 0:04.31
+      x1y4         1.98u 0.48s 0:02.47
+      x1y4         0.95u 0.45s 0:01.41
+      x1y4         0.12u 0.46s 0:00.59
+      x1y4         0.14u 1.44s 0:01.58
 
-# sky4
+            shm    3.85u 0.95s 0:04.81
+		   3.92u 0.48s 0:04.40
+		   1.96u 0.49s 0:02.46
+		   0.97u 0.46s 0:01.43
+		   0.16u 0.43s 0:00.59
+		   0.14u 0.98s 0:01.13
 
-      XPS13  hdd   6637.55user 329.92system 28:51.53elapsed 402%CPU busy>
-                   6460.71user 311.96system 27:49.63elapsed 405%CPU
-		   6508.26user 310.58system 27:57.96elapsed 406%CPU   uncached
-		   6405.97user 310.07system 27:43.83elapsed 403%CPU
-             shm   6387.34user 299.42system 27:15.54elapsed 408%CPU 
-      
