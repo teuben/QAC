@@ -312,7 +312,7 @@ def qac_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=True, factor=1.0, o
     return finalPtglist
 
     #-end of qac_im_ptg()
-pwd
+
 def qac_ms_ptg(msfile, outfile=None, uniq=True):
     """ get the ptg's from an MS into a list and/or ascii ptg file
     'J2000 19h00m00.00000 -030d00m00.000000',...
