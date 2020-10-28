@@ -379,6 +379,11 @@ sky4z-10:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+sky4z-20:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=[0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100] > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
 
 sky4z1:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b1.py"' > $@.log 2>&1; cp sky4.py $@.log $@
