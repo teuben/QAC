@@ -74,6 +74,7 @@ $(DATA8):
 zero:
 	$(CASA) zero.py > zero.log 2>&1
 	tail -4 zero.log
+	@echo "  !! You should probably run this test a few times, as it is likely to cache well !!"
 
 bench:
 	$(CASA) bench.py > bench.log 2>&1
@@ -365,6 +366,19 @@ sky4z:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+
+# sky4z-1,2 : test the I/O portion as each niter causes a major cycle with MS i/o
+sky4z-1:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=100 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4z-10:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=[0,10,20,30,40,50,60,70,80,90,100] > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
 
 sky4z1:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b1.py"' > $@.log 2>&1; cp sky4.py $@.log $@
