@@ -368,7 +368,12 @@ sky4z:
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
 
-# sky4z-1,2 : test the I/O portion as each niter causes a major cycle with MS i/o
+# sky4z-* : test the I/O portion as each niter causes a major cycle with MS i/o
+sky4z-0:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=0 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
 sky4z-1:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=100 > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
