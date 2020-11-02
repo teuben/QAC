@@ -201,12 +201,9 @@ if bench > 0:
     print("QAC_restore")
     (tpms,intms) = pickle.load(open(pdir+'/data.pkl','rb'))
     idx = len(niter)-1    # pick last image for export
-    if bench == 1:
-        qac_clean(pdir+'/bench1',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False, **args)
-        qac_fits(pdir+QAC.label(idx,'/bench1/tpint%s.image.pbcor'), stats=True)
-    elif bench == 2:
-        qac_clean(pdir+'/bench2',tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=True, **args)
-        qac_fits(pdir+QAC.label(idx,'/bench2/tpint%s.image.pbcor'), stats=True)
+    bdir = '/bench%d' % bench
+    qac_clean(pdir+bdir,tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False, **args)
+    qac_fits(pdir+QAC.label(idx,bdir+'/tpint%s.image.pbcor'), stats=True)
     sys.exit(0)
 
 
