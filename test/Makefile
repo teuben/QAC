@@ -367,24 +367,26 @@ sky4z:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
-# this needs to run after sky4z,or run it with bench=-1
+# SKY4Z-BENCH:   this needs Toshi's big data
+# this needs to run after sky4z,or run it with bench=-1: 4'24"
 sky4z-bench2: sky4z-bench
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=100000
-# quick one
+# quick one:                                               27"
 sky4z-bench1: sky4z-bench
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=0
-# the bootstrap if you don't want to run the long sky4z;  36"
+# the bootstrap if you don't want to run the long sky4z;   36"
 sky4z-bench0: sky4z-bench
 sky4z-bench:
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=-1
 
 
+# SKY4-BENCH:   this needs to generate using qac_alma()
 # this needs to run after sky4,or run it with bench=-1
 sky4-bench2: sky4-bench
 	$(CASA) sky4.py pdir='"sky4-bench"' bench=1 niter=100000
 # quick one
 sky4-bench1: sky4-bench
-	$(CASA) sky4.py pdir='"sky4-bench"' niter=0
+	$(CASA) sky4.py pdir='"sky4-bench"' bench=1 niter=0
 # the bootstrap if you don't want to run the long sky4
 sky4-bench0: sky4-bench
 sky4-bench:
@@ -487,6 +489,11 @@ sky4_0:
 
 sky4_1:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1 scales='[0,5,15,45]' ; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4_2:
+	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1 niter=0; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
