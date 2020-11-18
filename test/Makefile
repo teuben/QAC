@@ -371,6 +371,7 @@ sky4z:
 sky4z-bench:
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=100000
 
+# quick one
 sky4z-bench1:
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=0
 
