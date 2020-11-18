@@ -121,7 +121,9 @@ if QAC.exists(datafile):
     execfile(datafile,globals())
     if not Qgmc:
          print("Warning: datafile with Qgmc=False")
-else:    
+else:
+    if datafile != None:
+        print("Warning: datafile %s does not exist" % datafile)
     Qgmc = False       # if GMC models from Toshi (needs sd0,ms0)
     
 # derived parameters
@@ -204,6 +206,7 @@ if bench > 0:
     bdir = '/bench%d' % bench
     qac_clean(pdir+bdir,tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False, **args)
     qac_fits(pdir+QAC.label(idx,bdir+'/tpint%s.image.pbcor'), stats=True)
+    qac_end()
     sys.exit(0)
 
 
@@ -307,7 +310,7 @@ print("QAC_save")
 pdata = (tpms,intms)   
 pickle.dump(pdata,open(pdir+'/data.pkl','wb'))
 if bench < 0:
-    sys.exit(1)
+    sys.exit(0)
 
 
 if True:
