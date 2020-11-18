@@ -360,6 +360,12 @@ sky0f2:
 	grep QAC_STATS $@.log
 	@echo This is SD made by simobserve
 
+sky4z0:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' grid=0 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+
 # dc2019:   Toshi using a new sky4 with datafile=
 # 2L:   don't have the skymodel, so you a cheat skymodel-b.im
 sky4z:

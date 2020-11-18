@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "26-oct-2020"
+_version  = "27-oct-2020"
 _is_casa6 = None
 
 try:
@@ -3713,6 +3713,7 @@ def qac_end():
     See also qac_begin()
     """
     print("CASA_logfile: %s" % casalog.logfile())
+    os.system("cp %s ." % casalog.logfile())
     
     if QAC.hasdt():
         QAC.dt.tag("done")
