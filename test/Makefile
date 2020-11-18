@@ -74,6 +74,7 @@ $(DATA8):
 zero:
 	$(CASA) zero.py > zero.log 2>&1
 	tail -4 zero.log
+	@echo "  !! You should probably run this test a few times, as it is likely to cache well !!"
 
 bench:
 	$(CASA) bench.py > bench.log 2>&1
@@ -372,6 +373,50 @@ sky4z:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+# this needs to run after sky4z,or run it with bench=-1
+sky4z-bench2:
+	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=100000
+# quick one
+sky4z-bench1:
+	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=0
+# the bootstrap if you don't want to run the long sky4z
+sky4z-bench0:
+	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=-1
+
+
+# this needs to run after sky4,or run it with bench=-1
+sky4-bench2:
+	$(CASA) sky4.py pdir='"sky4-bench"' bench=1 niter=100000
+# quick one
+sky4-bench1:
+	$(CASA) sky4.py pdir='"sky4-bench"' niter=0
+# the bootstrap if you don't want to run the long sky4
+sky4-bench0:
+	$(CASA) sky4.py pdir='"sky4-bench"' bench=-1
+
+
+# sky4z-* : test the I/O portion as each niter causes a major cycle with MS i/o
+sky4z-0:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=0 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4z-1:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=100 > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4z-10:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=[0,10,20,30,40,50,60,70,80,90,100] > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4z-20:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=[0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100] > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+
 sky4z1:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b1.py"' > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
@@ -413,6 +458,16 @@ sky4q4:
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 
+sky4q5:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='[-5,0.5]'  > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4q6:
+	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel.py"' niter='range(0,10,310)' > $@.log 2>&1; cp sky4.py $@.log $@ ;grep QAC_STATS $@.log 
+	QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+
 sky4o:
 	$(CASA) sky4.py pdir='"$@"' otf=1  > $@.log 2>&1; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
@@ -426,6 +481,16 @@ sky4zz:
 #     67 field, cfg=0,1,4;  takes about 40-50 mins
 sky4:
 	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4_0:
+	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1 threshold='""'; cp sky4.py $@.log $@
+	grep QAC_STATS $@.log
+	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
+
+sky4_1:
+	$(CASA) sky4.py pdir='"$@"' > $@.log 2>&1 scales='[0,5,15,45]' ; cp sky4.py $@.log $@
 	grep QAC_STATS $@.log
 	grep QAC_STATS $@.log | grep export > $@/qac_stats.log
 

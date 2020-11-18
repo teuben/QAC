@@ -61,6 +61,7 @@ and here are some results
              shm    9.30user 1.12system 0:11.79elapsed  88%CPU
       XPS13  hdd    4.37user 1.00system 0:11.63elapsed  46%CPU OMP_NUM_THREADS=1
              shm    4.28user 0.91system 0:11.30elapsed  45%CPU
+             shm    4.28user 0.91system 0:11.30elapsed  45%CPU 
 
 ## sky4z
 
@@ -166,7 +167,6 @@ the benchmark (which creates a new directory M100qac) can be run via
 
       make M100feather
 
-
 On a desktop (with 6 cores)
 
       N                                                       R1    R2    P
@@ -175,7 +175,11 @@ On a desktop (with 6 cores)
       4   2286.83user 233.42system 35:07.95elapsed 119%CPU   1.21  3.15  0.28
       6   2826.72user 316.75system 34:18.85elapsed 152%CPU   1.50  4.61  0.28
      12   4840.44user 704.36system 36:43.21elapsed 251%CPU   2.58  9.90  0.19
-      
+
+      make M100data
+      make M100feather
+
+
 Although the amount to CPU time is increasing (R1 > 1), it is comforting to see that
 P is amazingly constant for N=2,4,6. Once we hit multiple hyperthreads for N>6 we
 can see P drop.

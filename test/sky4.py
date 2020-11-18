@@ -20,6 +20,7 @@
 #               
 #
 # @todo    set a mask so it only cleans in the original
+import pickle
 
 pdir         = 'sky4'                               # name of directory within which everything will reside
 model        = 'skymodel-b.fits'                    # this has phasecenter with dec=-30 for ALMA sims
@@ -54,6 +55,9 @@ esmooth      = 2.0
 
 # number of TP cycles
 nvgrp        = 4
+
+# benchmark of a re-run with just tclean
+bench        = 0
 
 # pick a few niter values for tclean to check flux convergence
 # if niter[0] is negative, it creates a logarithmic series to that power niter[1] is the stepsize
@@ -117,7 +121,9 @@ if QAC.exists(datafile):
     execfile(datafile,globals())
     if not Qgmc:
          print("Warning: datafile with Qgmc=False")
-else:    
+else:
+    if datafile != None:
+        print("Warning: datafile %s does not exist" % datafile)
     Qgmc = False       # if GMC models from Toshi (needs sd0,ms0)
     
 # derived parameters
@@ -180,7 +186,6 @@ print("My_tclean KWARGS:",args)
 
 # report, add Dtime
 qac_begin(pdir,False)
-qac_project(pdir)
 qac_log("REPORT")
 qac_version()
 tp2vis_version()
@@ -192,6 +197,21 @@ QAC.keys['cfg']     = cfg
 QAC.keys['wfactor'] = wfactor
 QAC.keys['mfactor'] = mfactor
 QAC.keys['afactor'] = afactor
+
+if bench > 0:
+    print("special benchmark with a re-run of a combination tclean only")
+    print("QAC_restore")
+    (tpms,intms) = pickle.load(open(pdir+'/data.pkl','rb'))
+    idx = len(niter)-1    # pick last image for export
+    bdir = '/bench%d' % bench
+    qac_clean(pdir+bdir,tpms,intms,imsize_s,pixel_s,niter=niter,phasecenter=phasecenter,do_int=False,do_concat=False, **args)
+    qac_fits(pdir+QAC.label(idx,bdir+'/tpint%s.image.pbcor'), stats=True)
+    qac_end()
+    sys.exit(0)
+
+
+qac_project(pdir)
+    
 
 if True:
     # always make an OTF, even if we don't use it
@@ -205,7 +225,7 @@ if True:
     imtrans(otfmap+'.tmp',otfmap,order='0132')    # make sure it's an RDSF cube
 
 if not Qgmc:
-    # this is where we generate our own simulated data
+    # this is where we generate our own simulated data 
     
     # allow overriding the map area
     (phasecenter, imsize_m, pixel_m) = qac_image_desc(model, phasecenter, imsize_m, pixel_m)
@@ -283,6 +303,15 @@ tp2viswt(tpms,wfactor,'multiply')
 
 print("tp2vispl: ",intms,tpms)
 tp2vispl(intms+[tpms],outfig=pdir+'/tp2vispl.png')    
+    
+
+
+print("QAC_save")
+pdata = (tpms,intms)   
+pickle.dump(pdata,open(pdir+'/data.pkl','wb'))
+if bench < 0:
+    sys.exit(0)
+
 
 if True:
     # we need the tpms.psf for sdintimaging(), otherwise this is not important
