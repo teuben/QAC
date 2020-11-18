@@ -25,8 +25,8 @@ you look at the system time.
              shm   16.94user 4.05system 0:22.07elapsed  95%CPU
       X1Y4   hdd    9.56user 1.25system 0:12.15elapsed  89%CPU
              shm    9.30user 1.12system 0:11.79elapsed  88%CPU
-      XPS13  hdd   11.49user 1.62system 0:12.84elapsed 102%CPU
-             shm   11.87user 1.33system 0:12.53elapsed 105%CPU
+      XPS13  hdd    4.37user 1.00system 0:11.63elapsed  46%CPU OMP_NUM_THREADS=1
+             shm    4.28user 0.91system 0:11.30elapsed  45%CPU 
 
 ## sky4z
 
@@ -70,6 +70,10 @@ the http://admit.astro.umd.edu/~teuben/QAC/qac_bench5.tar.gz, which creates thre
       M100_TP_CO_cube.bl.image
       M100_aver_12.ms
       M100_aver_7.ms
+
+
+      make M100data
+      make M100feather
 
 
       
