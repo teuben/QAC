@@ -369,13 +369,16 @@ sky4z:
 
 # this needs to run after sky4z,or run it with bench=-1
 sky4z-bench:
-	$(CASA) sky4.py pdir='"sky4z"' datafile='"skymodel-b.py"' bench=1 niter=100000
+	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=100000
+
+sky4z-bench1:
+	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=0
 
 # the bootstrap if you don't want to run the long sky4z
 sky4z-bench0:
-	$(CASA) sky4.py pdir='"sky4z"' datafile='"skymodel-b.py"' bench=-1
+	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=-1
 
-
+sk
 # sky4z-* : test the I/O portion as each niter causes a major cycle with MS i/o
 sky4z-0:
 	$(CASA) sky4.py pdir='"$@"' datafile='"skymodel-b.py"' niter=0 > $@.log 2>&1; cp sky4.py $@.log $@
