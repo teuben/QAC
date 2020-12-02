@@ -385,6 +385,15 @@ sky4z-bench0: sky4z-bench
 sky4z-bench:
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=-1
 
+#     use this to run many in parallel, preferably with OMP_NUM_THREADS=1
+RUN=0
+sky4z-bench2-$(RUN): sky4z-bench-$(RUN)
+	$(CASA) sky4.py pdir='"sky4z-bench-$(RUN)"' datafile='"skymodel-b.py"' bench=1 niter=100000
+sky4z-bench-$(RUN):
+	$(CASA) sky4.py pdir='"sky4z-bench-$(RUN)"' datafile='"skymodel-b.py"' bench=-1
+
+
+
 
 # SKY4-BENCH:   this needs to generate using qac_alma()
 # this needs to run after sky4,or run it with bench=-1
