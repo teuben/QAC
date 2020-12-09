@@ -13,12 +13,14 @@ TESTS = bench bench0 bench1 \
 
 .PHONY: $(TESTS)
 
+#   number of processors to use in mpicasa
+ONT = 2
 
 #  example on Mac:
 CASA  = time /Applications/CASA.app/Contents/MacOS/casa --nogui -c 
 #  example on Linux: (assuming it's in your $PATH - the portable solution)
 CASA  = casa-config --version; /usr/bin/time casa --nogui -c
-
+MPICASA = casa-config --version; /usr/bin/time mpicasa -n $(ONT) `which casa` --nogui -c
 
 help:
 	@echo tests = $(TESTS)
@@ -375,6 +377,9 @@ sky4z:
 
 # SKY4Z-BENCH:   this needs Toshi's big data
 # this needs to run after sky4z,or run it with bench=-1: 4'24"
+sky4z-bench2mpi: sky4z-bench
+	@echo MPICASA using ONT=$(ONT); sleep 4
+	$(MPICASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=100000
 sky4z-bench2: sky4z-bench
 	$(CASA) sky4.py pdir='"sky4z-bench"' datafile='"skymodel-b.py"' bench=1 niter=100000
 # quick one:                                               27"
