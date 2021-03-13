@@ -58,7 +58,7 @@ QAC.assertf(ms12)
 qac_clean1(test+'/clean',ms12,nsize,pixel,niter=niter,phasecenter=phasecenter,**line)
 
     
-qac_stats(ms12,i3)
+# qac_stats(ms12,i3)
 qac_stats(test+'/clean/dirtymap.image')
 
 # done
