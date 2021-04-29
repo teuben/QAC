@@ -293,7 +293,7 @@ class SDINT_imager:
 
             self.deconvolvertool.updateMask()
         
-            print 'Finished a cycle'
+            print('Finished a cycle')
 
         self.deconvolvertool.restoreImages()
 
