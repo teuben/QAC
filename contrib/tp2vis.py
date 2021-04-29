@@ -72,6 +72,7 @@ except:
 ## ===========================================
 
 # Following assumes uniform, non-heterogeneous, dish size
+global t2v_arrays
 t2v_arrays = {}
 
 # ALMA 12m array parameters
@@ -231,6 +232,8 @@ def guessarray(msfile):
     is used in the correlations.
     """
 
+    global t2v_arrays
+
     # Read antenna names in MS
     if not os.path.exists(msfile):              # make sure MS exists
         print("GUESSARRAY ERROR: no %s exists" % (msfile))
@@ -332,6 +335,8 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     the antpos.
     """
 
+    global t2v_arrays
+
     # CASA bug fixes
     # ==============
 
@@ -341,12 +346,7 @@ def tp2vis(infile, outfile, ptg, maxuv=10.0, rms=None, nvgrp=4, deconv=True, win
     # Parameters
     # ==========
 
-    seed  = 123                                 # for random number
-    seed  = 987                                 # for random number
-    seed  = 1
-    seed  = 2
-    seed  = 3
-    seed  = 123
+    seed  = 123        # although fixed, @todo there is still some randomness in the UV's???
 
     # Query the input image
     # =====================
@@ -912,6 +912,8 @@ def tp2visbl(infile, ptg=None, dish=12.0, maxuv=10.0, nvgrp=4, seed=123):
         
         Note that ALMATP and VIRTUAL need to already exist.
         """
+        global t2v_arrays
+        
         if size == None:
             if name in t2v_arrays.keys():
                 print(t2v_arrays[name])
@@ -1235,6 +1237,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
 
     # Separate MS inputs into INT and TP
 
+
     if type(mslist) != type([]): mslist = [mslist]
     msINT = []
     msTP  = []
@@ -1246,6 +1249,8 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
             msINT.append(ims)
         elif array == 'VIRTUAL':
             msTP.append(ims)
+        else:
+            print("Warning: could not guess array for %s" % ims)
 
     # Translate mode into operation name
     if type(mode) is str:
@@ -1270,7 +1275,7 @@ def tp2viswt(mslist, value=1.0, mode='statistics', makepsf=True):
                    'fwidth','min','max','mean','std'))
 
         for ims in mslist:
-
+            print("PJT",ims)
             ms.open(ims,nomodify=True)          # open MS
             ms.selectinit(reset=True)           # all spws
             spwinfo= ms.getspectralwindowinfo() # get spw info
