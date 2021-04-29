@@ -21,9 +21,10 @@ try:
 except:
     import pyfits as fits
 
-_version  = "27-oct-2020"
-_is_casa6 = None
+_version  = "29-apr-2021"
 
+#                     CASA 6.x or CASA 5.x ?
+_is_casa6 = None
 try:
     import casatools
     _is_casa6 = True    
@@ -40,6 +41,7 @@ _cms  = qa.convert(_cqa,"m/s")['value']    # speed of light, forced in m/s (2997
 _apr  = 180.0 * 3600.0 / np.pi             # arcsec per radian (206264.8)
 _bof  = np.pi / (4*math.log(2.0))          # beam oversampling factor (1.1331) : NPPB = bof * (Beam/Pixel)**2  [cbm in tp2vis.py]
 _stof = 2.0*np.sqrt(2.0*np.log(2.0))       # FWHM=stof*sigma  (2.3548)
+
 
 def qac_version():
     """ qac version reporter """
@@ -404,7 +406,6 @@ def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False
 
         Returns the (last) fits file  (@todo: should do a list if input is a list)
     
-        @todo  how can we add the QAC keywords to the FITS file
     """
     def add_qac_history(image, idict):
         """ add the QAC keywords to the (FITS) history
@@ -416,8 +417,11 @@ def qac_fits(image, outfile=None, box=None, chans=None, smooth=None, stats=False
         if idict == None:
             return
         ia.open(image)
+        history = []
         for k in idict.keys():
-            ia.sethistory(origin='QAC',history=['%s=%s' % (k, str(idict[k]))])
+            v = str(idict[k])
+            history.append("QAC %s=%s" % (k,v))
+        ia.sethistory(origin='QAC',history=history)
         ia.close()
         print(idict)
     #
@@ -3597,8 +3601,8 @@ def qac_argv(sysargv):
     a new sys.argv[] style list for you
     
     CASA5 and CASA6 differ in the way they re-populate sys.argv
-       casa5:  ['casa', '-c', 'myscript.py']
-       casa6:  ['myscript.py']
+       casa5:  ['casa', '-c', 'myscript.py', ...]
+       casa6:  ['myscript.py', ...]
     
     Typical usage:
 
@@ -3607,15 +3611,21 @@ def qac_argv(sysargv):
          for arg in qac_argv(sys.argv):
              exec(arg)
 
+    Alternative method in CASA6 might be to "import casashell"
+    
+
     """
     #print("PJT: ",sysargv)
     if _is_casa6:
+        if False:
+            import casashell
+            print("CASASHELL",casashell.argv)
         return sysargv[1:]
     else:
         return sysargv[3:]
 
 def qac_initkeys(keys=None, argv=[]):
-    QAC.keys = {}
+    QAC.keys = {"version" : _version}    
     if keys==None:
         return
     for k in keys.keys():
@@ -3634,7 +3644,8 @@ def qac_getkey(key=None):
 
 def qac_image(image, idict=None, merge=True):
     """ save a QAC dictionary, optionally merge it with an old one
-        return the new dictionary
+        return the new dictionary.
+        This dictionary is stored in a casa sub-table called "QAC"
 
         image:   input image
         idict:   new or updated dictionary. If blank, it return QAC
@@ -3677,14 +3688,14 @@ def qac_begin(label="QAC", log=True, plot=False, local=False):
     label      prefix for Dtime labeling
     log        Use logger ?
     plot       if True, force plots to show up interactively.
-    ltp2vis    if a local tp2vis.py exists, execfile it  (does not work)
+    local      if a local tp2vis.py exists, execfile it  (does not work)
 
     See also qac_tag() and qac_end()
     """
     if local:
         if os.path.exists('tp2vis.py'):
             print("Reading a local tp2vis, which doesn't seem to work")
-            execfile('./tp2vis.py')
+            execfile('tp2vis.py', globals())
             tp2vis_version()
 
     qac_initkeys()      # QAC.keys = {}
@@ -3713,7 +3724,8 @@ def qac_end():
     See also qac_begin()
     """
     print("CASA_logfile: %s" % casalog.logfile())
-    os.system("cp %s ." % casalog.logfile())
+    cmd = "pwd; cp %s ." % casalog.logfile()
+    os.system(cmd)
     
     if QAC.hasdt():
         QAC.dt.tag("done")
