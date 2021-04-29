@@ -125,13 +125,13 @@ if clean1 == 1:
     
 # run a JD ?
 if clean == 1:
-    print "Continuing benchmark with clean=1"
+    print("Continuing benchmark with clean=1")
     # line['do_cleanup'] = False
     qac_clean(test+'/clean',tpms,[ms12,ms07],nsize,pixel,niter=niter,phasecenter=phasecenter,do_int=do_int,do_concat=True,**line)
     # Jin says we can skip the concat again.... but it's not true (for pure simulated data we do need do_concat=False)
     # in 5.5.0-149 this still crashes 
     if tweak == 1:
-        print "Continuing benchmark with tweak=1"
+        print("Continuing benchmark with tweak=1")
         # loop over all 2nd and higher iterations and tweak them 
         for i in range(1,len(niter)): 
             inamed = test+'/clean/tpint'
@@ -153,7 +153,7 @@ if clean == 1:
 
 # final plot if enough data was accumulated for this type of comparison
 if plot == 1:
-    print "Plotting benchmark comparison"
+    print("Plotting benchmark comparison")
     a1=test+'/clean/int.image'
     b1=test+'/clean/tpint.image'
     c1=test+'/clean/int_2.image'
