@@ -791,7 +791,7 @@ def qac_stats(image, test = None, eps=None, box=None, region=None, pb=None, pbcu
         # mean, rms, min, max, flux
         # @TODO   this often fails
         mean = s0['mean'][0]
-        rms  = s0['rms'][0]
+        rms  = s0['sigma'][0]
         min  = s0['min'][0]
         max  = s0['max'][0]
         if 'flux' in s0:
@@ -1821,8 +1821,8 @@ def qac_noise(noise, *args, **kwargs):
     os.system('mv %s/dirtymap.image %s/zero_dirtymap.image'%(args[0], args[0]))
     # remove the other output since it is not needed
     os.system('rm -fr %s/dirtymap.*'%(args[0]))
-    # calculate scale factor
-    sn_scale_factor = noise / imstat('%s/zero_dirtymap.image'%(args[0]))['rms'][0]
+    # calculate scale factor  @todo   rms or sigma???
+    sn_scale_factor = noise / imstat('%s/zero_dirtymap.image'%(args[0]))['rms'][0]     
 
     return sn_scale_factor
 
@@ -3015,12 +3015,12 @@ def qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None, momfac = [2.0, 5.5, 
     chans2='%d~%d' % (chan_rms[2],chan_rms[3])
     chans3='%d~%d' % (chan_rms[1]+1,chan_rms[2]-1)
     if rms == None:
-        rms  = imstat(imcube,axes=[0,1])['rms']
+        rms  = imstat(imcube,axes=[0,1])['sigma']
         dmax = imstat(imcube,axes=[0,1])['max']
         dmin = imstat(imcube,axes=[0,1])['min']
         print(rms)
-        rms1 = imstat(imcube,axes=[0,1],chans=chans1)['rms'].mean()
-        rms2 = imstat(imcube,axes=[0,1],chans=chans2)['rms'].mean()
+        rms1 = imstat(imcube,axes=[0,1],chans=chans1)['sigma'].mean()
+        rms2 = imstat(imcube,axes=[0,1],chans=chans2)['sigma'].mean()
         print(rms1,rms2)
         rms = 0.5*(rms1+rms2)      # @todo should do weighted average
         print("RMS = %f" % rms)
@@ -3358,8 +3358,8 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, rmsfac=3.0, plot='qac_
         A useful way to check the the mean RMS at the first
         or last 10 channels is:
 
-        imstat(image,axes=[0,1])['rms'][:10].mean()
-        imstat(image,axes=[0,1])['rms'][-10:].mean()
+        imstat(image,axes=[0,1])['sigma'][:10].mean()
+        imstat(image,axes=[0,1])['sigma'][-10:].mean()
     
     """
     qac_tag("flux")
@@ -3374,7 +3374,7 @@ def qac_flux(image, box=None, dv = 1.0, border=0, edge=0, rmsfac=3.0, plot='qac_
     _tmp = imstat(image,axes=[0,1],box=box)
     fmin = _tmp['min']
     fmax = _tmp['max']
-    frms = _tmp['rms']
+    frms = _tmp['sigma']
     diff = fmax+fmin
     npp = _tmp['sum'][0]/_tmp['flux'][0]
     if edge > 0:
