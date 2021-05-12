@@ -21,7 +21,7 @@ try:
 except:
     import pyfits as fits
 
-_version  = "29-apr-2021"
+_version  = "12-may-2021"
 
 #                     CASA 6.x or CASA 5.x ?
 _is_casa6 = None
@@ -47,7 +47,7 @@ def qac_version():
     """ qac version reporter """
     global qac_root
     print("qac: version %s" % _version)
-    print("qac_root: %s" % qac_root)
+    print("qac_root: %s = %s" % (qac_root, os.path.realpath(qac_root)))
     if False:
         # casa[] only exists in CASA5
         print("casa:" + casa['version'])        # there is also:   cu.version_string()
@@ -3879,13 +3879,13 @@ class QAC(object):
     def iarray(array):
         """
         """
-        return map(int,array.split(','))
+        return list(map(int,array.split(',')))
 
     @staticmethod
     def farray(array):
         """
         """
-        return map(float,array.split(','))
+        return list(map(float,array.split(',')))
     
     @staticmethod
     def assertf(filename = None, debug=False):
