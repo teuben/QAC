@@ -13,14 +13,16 @@ TESTS = bench bench0 bench1 \
 
 .PHONY: $(TESTS)
 
-#   number of processors to use in mpicasa
+#   number of processors to use in mpicasa or openmp?
 ONT = 2
+
+TIME = OMP_NUM_THREADS=$(ONT) /usr/bin/time 
 
 #  example on Mac:
 CASA  = time /Applications/CASA.app/Contents/MacOS/casa --nogui -c 
 #  example on Linux: (assuming it's in your $PATH - the portable solution)
-CASA  = casa-config --version; /usr/bin/time casa --nogui -c
-MPICASA = casa-config --version; /usr/bin/time mpicasa -n $(ONT) `which casa` --nogui -c
+CASA  = casa-config --version; $(TIME) casa --nogui -c
+MPICASA = casa-config --version; $(TIME) mpicasa -n $(ONT) `which casa` --nogui -c
 
 help:
 	@echo tests = $(TESTS)
